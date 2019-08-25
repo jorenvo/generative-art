@@ -1,7 +1,17 @@
 import React from "react";
 import "./App.css";
+import { types } from "@babel/core";
 
-class ArtCanvas extends React.Component {
+enum ArtType {
+  Schotter,
+  Linien
+}
+
+interface ArtCanvasState {
+  type: ArtType;
+}
+
+class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   element: React.RefObject<HTMLCanvasElement>;
   ctx: CanvasRenderingContext2D | null;
   width: number;
@@ -15,9 +25,29 @@ class ArtCanvas extends React.Component {
     this.margin = 100;
     this.width = 400 + this.margin;
     this.height = 500 + this.margin;
+    this.state = {
+      type: ArtType.Schotter
+    };
   }
 
   componentDidMount() {
+    this.drawArt();
+  }
+
+  componentDidUpdate() {
+    this.drawArt();
+  }
+
+  drawArt() {
+    if (this.state.type == ArtType.Schotter) {
+      this.drawArtSchotter();
+    } else {
+      //this.drawArtLines();
+    }
+  }
+
+  drawArtSchotter() {
+    console.log("render");
     let dom_element = this.element.current!;
     dom_element.width = this.width;
     dom_element.height = this.height;
@@ -26,7 +56,7 @@ class ArtCanvas extends React.Component {
 
     let rect_per_row = 20;
     let rect_per_col = 20 * (this.height / this.width);
-    let draw_height = (this.height - this.margin)/ rect_per_col;
+    let draw_height = (this.height - this.margin) / rect_per_col;
     let draw_width = (this.width - this.margin) / rect_per_row;
 
     /* add margin */
@@ -67,8 +97,26 @@ class ArtCanvas extends React.Component {
     }
   }
 
+  stringToArtType(s: string): ArtType {
+    return ArtType[ArtType[Number(s)] as keyof typeof ArtType];
+  }
+
   render(): React.ReactNode {
-    return <canvas className="ArtCanvas" ref={this.element} />;
+    return (
+      <div>
+        <canvas className="ArtCanvas" ref={this.element} />
+        <select
+          onChange={event =>
+            this.setState({
+              type: this.stringToArtType(event.target.value)
+            })
+          }
+        >
+          <option value={ArtType.Schotter}>Schotter</option>
+          <option value={ArtType.Linien}>Lines</option>
+        </select>
+      </div>
+    );
   }
 }
 
