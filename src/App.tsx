@@ -1,6 +1,5 @@
 import React from "react";
 import "./App.css";
-import { types } from "@babel/core";
 
 enum ArtType {
   Schotter,
@@ -13,24 +12,41 @@ interface ArtCanvasState {
 
 class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   element: React.RefObject<HTMLCanvasElement>;
-  ctx: CanvasRenderingContext2D | null;
+  ctx: CanvasRenderingContext2D | undefined;
+  draw_width: number;
   width: number;
+  draw_height: number;
   height: number;
   margin: number;
+  dom_element: HTMLCanvasElement | undefined;
 
   constructor(props: any) {
     super(props);
     this.element = React.createRef();
-    this.ctx = null;
     this.margin = 100;
-    this.width = 400 + this.margin;
-    this.height = 500 + this.margin;
+
+    this.draw_width = 400;
+    this.width = this.draw_width + this.margin;
+    this.draw_height = 500;
+    this.height = this.draw_height + this.margin;
+
     this.state = {
-      type: ArtType.Schotter
+      type: ArtType.Linien
     };
   }
 
   componentDidMount() {
+    this.dom_element = this.element.current!;
+    this.dom_element.width = this.width;
+    this.dom_element.height = this.height;
+
+    let ctx = this.dom_element.getContext("2d");
+    if (!ctx) {
+      console.error("Could not get context for canvas.");
+    } else {
+      this.ctx = ctx;
+    }
+
     this.drawArt();
   }
 
@@ -39,62 +55,150 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   drawArt() {
-    if (this.state.type == ArtType.Schotter) {
-      this.drawArtSchotter();
-    } else {
-      //this.drawArtLines();
+    let ctx = this.ctx!;
+    ctx.clearRect(0, 0, this.width, this.height);
+
+    ctx.save();
+    // add margin
+    ctx.translate(this.margin / 2, this.margin / 2);
+
+    switch (this.state.type) {
+      case ArtType.Schotter: {
+        this.drawArtSchotter();
+        break;
+      }
+      case ArtType.Linien: {
+        this.drawArtLinien();
+        break;
+      }
     }
+    ctx.restore();
   }
 
   drawArtSchotter() {
-    console.log("render");
-    let dom_element = this.element.current!;
-    dom_element.width = this.width;
-    dom_element.height = this.height;
-
-    this.ctx = dom_element.getContext("2d")!;
-
+    let ctx = this.ctx!;
     let rect_per_row = 20;
-    let rect_per_col = 20 * (this.height / this.width);
-    let draw_height = (this.height - this.margin) / rect_per_col;
-    let draw_width = (this.width - this.margin) / rect_per_row;
+    let rect_per_col = rect_per_row * (this.height / this.width);
 
-    /* add margin */
-    this.ctx.translate(this.margin / 2, this.margin / 2);
+    let rect_width = this.draw_width / rect_per_row;
+    let rect_height = this.draw_height / rect_per_col;
 
     for (let row = 0; row < rect_per_col; row++) {
       let random_scale = row / 1.5;
 
       for (let col = 0; col < rect_per_row; col++) {
-        this.ctx.save();
+        ctx.save();
 
-        let offset_col = col * draw_width;
-        let offset_row = row * draw_height;
+        let offset_col = col * rect_width;
+        let offset_row = row * rect_height;
 
-        /* translate to origin */
-        this.ctx.translate(
-          offset_col + draw_width / 2,
-          offset_row + draw_height / 2
+        // translate to origin
+        ctx.translate(
+          offset_col + rect_width / 2,
+          offset_row + rect_height / 2
         );
 
         let random_angle = 0.01 * random_scale;
-        if (Math.random() > 0.5) this.ctx.rotate(random_angle);
-        else this.ctx.rotate(-random_angle);
+        if (Math.random() > 0.5) ctx.rotate(random_angle);
+        else ctx.rotate(-random_angle);
 
-        /* translate back */
-        this.ctx.translate(
-          -offset_col - draw_width / 2,
-          -offset_row - draw_height / 2
+        // translate back
+        ctx.translate(
+          -offset_col - rect_width / 2,
+          -offset_row - rect_height / 2
         );
 
-        this.ctx.translate(
+        ctx.translate(
           Math.random() * random_scale,
           Math.random() * random_scale
         );
-        this.ctx.strokeRect(offset_col, offset_row, draw_width, draw_height);
-        this.ctx.restore();
+        ctx.strokeRect(offset_col, offset_row, rect_width, rect_height);
+        ctx.restore();
       }
     }
+  }
+
+  drawArtLinien() {
+    let ctx = this.ctx!;
+    ctx.beginPath();
+
+    let rect_per_row = 20;
+    let rect_per_col = Math.floor(rect_per_row * (this.height / this.width));
+
+    let rect_width = this.draw_width / rect_per_row;
+    let rect_height = this.draw_height / rect_per_col;
+
+    let coordinates: [number, number][] = [];
+    for (let col = 0; col < rect_per_row + 1; col++) {
+      const straight_next_x = col * rect_width;
+      coordinates.push([straight_next_x, 0]);
+    }
+
+    for (let row = 0; row < rect_per_col; row++) {
+      const peak = rect_per_col / 2 - 4;
+      let random_scale_row = row;
+      if (row > peak) {
+        random_scale_row = rect_per_col - row;
+      }
+
+      coordinates[rect_per_row] = [
+        rect_width * rect_per_row,
+        row * rect_height
+      ];
+
+      for (let col = 0; col < rect_per_row; col++) {
+        const peak = rect_per_row / 2 - 4;
+        let random_scale_col = col;
+        if (col > peak) {
+          random_scale_col = rect_per_row - col;
+        }
+
+        let random_scale = (random_scale_row * random_scale_col) / 2;
+        if (row === rect_per_col - 1) {
+          random_scale = 1;
+        }
+
+        ctx.moveTo(...coordinates[col]);
+        ctx.lineTo(...coordinates[col + 1]);
+        ctx.stroke();
+
+        // vertical to next row, don't draw next line if on last row
+        if (row < rect_per_col) {
+          let new_row_x =
+            col * rect_width + (Math.random() - 0.5) * random_scale;
+          let new_row_y =
+            row * rect_height +
+            rect_height +
+            (Math.random() - 0.5) * random_scale;
+
+          ctx.moveTo(...coordinates[col]);
+          ctx.lineTo(new_row_x, new_row_y);
+          ctx.stroke();
+
+          coordinates[col] = [new_row_x, new_row_y];
+        }
+      }
+
+      // draw last vertical lines
+      if (row < rect_per_col) {
+        ctx.moveTo(rect_per_row * rect_width, row * rect_height);
+        ctx.lineTo(rect_per_row * rect_width, row * rect_height + rect_height);
+        ctx.stroke();
+      }
+    }
+
+    coordinates[rect_per_row] = [
+      rect_width * rect_per_row,
+      rect_height * rect_per_col
+    ];
+    // draw last horizontal lines
+    for (let col = 0; col < rect_per_row; col++) {
+      ctx.moveTo(...coordinates[col]);
+      ctx.lineTo(...coordinates[col + 1]);
+      ctx.stroke();
+    }
+
+    ctx.closePath();
   }
 
   stringToArtType(s: string): ArtType {
@@ -106,6 +210,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       <div>
         <canvas className="ArtCanvas" ref={this.element} />
         <select
+          defaultValue={String(this.state.type)}
           onChange={event =>
             this.setState({
               type: this.stringToArtType(event.target.value)
