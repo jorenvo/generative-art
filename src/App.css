@@ -2,12 +2,7 @@ h1 {
   text-align: center;
 }
 
-select {
-  display: block;
-  margin: 0 auto;
-}
-
-.ArtCanvas {
+select, input, .ArtCanvas {
   display: block;
   margin: 0 auto;
 }

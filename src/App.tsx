@@ -8,6 +8,7 @@ enum ArtType {
 
 interface ArtCanvasState {
   type: ArtType;
+  parameterA: number;
 }
 
 class ArtCanvas extends React.Component<{}, ArtCanvasState> {
@@ -31,7 +32,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.height = this.draw_height + this.margin;
 
     this.state = {
-      type: ArtType.Linien
+      type: ArtType.Linien,
+      parameterA: 5
     };
   }
 
@@ -153,7 +155,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           random_scale_col = rect_per_row - col - 0.5;
         }
 
-        let random_scale = (random_scale_row * random_scale_col) / 2;
+        let random_scale =
+          (random_scale_row * random_scale_col) / (10 / this.state.parameterA);
         if (row === rect_per_col - 1) {
           random_scale = 1;
         }
@@ -220,6 +223,18 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Schotter}>Schotter</option>
           <option value={ArtType.Linien}>Linien</option>
         </select>
+        <input
+          type="range"
+          name="parameter_a"
+          min="0"
+          max="10"
+          defaultValue={String(this.state.parameterA)}
+          onChange={event =>
+            this.setState({
+              parameterA: Number(event.target.value)
+            })
+          }
+        />
       </div>
     );
   }
