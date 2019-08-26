@@ -86,7 +86,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     let rect_height = this.draw_height / rect_per_col;
 
     for (let row = 0; row < rect_per_col; row++) {
-      let random_scale = row / 1.5;
+      let random_scale = row / (7.5 / this.state.parameterA);
 
       for (let col = 0; col < rect_per_row; col++) {
         ctx.save();
