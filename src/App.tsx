@@ -211,7 +211,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   drawArtDiamond() {
     const ctx = this.ctx!;
-    const x = 2 * this.state.parameterA;
+    const x = 2 * this.state.parameterA + 2;
     const scale = 200;
 
     ctx.beginPath();
