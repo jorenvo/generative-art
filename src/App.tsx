@@ -3,7 +3,8 @@ import "./App.css";
 
 enum ArtType {
   Schotter,
-  Linien
+  Linien,
+  Diamond
 }
 
 interface ArtCanvasState {
@@ -32,7 +33,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.height = this.draw_height + this.margin;
 
     this.state = {
-      type: ArtType.Linien,
+      type: ArtType.Diamond,
       parameterA: 5
     };
   }
@@ -71,6 +72,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       }
       case ArtType.Linien: {
         this.drawArtLinien();
+        break;
+      }
+      case ArtType.Diamond: {
+        this.drawArtDiamond();
         break;
       }
     }
@@ -204,6 +209,24 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.closePath();
   }
 
+  drawArtDiamond() {
+    const ctx = this.ctx!;
+    const x = 2 * this.state.parameterA;
+    const scale = 200;
+
+    ctx.beginPath();
+    for (let i = 0; i < x; i++) {
+      for (let j = 0; j < x; j++) {
+        ctx.save();
+        ctx.translate(this.draw_width / 2, this.draw_height / 2);
+        ctx.moveTo(Math.sin(i) * scale, 0); // [-1, 1] * scale => [-scale, scale]
+        ctx.lineTo(0, Math.sin(j) * scale);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+
   stringToArtType(s: string): ArtType {
     return ArtType[ArtType[Number(s)] as keyof typeof ArtType];
   }
@@ -222,6 +245,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         >
           <option value={ArtType.Schotter}>Schotter</option>
           <option value={ArtType.Linien}>Linien</option>
+          <option value={ArtType.Diamond}>Diamond</option>
         </select>
         <input
           type="range"
