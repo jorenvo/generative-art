@@ -135,10 +135,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     for (let row = 0; row < rect_per_col; row++) {
-      const peak = rect_per_col / 2 - 4;
+      const peak = rect_per_col / 2;
       let random_scale_row = row;
       if (row > peak) {
-        random_scale_row = rect_per_col - row;
+        random_scale_row = rect_per_col - row - 1;
       }
 
       coordinates[rect_per_row] = [
@@ -147,10 +147,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       ];
 
       for (let col = 0; col < rect_per_row; col++) {
-        const peak = rect_per_row / 2 - 4;
+        const peak = rect_per_row / 2;
         let random_scale_col = col;
         if (col > peak) {
-          random_scale_col = rect_per_row - col;
+          random_scale_col = rect_per_row - col - 1;
         }
 
         let random_scale = (random_scale_row * random_scale_col) / 2;
