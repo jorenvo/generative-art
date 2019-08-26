@@ -43,7 +43,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.dom_element.width = this.width;
     this.dom_element.height = this.height;
 
-    let ctx = this.dom_element.getContext("2d");
+    const ctx = this.dom_element.getContext("2d");
     if (!ctx) {
       console.error("Could not get context for canvas.");
     } else {
@@ -58,7 +58,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   drawArt() {
-    let ctx = this.ctx!;
+    const ctx = this.ctx!;
     ctx.clearRect(0, 0, this.width, this.height);
 
     ctx.save();
@@ -83,21 +83,21 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   drawArtSchotter() {
-    let ctx = this.ctx!;
-    let rect_per_row = 20;
-    let rect_per_col = rect_per_row * (this.height / this.width);
+    const ctx = this.ctx!;
+    const rect_per_row = 20;
+    const rect_per_col = rect_per_row * (this.height / this.width);
 
-    let rect_width = this.draw_width / rect_per_row;
-    let rect_height = this.draw_height / rect_per_col;
+    const rect_width = this.draw_width / rect_per_row;
+    const rect_height = this.draw_height / rect_per_col;
 
     for (let row = 0; row < rect_per_col; row++) {
-      let random_scale = row / (7.5 / this.state.parameterA);
+      const random_scale = row / (7.5 / this.state.parameterA);
 
       for (let col = 0; col < rect_per_row; col++) {
         ctx.save();
 
-        let offset_col = col * rect_width;
-        let offset_row = row * rect_height;
+        const offset_col = col * rect_width;
+        const offset_row = row * rect_height;
 
         // translate to origin
         ctx.translate(
@@ -105,7 +105,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           offset_row + rect_height / 2
         );
 
-        let random_angle = 0.01 * random_scale;
+        const random_angle = 0.01 * random_scale;
         if (Math.random() > 0.5) ctx.rotate(random_angle);
         else ctx.rotate(-random_angle);
 
@@ -126,16 +126,16 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   drawArtLinien() {
-    let ctx = this.ctx!;
+    const ctx = this.ctx!;
     ctx.beginPath();
 
-    let rect_per_row = 20;
-    let rect_per_col = Math.floor(rect_per_row * (this.height / this.width));
+    const rect_per_row = 20;
+    const rect_per_col = Math.floor(rect_per_row * (this.height / this.width));
 
-    let rect_width = this.draw_width / rect_per_row;
-    let rect_height = this.draw_height / rect_per_col;
+    const rect_width = this.draw_width / rect_per_row;
+    const rect_height = this.draw_height / rect_per_col;
 
-    let coordinates: [number, number][] = [];
+    const coordinates: [number, number][] = [];
     for (let col = 0; col < rect_per_row + 1; col++) {
       const straight_next_x = col * rect_width;
       coordinates.push([straight_next_x, 0]);
@@ -172,9 +172,9 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
         // vertical to next row, don't draw next line if on last row
         if (row < rect_per_col) {
-          let new_row_x =
+          const new_row_x =
             col * rect_width + (Math.random() - 0.5) * random_scale;
-          let new_row_y =
+          const new_row_y =
             row * rect_height +
             rect_height +
             (Math.random() - 0.5) * random_scale;
