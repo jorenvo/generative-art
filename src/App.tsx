@@ -218,7 +218,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           }
         >
           <option value={ArtType.Schotter}>Schotter</option>
-          <option value={ArtType.Linien}>Lines</option>
+          <option value={ArtType.Linien}>Linien</option>
         </select>
       </div>
     );
