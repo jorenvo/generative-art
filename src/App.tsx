@@ -4,7 +4,8 @@ import "./App.css";
 enum ArtType {
   Schotter,
   Linien,
-  Diamond
+  Diamond,
+  Moiré
 }
 
 interface ArtCanvasState {
@@ -33,7 +34,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.height = this.draw_height + this.margin;
 
     this.state = {
-      type: ArtType.Diamond,
+      type: ArtType.Moiré,
       parameterA: 5
     };
   }
@@ -76,6 +77,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       }
       case ArtType.Diamond: {
         this.drawArtDiamond();
+        break;
+      }
+      case ArtType.Moiré: {
+        this.drawArtMoiré();
         break;
       }
     }
@@ -227,6 +232,32 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
   }
 
+  drawArtMoiré() {
+    const ctx = this.ctx!;
+
+    let random_rects: [number, number, number, number][] = [];
+    for (let i = 0; i < 6000; i++) {
+      random_rects.push([
+        Math.random() * this.draw_width,
+        Math.random() * this.draw_height,
+        3,
+        3
+      ]);
+    }
+
+    for (let rect of random_rects) {
+      ctx.fillRect(...rect);
+    }
+
+    ctx.translate(this.draw_width / 2, this.draw_height / 2);
+    ctx.rotate(this.state.parameterA * 0.005);
+    ctx.translate(-this.draw_width / 2, -this.draw_height / 2);
+
+    for (let rect of random_rects) {
+      ctx.fillRect(...rect);
+    }
+  }
+
   stringToArtType(s: string): ArtType {
     return ArtType[ArtType[Number(s)] as keyof typeof ArtType];
   }
@@ -246,6 +277,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Schotter}>Schotter</option>
           <option value={ArtType.Linien}>Linien</option>
           <option value={ArtType.Diamond}>Diamond</option>
+          <option value={ArtType.Moiré}>Moiré</option>
         </select>
         <input
           type="range"
