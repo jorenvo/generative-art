@@ -284,6 +284,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           name="parameter_a"
           min="0"
           max="10"
+          step="0.2"
           defaultValue={String(this.state.parameterA)}
           onChange={event =>
             this.setState({
