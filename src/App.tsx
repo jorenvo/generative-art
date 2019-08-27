@@ -23,7 +23,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   height: number;
   margin: number;
   dom_element: HTMLCanvasElement | undefined;
-  random_rects: [number, number, number, number][];
+  random_pool: number[];
 
   constructor(props: any) {
     super(props);
@@ -34,7 +34,11 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.width = this.draw_width + this.margin;
     this.draw_height = 500;
     this.height = this.draw_height + this.margin;
-    this.random_rects = [];
+
+    this.random_pool = [];
+    for (let i = 0; i < 100000; i++) {
+      this.random_pool.push(Math.random());
+    }
 
     this.state = {
       type: ArtType.Moiré2,
@@ -102,6 +106,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const rect_width = this.draw_width / rect_per_row;
     const rect_height = this.draw_height / rect_per_col;
 
+    let random_index = 0;
+
     for (let row = 0; row < rect_per_col; row++) {
       const random_scale = row / (7.5 / this.state.parameterA);
 
@@ -118,7 +124,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         );
 
         const random_angle = 0.01 * random_scale;
-        if (Math.random() > 0.5) ctx.rotate(random_angle);
+        if (this.random_pool[random_index++] > 0.5) ctx.rotate(random_angle);
         else ctx.rotate(-random_angle);
 
         // translate back
@@ -128,8 +134,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         );
 
         ctx.translate(
-          Math.random() * random_scale,
-          Math.random() * random_scale
+          this.random_pool[random_index++] * random_scale,
+          this.random_pool[random_index++] * random_scale
         );
         ctx.strokeRect(offset_col, offset_row, rect_width, rect_height);
         ctx.restore();
@@ -146,6 +152,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     const rect_width = this.draw_width / rect_per_row;
     const rect_height = this.draw_height / rect_per_col;
+
+    let random_index = 0;
 
     const coordinates: [number, number][] = [];
     for (let col = 0; col < rect_per_row + 1; col++) {
@@ -185,11 +193,12 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         // vertical to next row, don't draw next line if on last row
         if (row < rect_per_col) {
           const new_row_x =
-            col * rect_width + (Math.random() - 0.5) * random_scale;
+            col * rect_width +
+            (this.random_pool[random_index++] - 0.5) * random_scale;
           const new_row_y =
             row * rect_height +
             rect_height +
-            (Math.random() - 0.5) * random_scale;
+            (this.random_pool[random_index++] - 0.5) * random_scale;
 
           ctx.moveTo(...coordinates[col]);
           ctx.lineTo(new_row_x, new_row_y);
@@ -241,55 +250,59 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   drawArtMoiré1() {
     const ctx = this.ctx!;
-    if (this.random_rects.length === 0) {
-      for (let i = 0; i < 6000; i++) {
-        this.random_rects.push([
-          Math.random() * this.draw_width,
-          Math.random() * this.draw_height,
-          3,
-          3
-        ]);
-      }
-    }
-
-    for (let rect of this.random_rects) {
-      ctx.fillRect(...rect);
+    const nr_rectangles = 6000;
+    let random_index = 0;
+    for (let i = 0; i < nr_rectangles; i++) {
+      ctx.fillRect(
+        this.random_pool[random_index++] * this.draw_width,
+        this.random_pool[random_index++] * this.draw_height,
+        3,
+        3
+      );
     }
 
     ctx.translate(this.draw_width / 2, this.draw_height / 2);
     ctx.rotate(this.state.parameterA * 0.006);
     ctx.translate(-this.draw_width / 2, -this.draw_height / 2);
 
-    for (let rect of this.random_rects) {
-      ctx.fillRect(...rect);
+    random_index = 0;
+    for (let i = 0; i < nr_rectangles; i++) {
+      ctx.fillRect(
+        this.random_pool[random_index++] * this.draw_width,
+        this.random_pool[random_index++] * this.draw_height,
+        3,
+        3
+      );
     }
   }
 
   drawArtMoiré2() {
     const ctx = this.ctx!;
-    if (this.random_rects.length === 0) {
-      for (let i = 0; i < 6000; i++) {
-        this.random_rects.push([
-          Math.random() * this.draw_width,
-          Math.random() * this.draw_height,
-          3,
-          3
-        ]);
-      }
-    }
-
-    for (let rect of this.random_rects) {
-      ctx.fillRect(...rect);
+    const nr_rectangles = 6000;
+    let random_index = 0;
+    for (let i = 0; i < nr_rectangles; i++) {
+      ctx.fillRect(
+        this.random_pool[random_index++] * this.draw_width,
+        this.random_pool[random_index++] * this.draw_height,
+        3,
+        3
+      );
     }
 
     ctx.translate(this.draw_width / 2, this.draw_height / 2);
     ctx.rotate(0.03);
     ctx.translate(-this.draw_width / 2, -this.draw_height / 2);
 
+    random_index = 0;
     const x_translation = (this.state.parameterA - 5) * 2;
     ctx.translate(x_translation, 0);
-    for (let rect of this.random_rects) {
-      ctx.fillRect(...rect);
+    for (let i = 0; i < nr_rectangles; i++) {
+      ctx.fillRect(
+        this.random_pool[random_index++] * this.draw_width,
+        this.random_pool[random_index++] * this.draw_height,
+        3,
+        3
+      );
     }
     ctx.translate(-x_translation, 0);
   }
