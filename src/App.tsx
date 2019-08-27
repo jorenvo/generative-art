@@ -123,9 +123,9 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           offset_row + rect_height / 2
         );
 
-        const random_angle = 0.01 * random_scale;
-        if (this.random_pool[random_index++] > 0.5) ctx.rotate(random_angle);
-        else ctx.rotate(-random_angle);
+        const angle = 0.01 * random_scale;
+        if (this.random_pool[random_index++] > 0.5) ctx.rotate(angle);
+        else ctx.rotate(-angle);
 
         // translate back
         ctx.translate(
