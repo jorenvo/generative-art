@@ -5,7 +5,8 @@ enum ArtType {
   Schotter,
   Linien,
   Diamond,
-  Moiré
+  Moiré1,
+  Moiré2
 }
 
 interface ArtCanvasState {
@@ -22,6 +23,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   height: number;
   margin: number;
   dom_element: HTMLCanvasElement | undefined;
+  random_rects: [number, number, number, number][];
 
   constructor(props: any) {
     super(props);
@@ -32,9 +34,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.width = this.draw_width + this.margin;
     this.draw_height = 500;
     this.height = this.draw_height + this.margin;
+    this.random_rects = [];
 
     this.state = {
-      type: ArtType.Moiré,
+      type: ArtType.Moiré2,
       parameterA: 5
     };
   }
@@ -79,8 +82,12 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         this.drawArtDiamond();
         break;
       }
-      case ArtType.Moiré: {
-        this.drawArtMoiré();
+      case ArtType.Moiré1: {
+        this.drawArtMoiré1();
+        break;
+      }
+      case ArtType.Moiré2: {
+        this.drawArtMoiré2();
         break;
       }
     }
@@ -232,30 +239,59 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
   }
 
-  drawArtMoiré() {
+  drawArtMoiré1() {
     const ctx = this.ctx!;
-
-    let random_rects: [number, number, number, number][] = [];
-    for (let i = 0; i < 6000; i++) {
-      random_rects.push([
-        Math.random() * this.draw_width,
-        Math.random() * this.draw_height,
-        3,
-        3
-      ]);
+    if (this.random_rects.length === 0) {
+      for (let i = 0; i < 6000; i++) {
+        this.random_rects.push([
+          Math.random() * this.draw_width,
+          Math.random() * this.draw_height,
+          3,
+          3
+        ]);
+      }
     }
 
-    for (let rect of random_rects) {
+    for (let rect of this.random_rects) {
       ctx.fillRect(...rect);
     }
 
     ctx.translate(this.draw_width / 2, this.draw_height / 2);
-    ctx.rotate(this.state.parameterA * 0.005);
+    ctx.rotate(this.state.parameterA * 0.006);
     ctx.translate(-this.draw_width / 2, -this.draw_height / 2);
 
-    for (let rect of random_rects) {
+    for (let rect of this.random_rects) {
       ctx.fillRect(...rect);
     }
+  }
+
+  drawArtMoiré2() {
+    const ctx = this.ctx!;
+    if (this.random_rects.length === 0) {
+      for (let i = 0; i < 6000; i++) {
+        this.random_rects.push([
+          Math.random() * this.draw_width,
+          Math.random() * this.draw_height,
+          3,
+          3
+        ]);
+      }
+    }
+
+    for (let rect of this.random_rects) {
+      ctx.fillRect(...rect);
+    }
+
+    ctx.translate(this.draw_width / 2, this.draw_height / 2);
+    ctx.rotate(0.03);
+    ctx.translate(-this.draw_width / 2, -this.draw_height / 2);
+
+    const x_translation = (this.state.parameterA - 5) * 2;
+    ctx.translate(x_translation, 0);
+    for (let rect of this.random_rects) {
+      ctx.fillRect(...rect);
+    }
+    ctx.translate(-x_translation, 0);
   }
 
   stringToArtType(s: string): ArtType {
@@ -277,7 +313,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Schotter}>Schotter</option>
           <option value={ArtType.Linien}>Linien</option>
           <option value={ArtType.Diamond}>Diamond</option>
-          <option value={ArtType.Moiré}>Moiré</option>
+          <option value={ArtType.Moiré1}>Moiré 1.</option>
+          <option value={ArtType.Moiré2}>Moiré 2.</option>
         </select>
         <input
           type="range"
