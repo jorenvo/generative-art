@@ -6,7 +6,8 @@ enum ArtType {
   Linien,
   Diamond,
   Moiré1,
-  Moiré2
+  Moiré2,
+  Maze
 }
 
 interface ArtCanvasState {
@@ -41,7 +42,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     this.state = {
-      type: ArtType.Moiré2,
+      type: ArtType.Maze,
       parameterA: 5
     };
   }
@@ -92,6 +93,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       }
       case ArtType.Moiré2: {
         this.drawArtMoiré2();
+        break;
+      }
+      case ArtType.Maze: {
+        this.drawArtMaze();
         break;
       }
     }
@@ -307,6 +312,50 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.translate(-x_translation, 0);
   }
 
+  drawArtMaze() {
+    const ctx = this.ctx!;
+    const lines_per_row = 25;
+    const lines_per_column = Math.ceil(
+      lines_per_row * (this.draw_height / this.draw_width)
+    );
+    const line_length = this.draw_width / lines_per_row;
+    let random_index = 0;
+
+    ctx.beginPath();
+    ctx.lineWidth = 3;
+
+    for (let row = 0; row < lines_per_column; row++) {
+      for (let col = 0; col < lines_per_row; col++) {
+        const random = this.random_pool[random_index++];
+
+        if (row === 0) {
+          ctx.moveTo(col * line_length, row * line_length);
+          ctx.lineTo(col * line_length + line_length, row * line_length);
+        } else if (row === lines_per_column - 1) {
+          ctx.moveTo(col * line_length, (row + 1) * line_length);
+          ctx.lineTo(col * line_length + line_length, (row + 1) * line_length);
+        }
+
+        if (col === 0) {
+          ctx.moveTo(col * line_length, row * line_length);
+          ctx.lineTo(col * line_length, row * line_length + line_length);
+        } else if (col === lines_per_row - 1) {
+          ctx.moveTo((col + 1) * line_length, row * line_length);
+          ctx.lineTo((col + 1) * line_length, row * line_length + line_length);
+        }
+
+        ctx.moveTo(col * line_length, row * line_length);
+        if (random < this.state.parameterA / 10) {
+          ctx.lineTo(col * line_length + line_length, row * line_length);
+        } else {
+          ctx.lineTo(col * line_length, row * line_length + line_length);
+        }
+      }
+    }
+
+    ctx.stroke();
+  }
+
   stringToArtType(s: string): ArtType {
     return ArtType[ArtType[Number(s)] as keyof typeof ArtType];
   }
@@ -329,7 +378,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Diamond}>Diamond</option>
           <option value={ArtType.Moiré1}>Moiré 1.</option>
           <option value={ArtType.Moiré2}>Moiré 2.</option>
-          <option value={ArtType.New}>New</option>
+          <option value={ArtType.Maze}>Doolhof</option>
         </select>
         <input
           type="range"
