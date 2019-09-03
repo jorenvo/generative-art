@@ -11,6 +11,13 @@ input,
 
 @media screen and (max-width: 640px) {
   .ArtCanvas {
-    width: 90%;
+    width: 100%;
   }
+}
+
+/* this stops iOS from zooming when focusing an input */
+select,
+textarea,
+input {
+  font-size: 16px;
 }
