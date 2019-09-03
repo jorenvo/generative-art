@@ -18,6 +18,7 @@ interface ArtCanvasState {
 class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   element: React.RefObject<HTMLCanvasElement>;
   ctx: CanvasRenderingContext2D | undefined;
+  width_to_height_ratio: number;
   draw_width: number;
   width: number;
   draw_height: number;
@@ -31,9 +32,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.element = React.createRef();
     this.margin = 100;
 
+    this.width_to_height_ratio = 1.25;
     this.draw_width = 400;
     this.width = this.draw_width + this.margin;
-    this.draw_height = 500;
+    this.draw_height = Math.floor(this.draw_width * this.width_to_height_ratio);
     this.height = this.draw_height + this.margin;
 
     this.random_pool = [];
