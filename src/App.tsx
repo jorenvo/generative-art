@@ -153,6 +153,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   drawArtLinien() {
     const ctx = this.ctx!;
     ctx.beginPath();
+    ctx.lineWidth = 3;
 
     const rect_per_row = 20;
     const rect_per_col = Math.floor(rect_per_row * (this.height / this.width));
