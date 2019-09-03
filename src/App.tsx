@@ -319,6 +319,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           defaultValue={String(this.state.type)}
           onChange={event =>
             this.setState({
+              parameterA: 5,
               type: this.stringToArtType(event.target.value)
             })
           }
@@ -328,6 +329,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Diamond}>Diamond</option>
           <option value={ArtType.Moiré1}>Moiré 1.</option>
           <option value={ArtType.Moiré2}>Moiré 2.</option>
+          <option value={ArtType.New}>New</option>
         </select>
         <input
           type="range"
@@ -335,7 +337,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           min="0"
           max="10"
           step="0.2"
-          defaultValue={String(this.state.parameterA)}
+          value={String(this.state.parameterA)}
           onChange={event =>
             this.setState({
               parameterA: Number(event.target.value)
