@@ -195,7 +195,6 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
         ctx.moveTo(...coordinates[col]);
         ctx.lineTo(...coordinates[col + 1]);
-        ctx.stroke();
 
         // vertical to next row, don't draw next line if on last row
         if (row < rect_per_col) {
@@ -209,7 +208,6 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
           ctx.moveTo(...coordinates[col]);
           ctx.lineTo(new_row_x, new_row_y);
-          ctx.stroke();
 
           coordinates[col] = [new_row_x, new_row_y];
         }
@@ -219,7 +217,6 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       if (row < rect_per_col) {
         ctx.moveTo(rect_per_row * rect_width, row * rect_height);
         ctx.lineTo(rect_per_row * rect_width, row * rect_height + rect_height);
-        ctx.stroke();
       }
     }
 
@@ -231,9 +228,9 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     for (let col = 0; col < rect_per_row; col++) {
       ctx.moveTo(...coordinates[col]);
       ctx.lineTo(...coordinates[col + 1]);
-      ctx.stroke();
     }
 
+    ctx.stroke();
     ctx.closePath();
   }
 
@@ -249,10 +246,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         ctx.translate(this.draw_width / 2, this.draw_height / 2);
         ctx.moveTo(Math.sin(i) * scale, 0); // [-1, 1] * scale => [-scale, scale]
         ctx.lineTo(0, Math.sin(j) * scale);
-        ctx.stroke();
         ctx.restore();
       }
     }
+    ctx.stroke();
   }
 
   drawArtMoiré1() {
