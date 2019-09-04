@@ -7,7 +7,8 @@ enum ArtType {
   Diamond,
   Moiré1,
   Moiré2,
-  Maze
+  Maze,
+  Fredkin
 }
 
 interface ArtCanvasState {
@@ -44,7 +45,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     this.state = {
-      type: ArtType.Maze,
+      type: ArtType.Fredkin,
       parameterA: 5
     };
   }
@@ -99,6 +100,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       }
       case ArtType.Maze: {
         this.drawArtMaze();
+        break;
+      }
+      case ArtType.Fredkin: {
+        this.drawArtFredkin();
         break;
       }
     }
@@ -356,6 +361,115 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.stroke();
   }
 
+  drawArtFredkin() {
+    const ctx = this.ctx!;
+
+    // odd rows should be chosen so that cols is also odd for symmetry
+    const rows = 107;
+    const cols = Math.floor(rows / this.width_to_height_ratio);
+
+    const square_scale = this.draw_width / cols;
+    const square_size = 5;
+    let squares: number[][] = [];
+    const get_neumann_neighbors = (row: number, col: number) => {
+      let neighbors = 0;
+
+      // top
+      if (row - 1 >= 0 && squares[row - 1][col] & 1) {
+        neighbors += 1;
+      }
+
+      // bottom
+      if (row + 1 < rows && squares[row + 1][col] & 1) {
+        neighbors += 1;
+      }
+
+      // right
+      if (col + 1 < cols && squares[row][col + 1] & 1) {
+        neighbors += 1;
+      }
+
+      // left
+      if (col - 1 >= 0 && squares[row][col - 1] & 1) {
+        neighbors += 1;
+      }
+
+      return neighbors;
+    };
+    const draw_pants = (center_row: number, center_col: number) => {
+      // XXX
+      // XOX
+      // X X
+      //
+      // O is center
+      squares[center_row - 1][center_col] = 1;
+
+      squares[center_row - 1][center_col - 1] = 1;
+      squares[center_row][center_col - 1] = 1;
+      squares[center_row + 1][center_col - 1] = 1;
+
+      squares[center_row - 1][center_col + 1] = 1;
+      squares[center_row][center_col + 1] = 1;
+      squares[center_row + 1][center_col + 1] = 1;
+    };
+
+    for (let row = 0; row < rows; row++) {
+      squares.push([]);
+      for (let col = 0; col < cols; col++) {
+        squares[row].push(0);
+      }
+    }
+
+    const quarter_rows = Math.floor(rows / 4);
+    const quarter_cols = Math.floor(cols / 4);
+    const center_row = Math.floor(rows / 2);
+    const center_col = Math.floor(cols / 2);
+    draw_pants(center_row, center_col);
+
+    draw_pants(1, 1);
+    draw_pants(1 + quarter_rows, 1 + quarter_cols);
+
+    draw_pants(1, cols - 2);
+    draw_pants(1 + quarter_rows, cols - 2 - quarter_cols);
+
+    draw_pants(rows - 2, 1);
+    draw_pants(rows - 2 - quarter_rows, 1 + quarter_cols);
+
+    draw_pants(rows - 2, cols - 2);
+    draw_pants(rows - 2 - quarter_rows, cols - 2 - quarter_cols);
+
+    for (let gen = 0; gen < this.state.parameterA * 5; gen++) {
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const neighbors = get_neumann_neighbors(row, col);
+
+          if (neighbors & 1) {
+            squares[row][col] |= 0b10;
+          }
+        }
+      }
+
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          squares[row][col] >>= 1;
+        }
+      }
+    }
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        if (squares[row][col]) {
+          ctx.fillRect(
+            col * square_scale + 0.5,
+            row * square_scale + 0.5,
+            square_size,
+            square_size
+          );
+        }
+      }
+    }
+  }
+
   stringToArtType(s: string): ArtType {
     return ArtType[ArtType[Number(s)] as keyof typeof ArtType];
   }
@@ -379,6 +493,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Moiré1}>Moiré 1.</option>
           <option value={ArtType.Moiré2}>Moiré 2.</option>
           <option value={ArtType.Maze}>Doolhof</option>
+          <option value={ArtType.Fredkin}>Fredkin</option>
         </select>
         <input
           type="range"
