@@ -8,7 +8,8 @@ enum ArtType {
   Moiré1,
   Moiré2,
   Maze,
-  Fredkin
+  Fredkin1,
+  Fredkin2
 }
 
 interface ArtCanvasState {
@@ -107,8 +108,12 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         this.drawArtMaze();
         break;
       }
-      case ArtType.Fredkin: {
-        this.drawArtFredkin();
+      case ArtType.Fredkin1: {
+        this.drawArtFredkin1();
+        break;
+      }
+      case ArtType.Fredkin2: {
+        this.drawArtFredkin2();
         break;
       }
     }
@@ -368,7 +373,13 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.stroke();
   }
 
-  private drawArtFredkin() {
+  private drawArtFredkin(
+    seeder: (
+      squares: number[][],
+      center_row: number,
+      center_col: number
+    ) => void
+  ) {
     const ctx = this.getContext();
 
     // odd rows should be chosen so that cols is also odd for symmetry
@@ -403,22 +414,6 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
       return neighbors;
     };
-    const draw_pants = (center_row: number, center_col: number) => {
-      // XXX
-      // XOX
-      // X X
-      //
-      // O is center
-      squares[center_row - 1][center_col] = 1;
-
-      squares[center_row - 1][center_col - 1] = 1;
-      squares[center_row][center_col - 1] = 1;
-      squares[center_row + 1][center_col - 1] = 1;
-
-      squares[center_row - 1][center_col + 1] = 1;
-      squares[center_row][center_col + 1] = 1;
-      squares[center_row + 1][center_col + 1] = 1;
-    };
 
     for (let row = 0; row < rows; row++) {
       squares.push([]);
@@ -431,21 +426,21 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const quarter_cols = Math.floor(cols / 4);
     const center_row = Math.floor(rows / 2);
     const center_col = Math.floor(cols / 2);
-    draw_pants(center_row, center_col);
+    seeder(squares, center_row, center_col);
 
-    draw_pants(1, 1);
-    draw_pants(1 + quarter_rows, 1 + quarter_cols);
+    seeder(squares, 1, 1);
+    seeder(squares, 1 + quarter_rows, 1 + quarter_cols);
 
-    draw_pants(1, cols - 2);
-    draw_pants(1 + quarter_rows, cols - 2 - quarter_cols);
+    seeder(squares, 1, cols - 2);
+    seeder(squares, 1 + quarter_rows, cols - 2 - quarter_cols);
 
-    draw_pants(rows - 2, 1);
-    draw_pants(rows - 2 - quarter_rows, 1 + quarter_cols);
+    seeder(squares, rows - 2, 1);
+    seeder(squares, rows - 2 - quarter_rows, 1 + quarter_cols);
 
-    draw_pants(rows - 2, cols - 2);
-    draw_pants(rows - 2 - quarter_rows, cols - 2 - quarter_cols);
+    seeder(squares, rows - 2, cols - 2);
+    seeder(squares, rows - 2 - quarter_rows, cols - 2 - quarter_cols);
 
-    for (let gen = 0; gen < this.state.parameterA * 5; gen++) {
+    for (let gen = 0; gen < this.state.parameterA * 5 + 5; gen++) {
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
           const neighbors = get_neumann_neighbors(row, col);
@@ -477,6 +472,52 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
   }
 
+  private drawArtFredkin1() {
+    const draw_pants = (
+      squares: number[][],
+      center_row: number,
+      center_col: number
+    ) => {
+      // XXX
+      // XOX
+      // X X
+      //
+      // O is center
+      squares[center_row - 1][center_col] = 1;
+
+      squares[center_row - 1][center_col - 1] = 1;
+      squares[center_row][center_col - 1] = 1;
+      squares[center_row + 1][center_col - 1] = 1;
+
+      squares[center_row - 1][center_col + 1] = 1;
+      squares[center_row][center_col + 1] = 1;
+      squares[center_row + 1][center_col + 1] = 1;
+    };
+
+    this.drawArtFredkin(draw_pants);
+  }
+
+  private drawArtFredkin2() {
+    const draw_pentomino = (
+      squares: number[][],
+      center_row: number,
+      center_col: number
+    ) => {
+      //  X
+      //  O
+      // XXX
+      //
+      // O is center
+      squares[center_row - 1][center_col] = 1;
+
+      squares[center_row + 1][center_col - 1] = 1;
+      squares[center_row + 1][center_col] = 1;
+      squares[center_row + 1][center_col + 1] = 1;
+    };
+
+    this.drawArtFredkin(draw_pentomino);
+  }
+
   private stringToArtType(s: string): ArtType {
     return ArtType[ArtType[Number(s)] as keyof typeof ArtType];
   }
@@ -500,7 +541,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Moiré1}>Moiré 1.</option>
           <option value={ArtType.Moiré2}>Moiré 2.</option>
           <option value={ArtType.Maze}>Doolhof</option>
-          <option value={ArtType.Fredkin}>Fredkin</option>
+          <option value={ArtType.Fredkin1}>Fredkin 1.</option>
+          <option value={ArtType.Fredkin2}>Fredkin 2.</option>
         </select>
         <input
           type="range"
