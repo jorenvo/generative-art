@@ -120,6 +120,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     let random_index = 0;
 
+    ctx.beginPath();
     for (let row = 0; row < rect_per_col; row++) {
       const random_scale = row / (7.5 / this.state.parameterA);
 
@@ -149,10 +150,11 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           this.random_pool[random_index++] * random_scale,
           this.random_pool[random_index++] * random_scale
         );
-        ctx.strokeRect(offset_col, offset_row, rect_width, rect_height);
+        ctx.rect(offset_col, offset_row, rect_width, rect_height);
         ctx.restore();
       }
     }
+    ctx.stroke();
   }
 
   drawArtLinien() {
