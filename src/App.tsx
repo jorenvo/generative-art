@@ -45,7 +45,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     this.state = {
-      type: ArtType.Fredkin,
+      type: ArtType.Schotter,
       parameterA: 5
     };
   }
