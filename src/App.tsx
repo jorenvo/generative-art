@@ -18,7 +18,6 @@ interface ArtCanvasState {
 
 class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   element: React.RefObject<HTMLCanvasElement>;
-  ctx: CanvasRenderingContext2D | undefined;
   width_to_height_ratio: number;
   draw_width: number;
   width: number;
@@ -54,14 +53,6 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.dom_element = this.element.current!;
     this.dom_element.width = this.width;
     this.dom_element.height = this.height;
-
-    const ctx = this.dom_element.getContext("2d");
-    if (!ctx) {
-      console.error("Could not get context for canvas.");
-    } else {
-      this.ctx = ctx;
-    }
-
     this.drawArt();
   }
 
@@ -69,8 +60,22 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.drawArt();
   }
 
+  getContext() {
+    const element = this.dom_element;
+    if (!element) {
+      throw new Error("Could not get canvas DOM element.");
+    } else {
+      const ctx = element.getContext("2d");
+      if (!ctx) {
+        throw new Error("Could not get context for canvas.");
+      } else {
+        return ctx;
+      }
+    }
+  }
+
   drawArt() {
-    const ctx = this.ctx!;
+    const ctx = this.getContext();
     ctx.clearRect(0, 0, this.width, this.height);
 
     ctx.save();
@@ -111,7 +116,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   drawArtSchotter() {
-    const ctx = this.ctx!;
+    const ctx = this.getContext();
     const rect_per_row = 20;
     const rect_per_col = rect_per_row * (this.height / this.width);
 
@@ -158,7 +163,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   drawArtLinien() {
-    const ctx = this.ctx!;
+    const ctx = this.getContext();
     ctx.beginPath();
     ctx.lineWidth = 3;
 
@@ -243,7 +248,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   drawArtDiamond() {
-    const ctx = this.ctx!;
+    const ctx = this.getContext();
     const x = 2 * this.state.parameterA + 2;
     const scale = 200;
 
@@ -261,7 +266,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   drawArtMoiré1() {
-    const ctx = this.ctx!;
+    const ctx = this.getContext();
     const nr_rectangles = 6000;
     let random_index = 0;
     for (let i = 0; i < nr_rectangles; i++) {
@@ -289,7 +294,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   drawArtMoiré2() {
-    const ctx = this.ctx!;
+    const ctx = this.getContext();
     const nr_rectangles = 6000;
     let random_index = 0;
     for (let i = 0; i < nr_rectangles; i++) {
@@ -320,7 +325,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   drawArtMaze() {
-    const ctx = this.ctx!;
+    const ctx = this.getContext();
     const lines_per_row = 25;
     const lines_per_column = Math.ceil(
       lines_per_row * (this.draw_height / this.draw_width)
@@ -364,7 +369,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   drawArtFredkin() {
-    const ctx = this.ctx!;
+    const ctx = this.getContext();
 
     // odd rows should be chosen so that cols is also odd for symmetry
     const rows = 107;
