@@ -17,15 +17,15 @@ interface ArtCanvasState {
 }
 
 class ArtCanvas extends React.Component<{}, ArtCanvasState> {
-  element: React.RefObject<HTMLCanvasElement>;
-  width_to_height_ratio: number;
-  draw_width: number;
-  width: number;
-  draw_height: number;
-  height: number;
-  margin: number;
-  dom_element: HTMLCanvasElement | undefined;
-  random_pool: number[];
+  private element: React.RefObject<HTMLCanvasElement>;
+  private width_to_height_ratio: number;
+  private draw_width: number;
+  private width: number;
+  private draw_height: number;
+  private height: number;
+  private margin: number;
+  private dom_element: HTMLCanvasElement | undefined;
+  private random_pool: number[];
 
   constructor(props: any) {
     super(props);
@@ -60,7 +60,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.drawArt();
   }
 
-  getContext() {
+  private getContext() {
     const element = this.dom_element;
     if (!element) {
       throw new Error("Could not get canvas DOM element.");
@@ -74,7 +74,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
   }
 
-  drawArt() {
+  private drawArt() {
     const ctx = this.getContext();
     ctx.clearRect(0, 0, this.width, this.height);
 
@@ -115,7 +115,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.restore();
   }
 
-  drawArtSchotter() {
+  private drawArtSchotter() {
     const ctx = this.getContext();
     const rect_per_row = 20;
     const rect_per_col = rect_per_row * (this.height / this.width);
@@ -162,7 +162,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.stroke();
   }
 
-  drawArtLinien() {
+  private drawArtLinien() {
     const ctx = this.getContext();
     ctx.beginPath();
     ctx.lineWidth = 3;
@@ -247,7 +247,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.closePath();
   }
 
-  drawArtDiamond() {
+  private drawArtDiamond() {
     const ctx = this.getContext();
     const x = 2 * this.state.parameterA + 2;
     const scale = 200;
@@ -265,7 +265,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.stroke();
   }
 
-  drawArtMoiré1() {
+  private drawArtMoiré1() {
     const ctx = this.getContext();
     const nr_rectangles = 6000;
     let random_index = 0;
@@ -293,7 +293,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
   }
 
-  drawArtMoiré2() {
+  private drawArtMoiré2() {
     const ctx = this.getContext();
     const nr_rectangles = 6000;
     let random_index = 0;
@@ -324,7 +324,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.translate(-x_translation, 0);
   }
 
-  drawArtMaze() {
+  private drawArtMaze() {
     const ctx = this.getContext();
     const lines_per_row = 25;
     const lines_per_column = Math.ceil(
@@ -368,7 +368,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.stroke();
   }
 
-  drawArtFredkin() {
+  private drawArtFredkin() {
     const ctx = this.getContext();
 
     // odd rows should be chosen so that cols is also odd for symmetry
@@ -477,7 +477,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
   }
 
-  stringToArtType(s: string): ArtType {
+  private stringToArtType(s: string): ArtType {
     return ArtType[ArtType[Number(s)] as keyof typeof ArtType];
   }
 
