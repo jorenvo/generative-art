@@ -9,7 +9,8 @@ enum ArtType {
   Moiré2,
   Maze,
   Fredkin1,
-  Fredkin2
+  Fredkin2,
+  New
 }
 
 interface ArtCanvasState {
@@ -45,7 +46,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     this.state = {
-      type: ArtType.Schotter,
+      type: ArtType.New,
       parameterA: 5
     };
   }
@@ -114,6 +115,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       }
       case ArtType.Fredkin2: {
         this.drawArtFredkin2();
+        break;
+      }
+      case ArtType.New: {
+        this.drawArtNew();
         break;
       }
     }
@@ -518,6 +523,64 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.drawArtFredkin(draw_pentomino);
   }
 
+  private drawArtNew() {
+    const ctx = this.getContext();
+    const cols = 17;
+    const rows = cols * this.width_to_height_ratio;
+    const width_per_square = this.draw_width / cols;
+    const height_per_cols = this.draw_height / rows;
+    const square_size = 15;
+    const colors = [
+      "#82aed1",
+      "#6eaad1",
+      "#5aa8d0",
+      "#36bbcf",
+      "#19cca8",
+      "#06c93e",
+      "#51c300",
+      "#bd9200",
+      "#b50000"
+    ];
+    let color_index = 0;
+
+    console.log(this.draw_width);
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        console.log(col * width_per_square + width_per_square / 2);
+        ctx.fillStyle = colors[color_index++ % colors.length];
+        ctx.fillRect(
+          col * width_per_square + width_per_square / 2 - square_size / 2,
+          row * height_per_cols + width_per_square / 2 - square_size / 2,
+          square_size,
+          square_size
+        );
+      }
+    }
+  }
+
+  private drawArtNew2() {
+    const ctx = this.getContext();
+    const scale = 10;
+    const lines = 54;
+
+    ctx.beginPath();
+
+    for (let i = 0; i < 1000; i += 0.1) {
+      for (let line = 0; line < lines; line++) {
+        ctx.rect(
+          i * scale,
+          Math.sin(i * (i / (55 + line * this.state.parameterA))) * scale * 5 +
+            line * 10,
+          1,
+          1
+        );
+      }
+    }
+
+    ctx.stroke();
+  }
+
   private stringToArtType(s: string): ArtType {
     return ArtType[ArtType[Number(s)] as keyof typeof ArtType];
   }
@@ -543,6 +606,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Maze}>Doolhof</option>
           <option value={ArtType.Fredkin1}>Fredkin 1.</option>
           <option value={ArtType.Fredkin2}>Fredkin 2.</option>
+          <option value={ArtType.New}>New</option>
         </select>
         <input
           type="range"
