@@ -9,12 +9,25 @@ enum ArtType {
   Moiré2,
   Maze,
   Fredkin1,
-  Fredkin2
+  Fredkin2,
+  Iso
 }
 
 interface ArtCanvasState {
   type: ArtType;
   parameterA: number;
+}
+
+class Point3D {
+  x: number;
+  y: number;
+  z: number;
+
+  constructor(x = 0, y = 0, z = 0) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
 }
 
 class ArtCanvas extends React.Component<{}, ArtCanvasState> {
@@ -45,7 +58,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     this.state = {
-      type: ArtType.Schotter,
+      type: ArtType.Iso,
       parameterA: 5
     };
   }
@@ -114,6 +127,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       }
       case ArtType.Fredkin2: {
         this.drawArtFredkin2();
+        break;
+      }
+      case ArtType.Iso: {
+        this.drawArtIso();
         break;
       }
     }
@@ -518,6 +535,98 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.drawArtFredkin(draw_pentomino);
   }
 
+  private convertToIso(c: Point3D): Point3D {
+    const sqrt3 = Math.sqrt(3);
+    const iso_c = new Point3D();
+    iso_c.x = sqrt3 * c.x + 0 * c.y + -sqrt3 * c.z;
+    iso_c.y = 1 * c.x + 2 * c.y + 1 * c.z;
+    // z is unused
+    // iso_c.z = sqrt2 * c.x + -sqrt2 * c.y + sqrt2 * c.z;
+
+    return iso_c;
+  }
+
+  private drawArtIso() {
+    const ctx = this.getContext();
+    let cube: Point3D[] = [
+      // top face (ends up bottom in isometric projection)
+      new Point3D(0, 1, 0), // top left front
+      new Point3D(1, 1, 0), // top right front
+      new Point3D(1, 1, 1), // top right back
+      new Point3D(0, 1, 1), // top left back
+      new Point3D(0, 1, 0), // top left front
+
+      // front face (ends up right back in isometric projection)
+      new Point3D(0, 0, 0), // bottom left front
+      new Point3D(1, 0, 0), // bottom right front
+      new Point3D(1, 1, 0), // top right front
+      new Point3D(0, 1, 0), // top left front
+      new Point3D(0, 0, 0), // bottom left front
+
+      // left face (ends up back left in isometric projection)
+      new Point3D(0, 0, 0), // bottom left front
+      new Point3D(0, 0, 1), // bottom left back
+      new Point3D(0, 1, 1), // top left back
+      new Point3D(0, 1, 0), // top left front
+      new Point3D(0, 0, 0), // bottom left front
+
+      // back face (ends up front left in isometric projection)
+      new Point3D(0, 0, 1), // bottom left back
+      new Point3D(1, 0, 1), // bottom right back
+      new Point3D(1, 1, 1), // top right back
+      new Point3D(0, 1, 1), // top left back
+      new Point3D(0, 0, 1), // bottom left back
+
+      // right face (ends up back right in isometric projection)
+      new Point3D(1, 0, 0), // bottom right front
+      new Point3D(1, 0, 1), // bottom right back
+      new Point3D(1, 1, 1), // top right back
+      new Point3D(1, 1, 0), // top right front
+      new Point3D(1, 0, 0), // bottom right front
+
+      // bottom face (ends up top in isometric projection)
+      new Point3D(0, 0, 0), // bottom left front
+      new Point3D(1, 0, 0), // bottom right front
+      new Point3D(1, 0, 1), // bottom right back
+      new Point3D(0, 0, 1), // bottom left back
+      new Point3D(0, 0, 0) // bottom left front
+    ];
+    const scale = 10;
+    cube = cube.map(c => {
+      let iso = this.convertToIso(c);
+      iso.x *= scale;
+      iso.y *= scale;
+      iso.z *= scale;
+      return iso;
+    });
+
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    let new_face = true;
+    for (let i = 0; i < cube.length; i++) {
+      if (i % 5 === 0) {
+        new_face = true;
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+      }
+
+      console.log(cube[i].x, cube[i].y);
+      if (new_face) {
+        ctx.moveTo(cube[i].x, cube[i].y);
+        new_face = false;
+      } else {
+        ctx.lineTo(cube[i].x, cube[i].y);
+      }
+    }
+
+    // draw last face
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
   private stringToArtType(s: string): ArtType {
     return ArtType[ArtType[Number(s)] as keyof typeof ArtType];
   }
@@ -543,6 +652,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Maze}>Doolhof</option>
           <option value={ArtType.Fredkin1}>Fredkin 1.</option>
           <option value={ArtType.Fredkin2}>Fredkin 2.</option>
+          <option value={ArtType.Iso}>Iso</option>
         </select>
         <input
           type="range"
