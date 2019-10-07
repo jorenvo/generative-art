@@ -28,6 +28,10 @@ class Point3D {
     this.y = y;
     this.z = z;
   }
+
+  add(other: Point3D): Point3D {
+    return new Point3D(this.x + other.x, this.y + other.y, this.z + other.z);
+  }
 }
 
 class ArtCanvas extends React.Component<{}, ArtCanvasState> {
@@ -546,8 +550,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     return iso_c;
   }
 
-  private drawArtIso() {
-    const ctx = this.getContext();
+  private generateCube(bottom_left_front: Point3D): Point3D[] {
     let cube: Point3D[] = [
       // top face (ends up bottom in isometric projection)
       new Point3D(0, 1, 0), // top left front
@@ -591,8 +594,20 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       new Point3D(0, 0, 1), // bottom left back
       new Point3D(0, 0, 0) // bottom left front
     ];
+    cube = cube.map(p => p.add(bottom_left_front));
+
+    return cube;
+  }
+
+  private drawArtIso() {
+    const ctx = this.getContext();
+    let cubes: Point3D[] = [];
+    for (let i = 0; i < 10; i++) {
+      cubes = cubes.concat(this.generateCube(new Point3D(i, 0, 0)));
+    }
+
     const scale = 10;
-    cube = cube.map(c => {
+    cubes = cubes.map(c => {
       let iso = this.convertToIso(c);
       iso.x *= scale;
       iso.y *= scale;
@@ -603,7 +618,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.beginPath();
     ctx.fillStyle = "white";
     let new_face = true;
-    for (let i = 0; i < cube.length; i++) {
+    for (let i = 0; i < cubes.length; i++) {
       if (i % 5 === 0) {
         new_face = true;
         ctx.closePath();
@@ -612,12 +627,11 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         ctx.beginPath();
       }
 
-      console.log(cube[i].x, cube[i].y);
       if (new_face) {
-        ctx.moveTo(cube[i].x, cube[i].y);
+        ctx.moveTo(cubes[i].x, cubes[i].y);
         new_face = false;
       } else {
-        ctx.lineTo(cube[i].x, cube[i].y);
+        ctx.lineTo(cubes[i].x, cubes[i].y);
       }
     }
 
