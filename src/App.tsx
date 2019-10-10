@@ -594,6 +594,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       new Point3D(0, 0, 1), // bottom left back
       new Point3D(0, 0, 0) // bottom left front
     ];
+    bottom_left_front.y *= -1;
     cube = cube.map(p => p.add(bottom_left_front));
 
     return cube;
@@ -602,16 +603,42 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private drawArtIso() {
     const ctx = this.getContext();
     let cubes: Point3D[] = [];
-    for (let i = 0; i < 10; i++) {
+    const horizontal_cubes = 5;
+    for (let i = 0; i < horizontal_cubes; i++) {
       cubes = cubes.concat(this.generateCube(new Point3D(i, 0, 0)));
     }
+    for (let i = 0; i < horizontal_cubes - 2; i++) {
+      cubes = cubes.concat(this.generateCube(new Point3D(i, 1, 0)));
+    }
+    for (let i = 0; i < horizontal_cubes; i++) {
+      if (Math.random() > 0.5) {
+        cubes = cubes.concat(this.generateCube(new Point3D(i, 0, 1)));
+      }
+    }
 
-    const scale = 10;
+    console.log(this.draw_width);
+
+    // range is:
+    // [-sqrt3, ..., horizontal_cubes * sqrt3]
+    // add sqrt3
+    // [0, ..., horizontal_cubes * sqrt3 + sqrt3]
+    // divide by sqrt3
+    // [0, ..., horizontal_cubes + sqrt3]
+    // divide by horizontal_cubes + sqrt3
+    // [0, ..., 1]
+    // multiply by draw_width
+    // [0, ..., draw_width]
+    const sqrt3 = Math.sqrt(3);
+    const scale = this.draw_width / (sqrt3 * horizontal_cubes + sqrt3);
+    const convert_to_screen_coordinates = (x: number) => {
+      return (x + sqrt3) * scale;
+    };
     cubes = cubes.map(c => {
       let iso = this.convertToIso(c);
-      iso.x *= scale;
-      iso.y *= scale;
-      iso.z *= scale;
+      iso.x = convert_to_screen_coordinates(iso.x);
+      iso.y = convert_to_screen_coordinates(iso.y);
+      iso.z = convert_to_screen_coordinates(iso.z);
+      console.log(c, iso);
       return iso;
     });
 
