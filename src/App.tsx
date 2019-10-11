@@ -603,42 +603,41 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private drawArtIso() {
     const ctx = this.getContext();
     let cubes: Point3D[] = [];
-    const horizontal_cubes = 5;
-    for (let i = 0; i < horizontal_cubes; i++) {
-      cubes = cubes.concat(this.generateCube(new Point3D(i, 0, 0)));
-    }
-    for (let i = 0; i < horizontal_cubes - 2; i++) {
-      cubes = cubes.concat(this.generateCube(new Point3D(i, 1, 0)));
-    }
-    for (let i = 0; i < horizontal_cubes; i++) {
-      if (Math.random() > 0.5) {
-        cubes = cubes.concat(this.generateCube(new Point3D(i, 0, 1)));
+    const horizontal_cubes = 10;
+    const cube_depth = 9;
+    for (let depth = 0; depth < cube_depth; depth++) {
+      for (let i = 0; i < horizontal_cubes; i++) {
+        cubes = cubes.concat(this.generateCube(new Point3D(i, 0, depth)));
       }
     }
-
-    console.log(this.draw_width);
+    // for (let i = 0; i < horizontal_cubes - 2; i++) {
+    //   cubes = cubes.concat(this.generateCube(new Point3D(i, 1, 0)));
+    // }
+    // for (let i = 0; i < horizontal_cubes; i++) {
+    //   if (Math.random() > 0.5) {
+    //     cubes = cubes.concat(this.generateCube(new Point3D(i, 0, 1)));
+    //   }
+    // }
 
     // range is:
-    // [-sqrt3, ..., horizontal_cubes * sqrt3]
-    // add sqrt3
-    // [0, ..., horizontal_cubes * sqrt3 + sqrt3]
-    // divide by sqrt3
-    // [0, ..., horizontal_cubes + sqrt3]
-    // divide by horizontal_cubes + sqrt3
+    // [-sqrt3 * cube_depth, ..., horizontal_cubes * sqrt3]
+    // add cube_depth * sqrt3
+    //   [0, ..., horizontal_cubes * sqrt3 + cube_depth * sqrt3]
+    // = [0, ..., (horizontal_cubes + cube_depth) * sqrt3]
+    // divide by (horizontal_cubes + cube_depth) * sqrt3
     // [0, ..., 1]
     // multiply by draw_width
     // [0, ..., draw_width]
     const sqrt3 = Math.sqrt(3);
-    const scale = this.draw_width / (sqrt3 * horizontal_cubes + sqrt3);
+    const scale = this.draw_width / ((horizontal_cubes + cube_depth) * sqrt3);
     const convert_to_screen_coordinates = (x: number) => {
-      return (x + sqrt3) * scale;
+      return (x + sqrt3 * cube_depth) * scale;
     };
     cubes = cubes.map(c => {
       let iso = this.convertToIso(c);
       iso.x = convert_to_screen_coordinates(iso.x);
       iso.y = convert_to_screen_coordinates(iso.y);
       iso.z = convert_to_screen_coordinates(iso.z);
-      console.log(c, iso);
       return iso;
     });
 
