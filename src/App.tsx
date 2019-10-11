@@ -604,10 +604,40 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const ctx = this.getContext();
     let cubes: Point3D[] = [];
     const horizontal_cubes = 10;
-    const cube_depth = 9;
-    for (let depth = 0; depth < cube_depth; depth++) {
-      for (let i = 0; i < horizontal_cubes; i++) {
-        cubes = cubes.concat(this.generateCube(new Point3D(i, 0, depth)));
+    const cube_depth = 10;
+    const cube_height = 10;
+
+    const starting_height = 3;
+    let column_height: number[][] = [];
+    for (let row = 0; row < cube_depth; row++) {
+      column_height[row] = [];
+      for (let col = 0; col < horizontal_cubes; col++) {
+        let prev_height = starting_height;
+        if (row - 1 >= 0) {
+          prev_height = column_height[row - 1][col];
+        }
+
+        const random_decrease = Math.random() > 0.9 ? 1 : 0;
+        column_height[row][col] = prev_height - random_decrease;
+
+        if (col - 1 >= 0) {
+          column_height[row][col] = Math.min(
+            column_height[row][col],
+            column_height[row][col - 1]
+          );
+        }
+      }
+    }
+
+    for (let height = 0; height < cube_height; height++) {
+      for (let depth = 0; depth < cube_depth; depth++) {
+        for (let i = 0; i < horizontal_cubes; i++) {
+          if (height <= column_height[depth][i]) {
+            cubes = cubes.concat(
+              this.generateCube(new Point3D(i, height, depth))
+            );
+          }
+        }
       }
     }
     // for (let i = 0; i < horizontal_cubes - 2; i++) {
