@@ -603,11 +603,12 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private drawArtIso() {
     const ctx = this.getContext();
     let cubes: Point3D[] = [];
+    let random_index = 0;
     const horizontal_cubes = 10;
     const cube_depth = 10;
     const cube_height = 10;
 
-    const starting_height = 3;
+    const starting_height = cube_height;
     let column_height: number[][] = [];
     for (let row = 0; row < cube_depth; row++) {
       column_height[row] = [];
@@ -617,8 +618,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           prev_height = column_height[row - 1][col];
         }
 
-        const random_decrease = Math.random() > 0.9 ? 1 : 0;
-        column_height[row][col] = prev_height - random_decrease;
+        column_height[row][col] = prev_height;
+        if (this.random_pool[random_index++] < col / horizontal_cubes) {
+          column_height[row][col]--;
+        }
 
         if (col - 1 >= 0) {
           column_height[row][col] = Math.min(
