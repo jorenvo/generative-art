@@ -634,6 +634,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     // 0 depth is at the back
     // 0 i is to the right
 
+    // todo reduce the runtime of this loop
     let cubes: Point3D[] = [];
     for (let height = 0; height < cube_height; height++) {
       for (let depth = 0; depth < cube_depth; depth++) {
@@ -650,9 +651,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
             column_height[depth][i + 1] > height + 1;
           const occluded = in_front && to_the_right;
           if (!occluded && height <= column_height[depth][i]) {
-            cubes = cubes.concat(
-              this.generateCube(new Point3D(i, height, depth))
-            );
+            cubes.push(...this.generateCube(new Point3D(i, height, depth)));
           }
         }
       }
@@ -660,8 +659,12 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     this.paintIsoArt(horizontal_cubes, cube_depth, cubes);
   }
-  
-  private paintIsoArt(horizontal_cubes: number, cube_depth: number, cubes: Point3D[]) {
+
+  private paintIsoArt(
+    horizontal_cubes: number,
+    cube_depth: number,
+    cubes: Point3D[]
+  ) {
     const ctx = this.getContext();
     console.log("rendering", cubes.length / (5 * 6), "cubes");
 
