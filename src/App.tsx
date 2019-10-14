@@ -601,12 +601,11 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private drawArtIso() {
-    const ctx = this.getContext();
-    let cubes: Point3D[] = [];
+    // TODO idea: animate like an engine
     let random_index = 0;
-    const horizontal_cubes = 10;
-    const cube_depth = 10;
-    const cube_height = 10;
+    const horizontal_cubes = 30;
+    const cube_depth = 30;
+    const cube_height = 30;
 
     const starting_height = cube_height;
     let column_height: number[][] = [];
@@ -632,10 +631,25 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       }
     }
 
+    // 0 depth is at the back
+    // 0 i is to the right
+
+    let cubes: Point3D[] = [];
     for (let height = 0; height < cube_height; height++) {
       for (let depth = 0; depth < cube_depth; depth++) {
         for (let i = 0; i < horizontal_cubes; i++) {
-          if (height <= column_height[depth][i]) {
+          // skip if there is something
+          // - in front of it and,
+          // - to the right of it and,
+          // - on top of it
+          const in_front =
+            depth + 1 < column_height.length &&
+            column_height[depth + 1][i] > height + 1;
+          const to_the_right =
+            i + 1 < column_height[depth].length &&
+            column_height[depth][i + 1] > height + 1;
+          const occluded = in_front && to_the_right;
+          if (!occluded && height <= column_height[depth][i]) {
             cubes = cubes.concat(
               this.generateCube(new Point3D(i, height, depth))
             );
@@ -643,14 +657,13 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         }
       }
     }
-    // for (let i = 0; i < horizontal_cubes - 2; i++) {
-    //   cubes = cubes.concat(this.generateCube(new Point3D(i, 1, 0)));
-    // }
-    // for (let i = 0; i < horizontal_cubes; i++) {
-    //   if (Math.random() > 0.5) {
-    //     cubes = cubes.concat(this.generateCube(new Point3D(i, 0, 1)));
-    //   }
-    // }
+
+    this.paintIsoArt(horizontal_cubes, cube_depth, cubes);
+  }
+  
+  private paintIsoArt(horizontal_cubes: number, cube_depth: number, cubes: Point3D[]) {
+    const ctx = this.getContext();
+    console.log("rendering", cubes.length / (5 * 6), "cubes");
 
     // range is:
     // [-sqrt3 * cube_depth, ..., horizontal_cubes * sqrt3]
