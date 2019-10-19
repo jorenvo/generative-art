@@ -29,8 +29,10 @@ class Point3D {
     this.z = z;
   }
 
-  add(other: Point3D): Point3D {
-    return new Point3D(this.x + other.x, this.y + other.y, this.z + other.z);
+  add(other: Point3D) {
+    this.x += other.x;
+    this.y += other.y;
+    this.z += other.z;
   }
 }
 
@@ -539,15 +541,15 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.drawArtFredkin(draw_pentomino);
   }
 
-  private convertToIso(c: Point3D): Point3D {
+  private convertToIso(c: Point3D) {
     const sqrt3 = Math.sqrt(3);
-    const iso_c = new Point3D();
-    iso_c.x = sqrt3 * c.x + 0 * c.y + -sqrt3 * c.z;
-    iso_c.y = 1 * c.x + 2 * c.y + 1 * c.z;
+    const temp_x = sqrt3 * c.x + 0 * c.y + -sqrt3 * c.z;
+    const temp_y = 1 * c.x + 2 * c.y + 1 * c.z;
+    c.x = temp_x;
+    c.y = temp_y;
+
     // z is unused
     // iso_c.z = sqrt2 * c.x + -sqrt2 * c.y + sqrt2 * c.z;
-
-    return iso_c;
   }
 
   private generateCube(bottom_left_front: Point3D): Point3D[] {
@@ -595,7 +597,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       new Point3D(0, 0, 0) // bottom left front
     ];
     bottom_left_front.y *= -1;
-    cube = cube.map(p => p.add(bottom_left_front));
+
+    cube.forEach(p => p.add(bottom_left_front));
 
     return cube;
   }
@@ -603,9 +606,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private drawArtIso() {
     // TODO idea: animate like an engine
     let random_index = 0;
-    const horizontal_cubes = 30;
-    const cube_depth = 30;
-    const cube_height = 30;
+    const cube_size = 10;
+    const horizontal_cubes = cube_size;
+    const cube_depth = cube_size;
+    const cube_height = cube_size;
 
     const starting_height = cube_height;
     let column_height: number[][] = [];
@@ -634,7 +638,6 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     // 0 depth is at the back
     // 0 i is to the right
 
-    // todo reduce the runtime of this loop
     let cubes: Point3D[] = [];
     for (let height = 0; height < cube_height; height++) {
       for (let depth = 0; depth < cube_depth; depth++) {
@@ -660,6 +663,11 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.paintIsoArt(horizontal_cubes, cube_depth, cubes);
   }
 
+  private convertToScreenCoordinates(cube_depth: number, scale: number, x: number): number {
+    const sqrt3 = Math.sqrt(3);
+    return (x + sqrt3 * cube_depth) * scale;
+  }
+
   private paintIsoArt(
     horizontal_cubes: number,
     cube_depth: number,
@@ -677,18 +685,13 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     // [0, ..., 1]
     // multiply by draw_width
     // [0, ..., draw_width]
-    const sqrt3 = Math.sqrt(3);
-    const scale = this.draw_width / ((horizontal_cubes + cube_depth) * sqrt3);
-    const convert_to_screen_coordinates = (x: number) => {
-      return (x + sqrt3 * cube_depth) * scale;
-    };
-    cubes = cubes.map(c => {
-      let iso = this.convertToIso(c);
-      iso.x = convert_to_screen_coordinates(iso.x);
-      iso.y = convert_to_screen_coordinates(iso.y);
-      iso.z = convert_to_screen_coordinates(iso.z);
-      return iso;
-    });
+    const scale = this.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
+    for (let index = 0; index < cubes.length; index++) {
+      this.convertToIso(cubes[index]);
+      cubes[index].x = this.convertToScreenCoordinates(cube_depth, scale, cubes[index].x);
+      cubes[index].y = this.convertToScreenCoordinates(cube_depth, scale, cubes[index].y);
+      cubes[index].z = this.convertToScreenCoordinates(cube_depth, scale, cubes[index].z);
+    }
 
     ctx.beginPath();
     ctx.fillStyle = "white";
