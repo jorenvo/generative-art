@@ -70,7 +70,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     this.state = {
-      type: ArtType.Iso,
+      type: ArtType.Schotter,
       parameterA: 5
     };
   }
@@ -700,7 +700,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     cubes: Point3D[]
   ) {
     const ctx = this.getContext();
-    console.log("rendering", cubes.length / (5 * 6), "cubes");
+    // console.log("rendering", cubes.length / (5 * 6), "cubes");
 
     // range is:
     // [-sqrt3 * cube_depth, ..., horizontal_cubes * sqrt3]
