@@ -10,7 +10,8 @@ enum ArtType {
   Maze,
   Fredkin1,
   Fredkin2,
-  Iso
+  Iso,
+  IsoColor
 }
 
 interface ArtCanvasState {
@@ -142,7 +143,11 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         break;
       }
       case ArtType.Iso: {
-        this.drawArtIso();
+        this.drawArtIso(!"no color");
+        break;
+      }
+      case ArtType.IsoColor: {
+        this.drawArtIso(!!"color");
         break;
       }
     }
@@ -558,7 +563,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     // iso_c.z = sqrt2 * c.x + -sqrt2 * c.y + sqrt2 * c.z;
   }
 
-  private generateCube(bottom_left_front: Point3D): Point3D[] {
+  private generateCube(
+    bottom_left_front: Point3D,
+    randomize: boolean
+  ): Point3D[] {
     let cube: Point3D[] = [
       // top face (ends up bottom in isometric projection)
       new Point3D(0, 1, 0), // top left front
@@ -610,23 +618,25 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     cube.forEach(p => {
       p.add(bottom_left_front);
 
-      const random = new Point3D(
-        (this.random_pool[random_index++] * parameter) / scale,
-        (this.random_pool[random_index++] * parameter) / scale,
-        0
-      );
+      if (randomize) {
+        const random = new Point3D(
+          (this.random_pool[random_index++] * parameter) / scale,
+          (this.random_pool[random_index++] * parameter) / scale,
+          0
+        );
 
-      if (this.random_pool[random_index++] > 0.5) {
-        p.add(random);
-      } else {
-        p.remove(random);
+        if (this.random_pool[random_index++] > 0.5) {
+          p.add(random);
+        } else {
+          p.remove(random);
+        }
       }
     });
 
     return cube;
   }
 
-  private drawArtIso() {
+  private drawArtIso(color: boolean) {
     let random_index = 0;
     const cube_size = 10;
     const horizontal_cubes = cube_size;
@@ -676,13 +686,15 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
             column_height[depth][i + 1] > height + 1;
           const occluded = in_front && to_the_right;
           if (!occluded && height <= column_height[depth][i]) {
-            cubes.push(...this.generateCube(new Point3D(i, height, depth)));
+            cubes.push(
+              ...this.generateCube(new Point3D(i, height, depth), !color)
+            );
           }
         }
       }
     }
 
-    this.paintIsoArt(horizontal_cubes, cube_depth, cubes);
+    this.paintIsoArt(horizontal_cubes, cube_depth, cubes, color);
   }
 
   private convertToScreenCoordinates(
@@ -697,7 +709,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private paintIsoArt(
     horizontal_cubes: number,
     cube_depth: number,
-    cubes: Point3D[]
+    cubes: Point3D[],
+    color: boolean
   ) {
     const ctx = this.getContext();
     // console.log("rendering", cubes.length / (5 * 6), "cubes");
@@ -733,11 +746,29 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     ctx.beginPath();
-    ctx.fillStyle = "white";
+
+    let palette = ["white"];
+    if (color) {
+      // generated with https://colourco.de/
+      const palettes = [
+        ["#619b3d", "#3e9eaa", "#8a3eba", "#c55243"],
+        ["#c6a36c", "#75cd7f", "#7e9fd4", "#da88d1"],
+        ["#42b87a", "#42bda1", "#44b7c0", "#4794c2", "#4972c5"],
+        ["#35885c", "#373997", "#a63772", "#b6b238"],
+        ["#cd7376", "#d08e76", "#d2ab79", "#d4c87c", "#c8d67f"],
+        ["#3e9e55", "#3f5cad", "#bd3f9f", "#c6a445"]
+      ];
+      palette =
+        palettes[Math.floor((this.state.parameterA / 11) * palettes.length)];
+    }
+
+    let palette_index = 0;
     let new_face = true;
     for (let i = 0; i < cubes.length; i++) {
       if (i % 5 === 0) {
         new_face = true;
+        ctx.fillStyle = palette[palette_index];
+        palette_index = (palette_index + 1) % palette.length;
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
@@ -784,6 +815,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Fredkin1}>Fredkin 1.</option>
           <option value={ArtType.Fredkin2}>Fredkin 2.</option>
           <option value={ArtType.Iso}>Iso</option>
+          <option value={ArtType.IsoColor}>Isocolor</option>
         </select>
         <input
           type="range"
