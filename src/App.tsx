@@ -34,6 +34,12 @@ class Point3D {
     this.y += other.y;
     this.z += other.z;
   }
+
+  remove(other: Point3D) {
+    this.x -= other.x;
+    this.y -= other.y;
+    this.z -= other.z;
+  }
 }
 
 class ArtCanvas extends React.Component<{}, ArtCanvasState> {
@@ -598,13 +604,29 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ];
     bottom_left_front.y *= -1;
 
-    cube.forEach(p => p.add(bottom_left_front));
+    let random_index = 0;
+    const scale = 20;
+    const parameter = this.state.parameterA - 5;
+    cube.forEach(p => {
+      p.add(bottom_left_front);
+
+      const random = new Point3D(
+        (this.random_pool[random_index++] * parameter) / scale,
+        (this.random_pool[random_index++] * parameter) / scale,
+        0
+      );
+
+      if (this.random_pool[random_index++] > 0.5) {
+        p.add(random);
+      } else {
+        p.remove(random);
+      }
+    });
 
     return cube;
   }
 
   private drawArtIso() {
-    // TODO idea: animate like an engine
     let random_index = 0;
     const cube_size = 10;
     const horizontal_cubes = cube_size;
@@ -663,7 +685,11 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.paintIsoArt(horizontal_cubes, cube_depth, cubes);
   }
 
-  private convertToScreenCoordinates(cube_depth: number, scale: number, x: number): number {
+  private convertToScreenCoordinates(
+    cube_depth: number,
+    scale: number,
+    x: number
+  ): number {
     const sqrt3 = Math.sqrt(3);
     return (x + sqrt3 * cube_depth) * scale;
   }
@@ -685,12 +711,25 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     // [0, ..., 1]
     // multiply by draw_width
     // [0, ..., draw_width]
-    const scale = this.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
+    const scale =
+      this.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
     for (let index = 0; index < cubes.length; index++) {
       this.convertToIso(cubes[index]);
-      cubes[index].x = this.convertToScreenCoordinates(cube_depth, scale, cubes[index].x);
-      cubes[index].y = this.convertToScreenCoordinates(cube_depth, scale, cubes[index].y);
-      cubes[index].z = this.convertToScreenCoordinates(cube_depth, scale, cubes[index].z);
+      cubes[index].x = this.convertToScreenCoordinates(
+        cube_depth,
+        scale,
+        cubes[index].x
+      );
+      cubes[index].y = this.convertToScreenCoordinates(
+        cube_depth,
+        scale,
+        cubes[index].y
+      );
+      cubes[index].z = this.convertToScreenCoordinates(
+        cube_depth,
+        scale,
+        cubes[index].z
+      );
     }
 
     ctx.beginPath();
