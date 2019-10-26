@@ -71,7 +71,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     this.state = {
-      type: ArtType.Schotter,
+      type: ArtType.IsoColor,
       parameterA: 5
     };
   }
@@ -638,7 +638,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   private drawArtIso(color: boolean) {
     let random_index = 0;
-    const cube_size = 10;
+    const cube_size = 3;
     const horizontal_cubes = cube_size;
     const cube_depth = cube_size;
     const cube_height = cube_size;
@@ -764,7 +764,23 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     let palette_index = 0;
     let new_face = true;
+    ctx.lineWidth = 20;
+
+    //            top-left       top-right
+    // middle-left-top               middle-right-top
+    // middle-left-bottom            middle-right-bottom
+    //           bottom-left     bottom-right
+    let min_x = Infinity,
+      min_y = Infinity;
+    let max_x = -Infinity,
+      max_y = -Infinity;
+
     for (let i = 0; i < cubes.length; i++) {
+      min_x = Math.min(min_x, cubes[i].x);
+      max_x = Math.max(max_x, cubes[i].x);
+      min_y = Math.min(min_y, cubes[i].y);
+      max_y = Math.max(max_y, cubes[i].y);
+
       if (i % 5 === 0) {
         new_face = true;
         ctx.fillStyle = palette[palette_index];
@@ -787,6 +803,39 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+
+    // clip to avoid thick lines exceeding the image
+    let hori_length = max_x - min_x;
+    let vert_length = max_y - min_y;
+    
+    // account for line thickness
+    const offset = ctx.lineWidth / 2;
+    min_y -= offset;
+    // min_x -= offset;
+    max_y += offset;
+    // max_x += offset;
+
+    console.log(min_x, min_y, max_x, max_y);
+
+    let diag_length =
+      Math.sqrt(Math.pow(min_y, 2) + Math.pow(vert_length / 3, 2));
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "red";
+    ctx.beginPath();
+
+    // start top center and go counterclockwise
+    ctx.moveTo(min_x + hori_length / 2, min_y);
+    ctx.lineTo(min_x - offset, diag_length);
+    ctx.lineTo(min_x - offset, diag_length + vert_length / 2 + offset);
+    ctx.lineTo(min_x + hori_length / 2, max_y);
+    ctx.lineTo(max_x + offset, diag_length + vert_length / 2 + offset);
+    ctx.lineTo(max_x + offset, diag_length);
+
+    ctx.closePath();
+    // ctx.stroke();
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.fill();
   }
 
   private stringToArtType(s: string): ArtType {
