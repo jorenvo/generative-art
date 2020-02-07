@@ -565,7 +565,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   private generateCube(
     bottom_left_front: Point3D,
-    randomize: boolean
+    randomize: boolean,
   ): Point3D[] {
     let cube: Point3D[] = [
       // top face (ends up bottom in isometric projection)
@@ -612,7 +612,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ];
     bottom_left_front.y *= -1;
 
-    let random_index = 0;
+    let random_index = Math.floor(Math.random() * 99999);
     const scale = 20;
     const parameter = this.state.parameterA - 5;
     cube.forEach(p => {
