@@ -590,7 +590,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     rotate_radians?: number,
   ): Point3D[] {
     let cube: Point3D[] = [
-      // top face (ends up bottom in isometric projection)
+      // // top face (ends up bottom in isometric projection)
       // new Point3D(0, 1, 0), // top left front
       // new Point3D(1, 1, 0), // top right front
       // new Point3D(1, 1, 1), // top right back
@@ -736,6 +736,34 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     return (x + sqrt3 * cube_depth) * scale;
   }
 
+  private renderIsoPath(cube_vertices: Point3D[], vertex_i: number) {
+    const ctx = this.getContext();
+    const debug_stroke_color = ["red", "green", "blue", "black"];
+    const debug = true;
+
+    ctx.closePath();
+    ctx.fill();
+
+    if (!debug) {
+      ctx.stroke();
+    } else if (vertex_i > 0) {
+      for (let j = vertex_i - 4; j < vertex_i; j++) {
+        ctx.beginPath();
+        ctx.moveTo(cube_vertices[j - 1].x, cube_vertices[j - 1].y);
+        ctx.lineTo(cube_vertices[j].x, cube_vertices[j].y);
+        ctx.setLineDash([2, 10 + Math.floor(Math.random() * 20)]);
+        ctx.strokeStyle = debug_stroke_color[(j - 1) % 4];
+        ctx.closePath();
+        ctx.stroke();
+      }
+    }
+
+    if (vertex_i < cube_vertices.length) {
+      ctx.beginPath();
+      ctx.moveTo(cube_vertices[vertex_i!].x, cube_vertices[vertex_i!].y);
+    }
+  }
+
   private paintIsoArt(
     horizontal_cubes: number,
     cube_depth: number,
@@ -793,37 +821,16 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         palettes[Math.floor((this.state.parameterA / 11) * palettes.length)];
     }
 
-    const stroke_color = ["red", "green", "blue", "black"];
     let palette_index = 0;
-    let new_face = true;
-    for (let i = 0; i < cubes.length; i++) {
+    for (let i = 0; i <= cubes.length; i++) { // <= to handle the last face
       if (i % 5 === 0) {
-        new_face = true;
-        // ctx.fillStyle = palette[palette_index];
+        ctx.fillStyle = palette[palette_index];
         palette_index = (palette_index + 1) % palette.length;
-        ctx.closePath();
-        // ctx.fill();
-        // ctx.stroke();
-        ctx.beginPath();
-      }
-
-      if (new_face) { // todo can't we move this into the top if?
-        ctx.moveTo(cubes[i].x, cubes[i].y);
-        new_face = false;
+        this.renderIsoPath(cubes, i);
       } else {
         ctx.lineTo(cubes[i].x, cubes[i].y);
-        ctx.strokeStyle = stroke_color[i % 4];
-        ctx.closePath();
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(cubes[i].x, cubes[i].y);
       }
     }
-
-    // draw last face
-    ctx.closePath();
-    // ctx.fill();
-    // ctx.stroke();
   }
 
   private drawArtRotatingCubeFrame(rotation_radians: number) {
