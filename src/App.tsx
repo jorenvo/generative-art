@@ -43,14 +43,23 @@ class Point3D {
     this.z -= other.z;
   }
 
+  // todo somehow refactor these into one function but typescript is hard
   rotate_xz(radians: number) {
-    this.x = this.x * Math.cos(radians) - this.z * Math.sin(radians);
+    const tmp_x = this.x * Math.cos(radians) - this.z * Math.sin(radians);
     this.z = this.x * Math.sin(radians) + this.z * Math.cos(radians);
+    this.x = tmp_x;
+  }
+
+  rotate_xy(radians: number) {
+    const tmp_x = this.x * Math.cos(radians) - this.y * Math.sin(radians);
+    this.y = this.x * Math.sin(radians) + this.y * Math.cos(radians);
+    this.x = tmp_x;
   }
 
   rotate_yz(radians: number) {
-    this.y = this.y * Math.cos(radians) - this.z * Math.sin(radians);
+    const tmp_y = this.y * Math.cos(radians) - this.z * Math.sin(radians);
     this.z = this.y * Math.sin(radians) + this.z * Math.cos(radians);
+    this.y = tmp_y;
   }
 }
 
@@ -590,26 +599,26 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     rotate_radians?: number,
   ): Point3D[] {
     let cube: Point3D[] = [
-      // // top face (ends up bottom in isometric projection)
-      // new Point3D(0, 1, 0), // top left front
-      // new Point3D(1, 1, 0), // top right front
-      // new Point3D(1, 1, 1), // top right back
-      // new Point3D(0, 1, 1), // top left back
-      // new Point3D(0, 1, 0), // top left front
+      // top face (ends up bottom in isometric projection)
+      new Point3D(0, 1, 0), // top left front
+      new Point3D(1, 1, 0), // top right front
+      new Point3D(1, 1, 1), // top right back
+      new Point3D(0, 1, 1), // top left back
+      new Point3D(0, 1, 0), // top left front
 
-      // // front face (ends up back right in isometric projection)
-      // new Point3D(0, 0, 0), // bottom left front
-      // new Point3D(1, 0, 0), // bottom right front
-      // new Point3D(1, 1, 0), // top right front
-      // new Point3D(0, 1, 0), // top left front
-      // new Point3D(0, 0, 0), // bottom left front
+      // front face (ends up back right in isometric projection)
+      new Point3D(0, 0, 0), // bottom left front
+      new Point3D(1, 0, 0), // bottom right front
+      new Point3D(1, 1, 0), // top right front
+      new Point3D(0, 1, 0), // top left front
+      new Point3D(0, 0, 0), // bottom left front
 
-      // // left face (ends up back left in isometric projection)
-      // new Point3D(0, 0, 0), // bottom left front
-      // new Point3D(0, 0, 1), // bottom left back
-      // new Point3D(0, 1, 1), // top left back
-      // new Point3D(0, 1, 0), // top left front
-      // new Point3D(0, 0, 0), // bottom left front
+      // left face (ends up back left in isometric projection)
+      new Point3D(0, 0, 0), // bottom left front
+      new Point3D(0, 0, 1), // bottom left back
+      new Point3D(0, 1, 1), // top left back
+      new Point3D(0, 1, 0), // top left front
+      new Point3D(0, 0, 0), // bottom left front
 
       // back face (ends up front left in isometric projection)
       new Point3D(0, 0, 1), // bottom left back
@@ -625,12 +634,12 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       new Point3D(1, 1, 0), // top right front
       new Point3D(1, 0, 0), // bottom right front
 
-      // // bottom face (ends up top in isometric projection)
-      // new Point3D(0, 0, 0), // bottom left front
-      // new Point3D(1, 0, 0), // bottom right front
-      // new Point3D(1, 0, 1), // bottom right back
-      // new Point3D(0, 0, 1), // bottom left back
-      // new Point3D(0, 0, 0) // bottom left front
+      // bottom face (ends up top in isometric projection)
+      new Point3D(0, 0, 0), // bottom left front
+      new Point3D(1, 0, 0), // bottom right front
+      new Point3D(1, 0, 1), // bottom right back
+      new Point3D(0, 0, 1), // bottom left back
+      new Point3D(0, 0, 0) // bottom left front
     ];
     bottom_left_front.y *= -1;
 
@@ -642,7 +651,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
       if (rotate_radians) {
         p.subtract(center_translation);
-        p.rotate_yz(rotate_radians);
+        p.rotate_xz(rotate_radians);
         p.add(center_translation);
       }
 
@@ -838,7 +847,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     this.clear();
     this.paintIsoArt(1, 0, cube_coords, false, 100);
-    // requestAnimationFrame(() => this.drawArtRotatingCubeFrame(rotation_radians + 0.01));
+    // todo make rotation speed framerate independant
+    requestAnimationFrame(() => this.drawArtRotatingCubeFrame(rotation_radians + 0.01));
   }
 
   private drawArtRotatingCube() {
