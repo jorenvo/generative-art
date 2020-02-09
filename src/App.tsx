@@ -11,7 +11,8 @@ enum ArtType {
   Fredkin1,
   Fredkin2,
   Iso,
-  IsoColor
+  IsoColor,
+  RotateCube,
 }
 
 interface ArtCanvasState {
@@ -36,10 +37,20 @@ class Point3D {
     this.z += other.z;
   }
 
-  remove(other: Point3D) {
+  subtract(other: Point3D) {
     this.x -= other.x;
     this.y -= other.y;
     this.z -= other.z;
+  }
+
+  rotate_xz(radians: number) {
+    this.x = this.x * Math.cos(radians) - this.z * Math.sin(radians);
+    this.z = this.x * Math.sin(radians) + this.z * Math.cos(radians);
+  }
+
+  rotate_yz(radians: number) {
+    this.y = this.y * Math.cos(radians) - this.z * Math.sin(radians);
+    this.z = this.y * Math.sin(radians) + this.z * Math.cos(radians);
   }
 }
 
@@ -71,7 +82,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     this.state = {
-      type: ArtType.Schotter,
+      type: ArtType.RotateCube,
       parameterA: 5
     };
   }
@@ -101,9 +112,14 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
   }
 
-  private drawArt() {
+  private clear() {
     const ctx = this.getContext();
     ctx.clearRect(0, 0, this.width, this.height);
+  }
+
+  private drawArt() {
+    const ctx = this.getContext();
+    this.clear();
 
     ctx.save();
     // add margin
@@ -148,6 +164,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       }
       case ArtType.IsoColor: {
         this.drawArtIso(!!"color");
+        break;
+      }
+      case ArtType.RotateCube: {
+        this.drawArtRotatingCube();
         break;
       }
     }
@@ -560,34 +580,36 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     c.y = temp_y;
 
     // z is unused
-    // iso_c.z = sqrt2 * c.x + -sqrt2 * c.y + sqrt2 * c.z;
+    // const sqrt2 = Math.sqrt(2);
+    // c.z = sqrt2 * c.x + -sqrt2 * c.y + sqrt2 * c.z;
   }
 
   private generateCube(
     bottom_left_front: Point3D,
     randomize: boolean,
+    rotate_radians?: number,
   ): Point3D[] {
     let cube: Point3D[] = [
       // top face (ends up bottom in isometric projection)
-      new Point3D(0, 1, 0), // top left front
-      new Point3D(1, 1, 0), // top right front
-      new Point3D(1, 1, 1), // top right back
-      new Point3D(0, 1, 1), // top left back
-      new Point3D(0, 1, 0), // top left front
+      // new Point3D(0, 1, 0), // top left front
+      // new Point3D(1, 1, 0), // top right front
+      // new Point3D(1, 1, 1), // top right back
+      // new Point3D(0, 1, 1), // top left back
+      // new Point3D(0, 1, 0), // top left front
 
-      // front face (ends up right back in isometric projection)
-      new Point3D(0, 0, 0), // bottom left front
-      new Point3D(1, 0, 0), // bottom right front
-      new Point3D(1, 1, 0), // top right front
-      new Point3D(0, 1, 0), // top left front
-      new Point3D(0, 0, 0), // bottom left front
+      // // front face (ends up back right in isometric projection)
+      // new Point3D(0, 0, 0), // bottom left front
+      // new Point3D(1, 0, 0), // bottom right front
+      // new Point3D(1, 1, 0), // top right front
+      // new Point3D(0, 1, 0), // top left front
+      // new Point3D(0, 0, 0), // bottom left front
 
-      // left face (ends up back left in isometric projection)
-      new Point3D(0, 0, 0), // bottom left front
-      new Point3D(0, 0, 1), // bottom left back
-      new Point3D(0, 1, 1), // top left back
-      new Point3D(0, 1, 0), // top left front
-      new Point3D(0, 0, 0), // bottom left front
+      // // left face (ends up back left in isometric projection)
+      // new Point3D(0, 0, 0), // bottom left front
+      // new Point3D(0, 0, 1), // bottom left back
+      // new Point3D(0, 1, 1), // top left back
+      // new Point3D(0, 1, 0), // top left front
+      // new Point3D(0, 0, 0), // bottom left front
 
       // back face (ends up front left in isometric projection)
       new Point3D(0, 0, 1), // bottom left back
@@ -596,19 +618,19 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       new Point3D(0, 1, 1), // top left back
       new Point3D(0, 0, 1), // bottom left back
 
-      // right face (ends up back right in isometric projection)
+      // right face (ends up front right in isometric projection)
       new Point3D(1, 0, 0), // bottom right front
       new Point3D(1, 0, 1), // bottom right back
       new Point3D(1, 1, 1), // top right back
       new Point3D(1, 1, 0), // top right front
       new Point3D(1, 0, 0), // bottom right front
 
-      // bottom face (ends up top in isometric projection)
-      new Point3D(0, 0, 0), // bottom left front
-      new Point3D(1, 0, 0), // bottom right front
-      new Point3D(1, 0, 1), // bottom right back
-      new Point3D(0, 0, 1), // bottom left back
-      new Point3D(0, 0, 0) // bottom left front
+      // // bottom face (ends up top in isometric projection)
+      // new Point3D(0, 0, 0), // bottom left front
+      // new Point3D(1, 0, 0), // bottom right front
+      // new Point3D(1, 0, 1), // bottom right back
+      // new Point3D(0, 0, 1), // bottom left back
+      // new Point3D(0, 0, 0) // bottom left front
     ];
     bottom_left_front.y *= -1;
 
@@ -616,6 +638,14 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const scale = 20;
     const parameter = this.state.parameterA - 5;
     cube.forEach(p => {
+      const center_translation = new Point3D(0.5, 0.5, 0.5);
+
+      if (rotate_radians) {
+        p.subtract(center_translation);
+        p.rotate_yz(rotate_radians);
+        p.add(center_translation);
+      }
+
       p.add(bottom_left_front);
 
       if (randomize) {
@@ -628,7 +658,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         if (this.random_pool[random_index++] > 0.5) {
           p.add(random);
         } else {
-          p.remove(random);
+          p.subtract(random);
         }
       }
     });
@@ -710,7 +740,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     horizontal_cubes: number,
     cube_depth: number,
     cubes: Point3D[],
-    color: boolean
+    color: boolean,
+    scale_override?: number,
   ) {
     const ctx = this.getContext();
     // console.log("rendering", cubes.length / (5 * 6), "cubes");
@@ -724,7 +755,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     // [0, ..., 1]
     // multiply by draw_width
     // [0, ..., draw_width]
-    const scale =
+    const scale = scale_override ||
       this.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
     for (let index = 0; index < cubes.length; index++) {
       this.convertToIso(cubes[index]);
@@ -762,31 +793,49 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         palettes[Math.floor((this.state.parameterA / 11) * palettes.length)];
     }
 
+    const stroke_color = ["red", "green", "blue", "black"];
     let palette_index = 0;
     let new_face = true;
     for (let i = 0; i < cubes.length; i++) {
       if (i % 5 === 0) {
         new_face = true;
-        ctx.fillStyle = palette[palette_index];
+        // ctx.fillStyle = palette[palette_index];
         palette_index = (palette_index + 1) % palette.length;
         ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
+        // ctx.fill();
+        // ctx.stroke();
         ctx.beginPath();
       }
 
-      if (new_face) {
+      if (new_face) { // todo can't we move this into the top if?
         ctx.moveTo(cubes[i].x, cubes[i].y);
         new_face = false;
       } else {
         ctx.lineTo(cubes[i].x, cubes[i].y);
+        ctx.strokeStyle = stroke_color[i % 4];
+        ctx.closePath();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cubes[i].x, cubes[i].y);
       }
     }
 
     // draw last face
     ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    // ctx.fill();
+    // ctx.stroke();
+  }
+
+  private drawArtRotatingCubeFrame(rotation_radians: number) {
+    const cube_coords = this.generateCube(new Point3D(1.15, 0, 0), false, rotation_radians);
+
+    this.clear();
+    this.paintIsoArt(1, 0, cube_coords, false, 100);
+    // requestAnimationFrame(() => this.drawArtRotatingCubeFrame(rotation_radians + 0.01));
+  }
+
+  private drawArtRotatingCube() {
+    requestAnimationFrame(() => this.drawArtRotatingCubeFrame(0));
   }
 
   private stringToArtType(s: string): ArtType {
@@ -816,6 +865,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Fredkin2}>Fredkin 2.</option>
           <option value={ArtType.Iso}>Iso</option>
           <option value={ArtType.IsoColor}>Isocolor</option>
+          <option value={ArtType.RotateCube}>Rotate</option>
         </select>
         <input
           type="range"
