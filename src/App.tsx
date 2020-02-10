@@ -794,7 +794,6 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     cube_depth: number,
     cube_vertices: Point3D[],
     color: boolean,
-    scale_override?: number,
   ) {
     const ctx = this.getContext();
     // console.log("rendering", cubes.length / (5 * 6), "cubes");
@@ -808,9 +807,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     // [0, ..., 1]
     // multiply by draw_width
     // [0, ..., draw_width]
-    const scale = // scale_override ||
+    const scale =
       this.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
-    // (this.draw_width * cube_depth) / (horizontal_cubes + cube_depth);
 
     let faces: Face[] = [];
     let face_vertices: Point3D[] = [];
