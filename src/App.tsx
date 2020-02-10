@@ -76,6 +76,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private draw_height: number;
   private height: number;
   private margin: number;
+  private animation_id: number | undefined;
   private dom_element: HTMLCanvasElement | undefined;
   private random_pool: number[];
 
@@ -89,6 +90,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.width = this.draw_width + this.margin;
     this.draw_height = Math.floor(this.draw_width * this.width_to_height_ratio);
     this.height = this.draw_height + this.margin;
+    this.animation_id = undefined;
 
     this.random_pool = [];
     for (let i = 0; i < 100000; i++) {
@@ -135,6 +137,11 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const ctx = this.getContext();
     this.clear();
 
+    if (this.animation_id !== undefined) {
+      cancelAnimationFrame(this.animation_id);
+      this.animation_id = undefined;
+    }
+    
     ctx.save();
     // add margin
     ctx.translate(this.margin / 2, this.margin / 2);
@@ -762,7 +769,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
     ctx.closePath();
     ctx.fill();
-    
+
     if (!debug) {
       ctx.stroke();
     } else {
@@ -799,7 +806,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     // [0, ..., draw_width]
     const scale = // scale_override ||
       this.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
-      // (this.draw_width * cube_depth) / (horizontal_cubes + cube_depth);
+    // (this.draw_width * cube_depth) / (horizontal_cubes + cube_depth);
 
     let faces: Face[] = [];
     let face_vertices: Point3D[] = [];
@@ -854,7 +861,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       palette =
         palettes[Math.floor((this.state.parameterA / 11) * palettes.length)];
     }
-    
+
     let palette_index = 0;
     faces.forEach(f => {
       this.renderIsoPath(f, palette[palette_index]);
@@ -874,11 +881,11 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.paintIsoArt(1, 1, cube_coords, false);
     ctx.restore();
     // todo make rotation speed framerate independant
-    requestAnimationFrame(() => this.drawArtRotatingCubeFrame(rotation_radians + 0.01));
+    this.animation_id = requestAnimationFrame(() => this.drawArtRotatingCubeFrame(rotation_radians + 0.001));
   }
 
   private drawArtRotatingCube() {
-    requestAnimationFrame(() => this.drawArtRotatingCubeFrame(0));
+    this.animation_id = requestAnimationFrame(() => this.drawArtRotatingCubeFrame(0));
   }
 
   private stringToArtType(s: string): ArtType {
