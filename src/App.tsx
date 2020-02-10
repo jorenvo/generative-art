@@ -128,6 +128,11 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
   }
 
+  private center() {
+    const ctx = this.getContext();
+    ctx.translate(this.margin / 2, this.margin / 2);
+  }
+
   private clear() {
     const ctx = this.getContext();
     ctx.clearRect(0, 0, this.width, this.height);
@@ -141,10 +146,9 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       cancelAnimationFrame(this.animation_id);
       this.animation_id = undefined;
     }
-    
+
     ctx.save();
-    // add margin
-    ctx.translate(this.margin / 2, this.margin / 2);
+    this.center();
 
     switch (this.state.type) {
       case ArtType.Schotter: {
@@ -869,19 +873,23 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     });
   }
 
-  private drawArtRotatingCubeFrame(rotation_radians: number) {
-    const cube_coords = this.generateCube(new Point3D(0, 0.6, 0), false, rotation_radians);
+  private renderAnimationFrame(render_fn: () => void) {
+    const ctx = this.getContext();
 
     this.clear();
-
-    const ctx = this.getContext(); // todo temp
     ctx.save();
-    ctx.translate(this.margin / 2, this.margin / 2); // todo temp
-
-    this.paintIsoArt(1, 1, cube_coords, false);
+    this.center();
+    render_fn();
     ctx.restore();
+  }
+
+  private drawArtRotatingCubeFrame(rotation_radians: number) {
+    const cube_coords = this.generateCube(new Point3D(0, 0.8, 0), false, rotation_radians);
+
+    this.renderAnimationFrame(() => this.paintIsoArt(1, 1, cube_coords, false));
+
     // todo make rotation speed framerate independant
-    this.animation_id = requestAnimationFrame(() => this.drawArtRotatingCubeFrame(rotation_radians + 0.001));
+    this.animation_id = requestAnimationFrame(() => this.drawArtRotatingCubeFrame(rotation_radians + 0.01));
   }
 
   private drawArtRotatingCube() {
