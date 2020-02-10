@@ -103,7 +103,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     this.state = {
-      type: ArtType.RotateCube,
+      type: ArtType.Schotter,
       parameterA: 5
     };
   }
