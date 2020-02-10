@@ -790,15 +790,16 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     // range is:
     // [-sqrt3 * cube_depth, ..., horizontal_cubes * sqrt3]
-    // add cube_depth * sqrt3
+    // add cube_depth * sqrt3 (done in convertToScreenCoordinates)
     //   [0, ..., horizontal_cubes * sqrt3 + cube_depth * sqrt3]
     // = [0, ..., (horizontal_cubes + cube_depth) * sqrt3]
     // divide by (horizontal_cubes + cube_depth) * sqrt3
     // [0, ..., 1]
     // multiply by draw_width
     // [0, ..., draw_width]
-    const scale = scale_override ||
+    const scale = // scale_override ||
       this.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
+      // (this.draw_width * cube_depth) / (horizontal_cubes + cube_depth);
 
     let faces: Face[] = [];
     let face_vertices: Point3D[] = [];
@@ -862,10 +863,16 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private drawArtRotatingCubeFrame(rotation_radians: number) {
-    const cube_coords = this.generateCube(new Point3D(1.15, 0, 0), false, rotation_radians);
+    const cube_coords = this.generateCube(new Point3D(0, 0.6, 0), false, rotation_radians);
 
     this.clear();
-    this.paintIsoArt(1, 0, cube_coords, false, 100);
+
+    const ctx = this.getContext(); // todo temp
+    ctx.save();
+    ctx.translate(this.margin / 2, this.margin / 2); // todo temp
+
+    this.paintIsoArt(1, 1, cube_coords, false);
+    ctx.restore();
     // todo make rotation speed framerate independant
     requestAnimationFrame(() => this.drawArtRotatingCubeFrame(rotation_radians + 0.01));
   }
