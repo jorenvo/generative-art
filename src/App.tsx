@@ -26,6 +26,7 @@ interface Face {
 }
 
 class Point3D {
+  [key: string]: any; // allow dynamic props
   x: number;
   y: number;
   z: number;
@@ -48,23 +49,22 @@ class Point3D {
     this.z -= other.z;
   }
 
-  // todo somehow refactor these into one function but typescript is hard
+  private rotate(axis1: string, axis2: string, radians: number) {
+    const tmp = this[axis1] * Math.cos(radians) - this[axis2] * Math.sin(radians);
+    this[axis2] = this[axis1] * Math.sin(radians) + this[axis2] * Math.cos(radians);
+    this[axis1] = tmp;
+  }
+
   rotate_xz(radians: number) {
-    const tmp_x = this.x * Math.cos(radians) - this.z * Math.sin(radians);
-    this.z = this.x * Math.sin(radians) + this.z * Math.cos(radians);
-    this.x = tmp_x;
+    this.rotate("x", "z", radians);
   }
 
   rotate_xy(radians: number) {
-    const tmp_x = this.x * Math.cos(radians) - this.y * Math.sin(radians);
-    this.y = this.x * Math.sin(radians) + this.y * Math.cos(radians);
-    this.x = tmp_x;
+    this.rotate("x", "y", radians);
   }
 
   rotate_yz(radians: number) {
-    const tmp_y = this.y * Math.cos(radians) - this.z * Math.sin(radians);
-    this.z = this.y * Math.sin(radians) + this.z * Math.cos(radians);
-    this.y = tmp_y;
+    this.rotate("y", "z", radians);
   }
 }
 
