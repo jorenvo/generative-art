@@ -50,8 +50,10 @@ class Point3D {
   }
 
   private rotate(axis1: string, axis2: string, radians: number) {
-    const tmp = this[axis1] * Math.cos(radians) - this[axis2] * Math.sin(radians);
-    this[axis2] = this[axis1] * Math.sin(radians) + this[axis2] * Math.cos(radians);
+    const sin = Math.sin(radians);
+    const cos = Math.cos(radians);
+    const tmp = this[axis1] * cos - this[axis2] * sin;
+    this[axis2] = this[axis1] * sin + this[axis2] * cos;
     this[axis1] = tmp;
   }
 
@@ -80,6 +82,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private dom_element: HTMLCanvasElement | undefined;
   private random_pool: number[];
 
+  private rotating_cube_radians: number; // todo this is not great
+
   constructor(props: any) {
     super(props);
     this.element = React.createRef();
@@ -91,6 +95,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.draw_height = Math.floor(this.draw_width * this.width_to_height_ratio);
     this.height = this.draw_height + this.margin;
     this.animation_id = undefined;
+    this.rotating_cube_radians = 0;
 
     this.random_pool = [];
     for (let i = 0; i < 100000; i++) {
@@ -881,17 +886,18 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.restore();
   }
 
-  private drawArtRotatingCubeFrame(rotation_radians: number) {
-    const cube_coords = this.generateCube(new Point3D(0, 0.8, 0), false, rotation_radians);
+  private drawArtRotatingCubeFrame() {
+    const cube_coords = this.generateCube(new Point3D(0, 0.8, 0), false, this.rotating_cube_radians);
 
     this.renderAnimationFrame(() => this.paintIsoArt(1, 1, cube_coords, false));
 
     // todo make rotation speed framerate independant
-    this.animation_id = requestAnimationFrame(() => this.drawArtRotatingCubeFrame(rotation_radians + 0.01));
+    this.rotating_cube_radians += 0.01 * (this.state.parameterA - 4);
+    this.animation_id = requestAnimationFrame(this.drawArtRotatingCubeFrame.bind(this));
   }
 
   private drawArtRotatingCube() {
-    this.animation_id = requestAnimationFrame(() => this.drawArtRotatingCubeFrame(0));
+    this.animation_id = requestAnimationFrame(this.drawArtRotatingCubeFrame.bind(this));
   }
 
   private stringToArtType(s: string): ArtType {
