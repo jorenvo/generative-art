@@ -582,15 +582,14 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private convertToIso(c: Point3D) {
+    const sqrt2 = Math.sqrt(2);
     const sqrt3 = Math.sqrt(3);
     const temp_x = sqrt3 * c.x + 0 * c.y + -sqrt3 * c.z;
     const temp_y = 1 * c.x + 2 * c.y + 1 * c.z;
+    const temp_z = sqrt2 * c.x + -sqrt2 * c.y + sqrt2 * c.z;
     c.x = temp_x;
     c.y = temp_y;
-
-    // z is unused
-    // const sqrt2 = Math.sqrt(2);
-    // c.z = sqrt2 * c.x + -sqrt2 * c.y + sqrt2 * c.z;
+    c.z = temp_z;
   }
 
   private generateCube(
@@ -776,12 +775,41 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private paintIsoArt(
     horizontal_cubes: number,
     cube_depth: number,
-    cubes: Point3D[],
+    cube_vertices: Point3D[],
     color: boolean,
     scale_override?: number,
   ) {
     const ctx = this.getContext();
     // console.log("rendering", cubes.length / (5 * 6), "cubes");
+
+    interface Face {
+      face: Point3D[],
+      center: Point3D,
+    }
+    let faces: Face[] = [];
+    let face_vertices: Point3D[] = [];
+    let face_sum: Point3D = new Point3D();
+    for (let i = 0; i < cube_vertices.length; i++) {
+      this.convertToIso(cube_vertices[i]);
+      face_vertices.push(cube_vertices[i]);
+
+      if (face_vertices.length === 5) {
+        faces.push({
+          face: face_vertices,
+          center: new Point3D(face_sum.x / 4, face_sum.y / 4, face_sum.z / 4)
+        });
+        face_vertices = [];
+        face_sum = new Point3D();
+      } else {
+        face_sum.add(cube_vertices[i]);
+      }
+    }
+
+    // console.log(faces.map((f) => f.center))
+    faces.sort((a, b) => a.center.z - b.center.z)
+    // console.log(faces.map((f) => f.center))
+
+    cube_vertices = faces.flatMap(f => f.face);
 
     // range is:
     // [-sqrt3 * cube_depth, ..., horizontal_cubes * sqrt3]
@@ -794,24 +822,6 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     // [0, ..., draw_width]
     const scale = scale_override ||
       this.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
-    for (let index = 0; index < cubes.length; index++) {
-      this.convertToIso(cubes[index]);
-      cubes[index].x = this.convertToScreenCoordinates(
-        cube_depth,
-        scale,
-        cubes[index].x
-      );
-      cubes[index].y = this.convertToScreenCoordinates(
-        cube_depth,
-        scale,
-        cubes[index].y
-      );
-      cubes[index].z = this.convertToScreenCoordinates(
-        cube_depth,
-        scale,
-        cubes[index].z
-      );
-    }
 
     ctx.beginPath();
 
@@ -831,13 +841,31 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     let palette_index = 0;
-    for (let i = 0; i <= cubes.length; i++) { // <= to handle the last face
+    for (let i = 0; i <= cube_vertices.length; i++) { // <= to handle the last face
+      if (i < cube_vertices.length) {
+        cube_vertices[i].x = this.convertToScreenCoordinates(
+          cube_depth,
+          scale,
+          cube_vertices[i].x
+        );
+        cube_vertices[i].y = this.convertToScreenCoordinates(
+          cube_depth,
+          scale,
+          cube_vertices[i].y
+        );
+        cube_vertices[i].z = this.convertToScreenCoordinates(
+          cube_depth,
+          scale,
+          cube_vertices[i].z
+        );
+      }
+
       if (i % 5 === 0) {
         ctx.fillStyle = palette[palette_index];
         palette_index = (palette_index + 1) % palette.length;
-        this.renderIsoPath(cubes, i);
+        this.renderIsoPath(cube_vertices, i);
       } else {
-        ctx.lineTo(cubes[i].x, cubes[i].y);
+        ctx.lineTo(cube_vertices[i].x, cube_vertices[i].y);
       }
     }
   }
