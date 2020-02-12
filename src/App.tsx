@@ -933,7 +933,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <option value={ArtType.Fredkin2}>Fredkin 2.</option>
           <option value={ArtType.Iso}>Iso</option>
           <option value={ArtType.IsoColor}>Isocolor</option>
-          <option value={ArtType.RotateCube}>Rotate</option>
+          <option value={ArtType.RotateCube}>κύβος</option>
         </select>
         <input
           type="range"
