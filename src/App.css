@@ -4,6 +4,7 @@ h1 {
 
 select,
 input,
+button,
 .ArtCanvas {
   display: block;
   margin: 20px auto;
@@ -18,6 +19,7 @@ input,
 /* this stops iOS from zooming when focusing an input */
 select,
 textarea,
+button,
 input {
   font-size: 16px;
 }

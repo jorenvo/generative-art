@@ -18,6 +18,7 @@ enum ArtType {
 interface ArtCanvasState {
   type: ArtType;
   parameterA: number;
+  random_pool: Array<number>;
 }
 
 interface Face {
@@ -80,7 +81,6 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private margin: number;
   private animation_id: number | undefined;
   private dom_element: HTMLCanvasElement | undefined;
-  private random_pool: number[];
 
   private rotating_cube_radians: number; // todo this is not great
 
@@ -97,14 +97,10 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.animation_id = undefined;
     this.rotating_cube_radians = 0;
 
-    this.random_pool = [];
-    for (let i = 0; i < 100000; i++) {
-      this.random_pool.push(Math.random());
-    }
-
     this.state = {
       type: ArtType.Schotter,
-      parameterA: 5
+      parameterA: 5,
+      random_pool: [],
     };
   }
 
@@ -112,11 +108,21 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.dom_element = this.element.current!;
     this.dom_element.width = this.width;
     this.dom_element.height = this.height;
+    this.initRandomPool();
     this.drawArt();
   }
 
   componentDidUpdate() {
     this.drawArt();
+  }
+
+  initRandomPool() {
+    let random_pool = [];
+    for (let i = 0; i < 100000; i++) {
+      random_pool.push(Math.random());
+    }
+
+    this.setState({ random_pool: random_pool });
   }
 
   private getContext() {
@@ -231,7 +237,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         );
 
         const angle = 0.01 * random_scale;
-        if (this.random_pool[random_index++] > 0.5) ctx.rotate(angle);
+        if (this.state.random_pool[random_index++] > 0.5) ctx.rotate(angle);
         else ctx.rotate(-angle);
 
         // translate back
@@ -241,8 +247,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         );
 
         ctx.translate(
-          this.random_pool[random_index++] * random_scale,
-          this.random_pool[random_index++] * random_scale
+          this.state.random_pool[random_index++] * random_scale,
+          this.state.random_pool[random_index++] * random_scale
         );
         ctx.rect(offset_col, offset_row, rect_width, rect_height);
         ctx.restore();
@@ -302,11 +308,11 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         if (row < rect_per_col) {
           const new_row_x =
             col * rect_width +
-            (this.random_pool[random_index++] - 0.5) * random_scale;
+            (this.state.random_pool[random_index++] - 0.5) * random_scale;
           const new_row_y =
             row * rect_height +
             rect_height +
-            (this.random_pool[random_index++] - 0.5) * random_scale;
+            (this.state.random_pool[random_index++] - 0.5) * random_scale;
 
           ctx.moveTo(...coordinates[col]);
           ctx.lineTo(new_row_x, new_row_y);
@@ -360,8 +366,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     let random_index = 0;
     for (let i = 0; i < nr_rectangles; i++) {
       ctx.fillRect(
-        this.random_pool[random_index++] * this.draw_width,
-        this.random_pool[random_index++] * this.draw_height,
+        this.state.random_pool[random_index++] * this.draw_width,
+        this.state.random_pool[random_index++] * this.draw_height,
         3,
         3
       );
@@ -374,8 +380,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     random_index = 0;
     for (let i = 0; i < nr_rectangles; i++) {
       ctx.fillRect(
-        this.random_pool[random_index++] * this.draw_width,
-        this.random_pool[random_index++] * this.draw_height,
+        this.state.random_pool[random_index++] * this.draw_width,
+        this.state.random_pool[random_index++] * this.draw_height,
         3,
         3
       );
@@ -388,8 +394,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     let random_index = 0;
     for (let i = 0; i < nr_rectangles; i++) {
       ctx.fillRect(
-        this.random_pool[random_index++] * this.draw_width,
-        this.random_pool[random_index++] * this.draw_height,
+        this.state.random_pool[random_index++] * this.draw_width,
+        this.state.random_pool[random_index++] * this.draw_height,
         3,
         3
       );
@@ -404,8 +410,8 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     ctx.translate(x_translation, 0);
     for (let i = 0; i < nr_rectangles; i++) {
       ctx.fillRect(
-        this.random_pool[random_index++] * this.draw_width,
-        this.random_pool[random_index++] * this.draw_height,
+        this.state.random_pool[random_index++] * this.draw_width,
+        this.state.random_pool[random_index++] * this.draw_height,
         3,
         3
       );
@@ -427,7 +433,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     for (let row = 0; row < lines_per_column; row++) {
       for (let col = 0; col < lines_per_row; col++) {
-        const random = this.random_pool[random_index++];
+        const random = this.state.random_pool[random_index++];
 
         if (row === 0) {
           ctx.moveTo(col * line_length, row * line_length);
@@ -679,12 +685,12 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
       if (randomize) {
         const random = new Point3D(
-          (this.random_pool[random_index++] * parameter) / scale,
-          (this.random_pool[random_index++] * parameter) / scale,
+          (this.state.random_pool[random_index++] * parameter) / scale,
+          (this.state.random_pool[random_index++] * parameter) / scale,
           0
         );
 
-        if (this.random_pool[random_index++] > 0.5) {
+        if (this.state.random_pool[random_index++] > 0.5) {
           p.add(random);
         } else {
           p.subtract(random);
@@ -713,7 +719,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         }
 
         column_height[row][col] = prev_height;
-        if (this.random_pool[random_index++] < col / horizontal_cubes) {
+        if (this.state.random_pool[random_index++] < col / horizontal_cubes) {
           column_height[row][col]--;
         }
 
@@ -942,6 +948,7 @@ class ArtCanvas extends React.Component<{}, ArtCanvasState> {
             })
           }
         />
+        <button name="reinit" onClick={this.initRandomPool.bind(this)}>~</button>
       </div>
     );
   }
