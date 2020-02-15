@@ -350,8 +350,8 @@ export class IsoCubeColor extends ArtPiece {
 export class IsoCubeRotate extends ArtPiece {
   private rotating_cube_radians: number;
 
-  constructor(name: string, canvas: ArtCanvas) {
-    super(name, canvas);
+  constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
+    super(name, uses_random_pool, canvas);
     this.rotating_cube_radians = 0;
   }
 

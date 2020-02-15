@@ -20,14 +20,14 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private margin: number;
   private dom_element: HTMLCanvasElement | undefined;
   private art_pieces: Array<ArtPiece>;
-  
+
   width_to_height_ratio: number;
   draw_width: number;
   width: number;
   draw_height: number;
   height: number;
   animation_id: number | undefined;
-  
+
   constructor(props: any) {
     super(props);
     this.element = React.createRef();
@@ -41,17 +41,17 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.animation_id = undefined;
 
     this.art_pieces = [
-      new Schotter("Schotter", this),
-      new Linien("Linien", this),
-      new Diamond("Diamond", this),
-      new Moiré1("Moiré 1", this),
-      new Moiré2("Moiré 2", this),
-      new Maze("Maze", this),
-      new Fredkin1("Fredkin 1", this),
-      new Fredkin2("Fredkin 2", this),
-      new IsoCube("Iso", this),
-      new IsoCubeColor("Isocolor", this),
-      new IsoCubeRotate("Rotate", this),
+      new Schotter("Schotter", !!"uses_random_pool", this),
+      new Linien("Linien", !!"uses_random_pool", this),
+      new Diamond("Diamond", !"doesn't use random pool", this),
+      new Moiré1("Moiré 1", !"doesn't use random pool", this),
+      new Moiré2("Moiré 2", !"doesn't use random pool", this),
+      new Maze("Maze", !!"uses_random_pool", this),
+      new Fredkin1("Fredkin 1", !"doesn't use random pool", this),
+      new Fredkin2("Fredkin 2", !"doesn't use random pool", this),
+      new IsoCube("Iso", !!"uses_random_pool", this),
+      new IsoCubeColor("Isocolor", !!"uses_random_pool", this),
+      new IsoCubeRotate("Rotate", !"doesn't use random pool", this),
     ];
 
     this.state = {
@@ -95,6 +95,10 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
   }
 
+  getActiveArt(): ArtPiece {
+    return this.art_pieces.find(art => art.name === this.state.active_art_name)!;
+  }
+
   renderSelect(): React.ReactNode {
     const default_art = this.art_pieces[0].name;
     const options = this.art_pieces.map(art => (
@@ -114,6 +118,14 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         {options}
       </select>
     );
+  }
+
+  renderReInit(): React.ReactNode {
+    if (this.getActiveArt().uses_random_pool) {
+      return (
+        <button name="reinit" onClick={this.initRandomPool.bind(this)}>~</button>
+      );
+    }
   }
 
   center() {
@@ -137,7 +149,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     ctx.save();
     this.center();
-    this.art_pieces.find(art => art.name === this.state.active_art_name)!.draw();
+    this.getActiveArt().draw();
     ctx.restore();
   }
 
@@ -159,7 +171,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
             })
           }
         />
-        <button name="reinit" onClick={this.initRandomPool.bind(this)}>~</button>
+        {this.renderReInit()}
       </div>
     );
   }
