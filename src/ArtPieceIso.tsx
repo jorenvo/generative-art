@@ -349,6 +349,7 @@ export class IsoCubeColor extends ArtPiece {
 
 export class IsoCubeRotate extends ArtPiece {
   private rotating_cube_radians: number;
+  private last_render_ms: number | undefined;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
@@ -367,11 +368,15 @@ export class IsoCubeRotate extends ArtPiece {
 
   private drawArtRotatingCubeFrame() {
     const utils = new IsoUtils(this.canvas);
+    const rotation_per_ms = 0.0005 * (this.canvas.state.parameterA - 4);
+    const current_render_ms = performance.now();
+    const elapsed_ms = current_render_ms - (this.last_render_ms || 0);
+    this.rotating_cube_radians += elapsed_ms * rotation_per_ms;
+
     const cube_coords = utils.generateCube(new Point3D(0, 0.8, 0), false, this.rotating_cube_radians);
     this.renderAnimationFrame(() => utils.paintIsoArt(1, 1, cube_coords, false));
 
-    // todo make rotation speed framerate independant
-    this.rotating_cube_radians += 0.01 * (this.canvas.state.parameterA - 4);
+    this.last_render_ms = current_render_ms;
     this.canvas.animation_id = requestAnimationFrame(this.drawArtRotatingCubeFrame.bind(this));
   }
 
