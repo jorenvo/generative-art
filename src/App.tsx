@@ -102,7 +102,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   renderSelect(): React.ReactNode {
     const default_art = this.art_pieces[0].name;
     const options = this.art_pieces.map(art => (
-      <option value={art.name}>{art.name}</option>
+      <option key={art.name} value={art.name}>{art.name}</option>
     ));
 
     return (
