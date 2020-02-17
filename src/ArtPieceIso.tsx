@@ -49,6 +49,12 @@ class Point3D {
   rotate_yz(radians: number) {
     this.rotate("y", "z", radians);
   }
+
+  for_each_dimension(fn: (a: number) => number) {
+    this.x = fn(this.x);
+    this.y = fn(this.y);
+    this.z = fn(this.z);
+  }
 }
 
 class IsoUtils {
@@ -73,79 +79,81 @@ class IsoUtils {
     bottom_left_front: Point3D,
     randomize: boolean,
     rotate_radians?: number,
-  ): Point3D[] {
-    let cube: Point3D[] = [
-      // top face (ends up bottom in isometric projection)
-      new Point3D(0, 1, 0), // top left front
-      new Point3D(1, 1, 0), // top right front
-      new Point3D(1, 1, 1), // top right back
-      new Point3D(0, 1, 1), // top left back
-      new Point3D(0, 1, 0), // top left front
-
-      // front face (ends up back right in isometric projection)
-      new Point3D(0, 0, 0), // bottom left front
-      new Point3D(1, 0, 0), // bottom right front
-      new Point3D(1, 1, 0), // top right front
-      new Point3D(0, 1, 0), // top left front
-      new Point3D(0, 0, 0), // bottom left front
-
-      // left face (ends up back left in isometric projection)
-      new Point3D(0, 0, 0), // bottom left front
-      new Point3D(0, 0, 1), // bottom left back
-      new Point3D(0, 1, 1), // top left back
-      new Point3D(0, 1, 0), // top left front
-      new Point3D(0, 0, 0), // bottom left front
-
-      // back face (ends up front left in isometric projection)
-      new Point3D(0, 0, 1), // bottom left back
-      new Point3D(1, 0, 1), // bottom right back
-      new Point3D(1, 1, 1), // top right back
-      new Point3D(0, 1, 1), // top left back
-      new Point3D(0, 0, 1), // bottom left back
-
-      // right face (ends up front right in isometric projection)
-      new Point3D(1, 0, 0), // bottom right front
-      new Point3D(1, 0, 1), // bottom right back
-      new Point3D(1, 1, 1), // top right back
-      new Point3D(1, 1, 0), // top right front
-      new Point3D(1, 0, 0), // bottom right front
-
-      // bottom face (ends up top in isometric projection)
-      new Point3D(0, 0, 0), // bottom left front
-      new Point3D(1, 0, 0), // bottom right front
-      new Point3D(1, 0, 1), // bottom right back
-      new Point3D(0, 0, 1), // bottom left back
-      new Point3D(0, 0, 0) // bottom left front
-    ];
+  ): Point3D[][] {
+    let cube: Point3D[][] = [
+      [ // top face (ends up bottom in isometric projection)
+        new Point3D(0, 1, 0), // top left front
+        new Point3D(1, 1, 0), // top right front
+        new Point3D(1, 1, 1), // top right back
+        new Point3D(0, 1, 1), // top left back
+        new Point3D(0, 1, 0), // top left front
+      ],
+      [ // front face (ends up back right in isometric projection)
+        new Point3D(0, 0, 0), // bottom left front
+        new Point3D(1, 0, 0), // bottom right front
+        new Point3D(1, 1, 0), // top right front
+        new Point3D(0, 1, 0), // top left front
+        new Point3D(0, 0, 0), // bottom left front
+      ],
+      [ // left face (ends up back left in isometric projection)
+        new Point3D(0, 0, 0), // bottom left front
+        new Point3D(0, 0, 1), // bottom left back
+        new Point3D(0, 1, 1), // top left back
+        new Point3D(0, 1, 0), // top left front
+        new Point3D(0, 0, 0), // bottom left front
+      ],
+      [ // back face (ends up front left in isometric projection)
+        new Point3D(0, 0, 1), // bottom left back
+        new Point3D(1, 0, 1), // bottom right back
+        new Point3D(1, 1, 1), // top right back
+        new Point3D(0, 1, 1), // top left back
+        new Point3D(0, 0, 1), // bottom left back
+      ],
+      [ // right face (ends up front right in isometric projection)
+        new Point3D(1, 0, 0), // bottom right front
+        new Point3D(1, 0, 1), // bottom right back
+        new Point3D(1, 1, 1), // top right back
+        new Point3D(1, 1, 0), // top right front
+        new Point3D(1, 0, 0), // bottom right front
+      ],
+      [ // bottom face (ends up top in isometric projection)
+        new Point3D(0, 0, 0), // bottom left front
+        new Point3D(1, 0, 0), // bottom right front
+        new Point3D(1, 0, 1), // bottom right back
+        new Point3D(0, 0, 1), // bottom left back
+        new Point3D(0, 0, 0) // bottom left front
+      ]];
     bottom_left_front.y *= -1;
 
     let random_index = Math.floor(Math.random() * 99999);
     const scale = 20;
     const parameter = this.canvas.state.parameterA - 5;
-    cube.forEach(p => {
-      const center_translation = new Point3D(0.5, 0.5, 0.5);
+    cube.forEach(face => {
+      face.forEach(p => {
+        const center_translation = new Point3D(0.5, 0.5, 0.5);
 
-      if (rotate_radians) {
-        p.subtract(center_translation);
-        p.rotate_xz(rotate_radians);
-        p.add(center_translation);
-      }
-
-      p.add(bottom_left_front);
-
-      if (randomize) {
-        const random = new Point3D(
-          (this.canvas.state.random_pool[random_index++] * parameter) / scale,
-          (this.canvas.state.random_pool[random_index++] * parameter) / scale,
-          0
-        );
-
-        if (this.canvas.state.random_pool[random_index++] > 0.5) {
-          p.add(random);
-        } else {
-          p.subtract(random);
+        if (rotate_radians) {
+          p.subtract(center_translation);
+          p.rotate_xz(rotate_radians);
+          p.add(center_translation);
         }
-      }
+
+        p.add(bottom_left_front);
+
+        if (randomize) {
+          const random = new Point3D(
+            (this.canvas.state.random_pool[random_index++] * parameter) / scale,
+            (this.canvas.state.random_pool[random_index++] * parameter) / scale,
+            0
+          );
+
+          if (this.canvas.state.random_pool[random_index++] > 0.5) {
+            p.add(random);
+          } else {
+            p.subtract(random);
+          }
+        }
+      });
     });
 
     return cube;
@@ -185,7 +193,7 @@ class IsoUtils {
     // 0 depth is at the back
     // 0 i is to the right
 
-    let cubes: Point3D[] = [];
+    let cubes: Point3D[][] = [];
     for (let height = 0; height < cube_height; height++) {
       for (let depth = 0; depth < cube_depth; depth++) {
         for (let i = 0; i < horizontal_cubes; i++) {
@@ -215,10 +223,10 @@ class IsoUtils {
   private convertToScreenCoordinates(
     cube_depth: number,
     scale: number,
-    x: number
-  ): number {
+    p: Point3D
+  ) {
     const sqrt3 = Math.sqrt(3);
-    return (x + sqrt3 * cube_depth) * scale;
+    p.for_each_dimension(a => (a + sqrt3 * cube_depth) * scale);
   }
 
   private renderIsoPath(face: Face, fill_color: string) {
@@ -253,7 +261,7 @@ class IsoUtils {
   paintIsoArt(
     horizontal_cubes: number,
     cube_depth: number,
-    cube_vertices: Point3D[],
+    face_vertices: Point3D[][],
     color: boolean,
   ) {
     const ctx = this.canvas.getContext();
@@ -268,43 +276,23 @@ class IsoUtils {
     // [0, ..., 1]
     // multiply by draw_width
     // [0, ..., draw_width]
-    const scale =
-      this.canvas.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
+    const scale = this.canvas.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
 
-    let faces: Face[] = [];
-    let face_vertices: Point3D[] = [];
-    let face_sum: Point3D = new Point3D();
-    for (let i = 0; i < cube_vertices.length; i++) {
-      this.convertToIso(cube_vertices[i]);
-      face_vertices.push(cube_vertices[i]);
+    const faces: Face[] = [];
+    face_vertices.forEach(face => {
+      const face_sum: Point3D = new Point3D();
 
-      if (face_vertices.length === 5) {
-        faces.push({
-          face: face_vertices,
-          center: new Point3D(face_sum.x / 4, face_sum.y / 4, face_sum.z / 4)
-        });
-        face_vertices = [];
-        face_sum = new Point3D();
-      } else {
-        face_sum.add(cube_vertices[i]);
-      }
+      face.forEach(vertex => {
+        this.convertToIso(vertex);
+        face_sum.add(vertex);
+        this.convertToScreenCoordinates(cube_depth, scale, vertex);
+      });
 
-      cube_vertices[i].x = this.convertToScreenCoordinates(
-        cube_depth,
-        scale,
-        cube_vertices[i].x
-      );
-      cube_vertices[i].y = this.convertToScreenCoordinates(
-        cube_depth,
-        scale,
-        cube_vertices[i].y
-      );
-      cube_vertices[i].z = this.convertToScreenCoordinates(
-        cube_depth,
-        scale,
-        cube_vertices[i].z
-      );
-    }
+      faces.push({
+        face: face,
+        center: new Point3D(face_sum.x / (face.length - 1), face_sum.y / (face.length - 1), face_sum.z / (face.length - 1)),
+      });
+    });
 
     faces.sort((a, b) => a.center.z - b.center.z);
 
