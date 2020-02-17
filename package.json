@@ -32,5 +32,8 @@
       "last 1 safari version"
     ]
   },
-  "homepage": "https://www.jvo.sh/generative-art"
+  "homepage": "https://www.jvo.sh/generative-art",
+  "devDependencies": {
+    "prettier": "1.19.1"
+  }
 }
