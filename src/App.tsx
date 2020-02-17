@@ -73,7 +73,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   initRandomPool() {
-    let random_pool = [];
+    const random_pool = [];
     for (let i = 0; i < 100_000; i++) {
       random_pool.push(Math.random());
     }
