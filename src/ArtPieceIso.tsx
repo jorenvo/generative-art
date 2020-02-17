@@ -2,8 +2,8 @@ import { ArtPiece } from "./ArtPiece";
 import { ArtCanvas } from "./App";
 
 interface Face {
-  face: Point3D[],
-  center: Point3D,
+  face: Point3D[];
+  center: Point3D;
 }
 
 class Point3D {
@@ -78,51 +78,58 @@ class IsoUtils {
   generateCube(
     bottom_left_front: Point3D,
     randomize: boolean,
-    rotate_radians?: number,
+    rotate_radians?: number
   ): Point3D[][] {
     let cube: Point3D[][] = [
-      [ // top face (ends up bottom in isometric projection)
+      [
+        // top face (ends up bottom in isometric projection)
         new Point3D(0, 1, 0), // top left front
         new Point3D(1, 1, 0), // top right front
         new Point3D(1, 1, 1), // top right back
         new Point3D(0, 1, 1), // top left back
         new Point3D(0, 1, 0), // top left front
       ],
-      [ // front face (ends up back right in isometric projection)
+      [
+        // front face (ends up back right in isometric projection)
         new Point3D(0, 0, 0), // bottom left front
         new Point3D(1, 0, 0), // bottom right front
         new Point3D(1, 1, 0), // top right front
         new Point3D(0, 1, 0), // top left front
         new Point3D(0, 0, 0), // bottom left front
       ],
-      [ // left face (ends up back left in isometric projection)
+      [
+        // left face (ends up back left in isometric projection)
         new Point3D(0, 0, 0), // bottom left front
         new Point3D(0, 0, 1), // bottom left back
         new Point3D(0, 1, 1), // top left back
         new Point3D(0, 1, 0), // top left front
         new Point3D(0, 0, 0), // bottom left front
       ],
-      [ // back face (ends up front left in isometric projection)
+      [
+        // back face (ends up front left in isometric projection)
         new Point3D(0, 0, 1), // bottom left back
         new Point3D(1, 0, 1), // bottom right back
         new Point3D(1, 1, 1), // top right back
         new Point3D(0, 1, 1), // top left back
         new Point3D(0, 0, 1), // bottom left back
       ],
-      [ // right face (ends up front right in isometric projection)
+      [
+        // right face (ends up front right in isometric projection)
         new Point3D(1, 0, 0), // bottom right front
         new Point3D(1, 0, 1), // bottom right back
         new Point3D(1, 1, 1), // top right back
         new Point3D(1, 1, 0), // top right front
         new Point3D(1, 0, 0), // bottom right front
       ],
-      [ // bottom face (ends up top in isometric projection)
+      [
+        // bottom face (ends up top in isometric projection)
         new Point3D(0, 0, 0), // bottom left front
         new Point3D(1, 0, 0), // bottom right front
         new Point3D(1, 0, 1), // bottom right back
         new Point3D(0, 0, 1), // bottom left back
-        new Point3D(0, 0, 0) // bottom left front
-      ]];
+        new Point3D(0, 0, 0), // bottom left front
+      ],
+    ];
     bottom_left_front.y *= -1;
 
     let random_index = Math.floor(Math.random() * 99999);
@@ -177,7 +184,10 @@ class IsoUtils {
         }
 
         column_height[row][col] = prev_height;
-        if (this.canvas.state.random_pool[random_index++] < col / horizontal_cubes) {
+        if (
+          this.canvas.state.random_pool[random_index++] <
+          col / horizontal_cubes
+        ) {
           column_height[row][col]--;
         }
 
@@ -262,7 +272,7 @@ class IsoUtils {
     horizontal_cubes: number,
     cube_depth: number,
     face_vertices: Point3D[][],
-    color: boolean,
+    color: boolean
   ) {
     const ctx = this.canvas.getContext();
     // console.log("rendering", cubes.length / (5 * 6), "cubes");
@@ -276,7 +286,8 @@ class IsoUtils {
     // [0, ..., 1]
     // multiply by draw_width
     // [0, ..., draw_width]
-    const scale = this.canvas.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
+    const scale =
+      this.canvas.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
 
     const faces: Face[] = [];
     face_vertices.forEach(face => {
@@ -290,7 +301,11 @@ class IsoUtils {
 
       faces.push({
         face: face,
-        center: new Point3D(face_sum.x / (face.length - 1), face_sum.y / (face.length - 1), face_sum.z / (face.length - 1)),
+        center: new Point3D(
+          face_sum.x / (face.length - 1),
+          face_sum.y / (face.length - 1),
+          face_sum.z / (face.length - 1)
+        ),
       });
     });
 
@@ -307,10 +322,12 @@ class IsoUtils {
         ["#42b87a", "#42bda1", "#44b7c0", "#4794c2", "#4972c5"],
         ["#35885c", "#373997", "#a63772", "#b6b238"],
         ["#cd7376", "#d08e76", "#d2ab79", "#d4c87c", "#c8d67f"],
-        ["#3e9e55", "#3f5cad", "#bd3f9f", "#c6a445"]
+        ["#3e9e55", "#3f5cad", "#bd3f9f", "#c6a445"],
       ];
       palette =
-        palettes[Math.floor((this.canvas.state.parameterA / 11) * palettes.length)];
+        palettes[
+          Math.floor((this.canvas.state.parameterA / 11) * palettes.length)
+        ];
     }
 
     let palette_index = 0;
@@ -361,15 +378,25 @@ export class IsoCubeRotate extends ArtPiece {
     const elapsed_ms = current_render_ms - (this.last_render_ms || 0);
     this.rotating_cube_radians += elapsed_ms * rotation_per_ms;
 
-    const cube_coords = utils.generateCube(new Point3D(0, 0.8, 0), false, this.rotating_cube_radians);
-    this.renderAnimationFrame(() => utils.paintIsoArt(1, 1, cube_coords, false));
+    const cube_coords = utils.generateCube(
+      new Point3D(0, 0.8, 0),
+      false,
+      this.rotating_cube_radians
+    );
+    this.renderAnimationFrame(() =>
+      utils.paintIsoArt(1, 1, cube_coords, false)
+    );
 
     this.last_render_ms = current_render_ms;
-    this.canvas.animation_id = requestAnimationFrame(this.drawArtRotatingCubeFrame.bind(this));
+    this.canvas.animation_id = requestAnimationFrame(
+      this.drawArtRotatingCubeFrame.bind(this)
+    );
   }
 
   private drawArtRotatingCube() {
-    this.canvas.animation_id = requestAnimationFrame(this.drawArtRotatingCubeFrame.bind(this));
+    this.canvas.animation_id = requestAnimationFrame(
+      this.drawArtRotatingCubeFrame.bind(this)
+    );
   }
 
   draw() {

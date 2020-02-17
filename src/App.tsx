@@ -96,13 +96,17 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   getActiveArt(): ArtPiece {
-    return this.art_pieces.find(art => art.name === this.state.active_art_name)!;
+    return this.art_pieces.find(
+      art => art.name === this.state.active_art_name
+    )!;
   }
 
   renderSelect(): React.ReactNode {
     const default_art = this.art_pieces[0].name;
     const options = this.art_pieces.map(art => (
-      <option key={art.name} value={art.name}>{art.name}</option>
+      <option key={art.name} value={art.name}>
+        {art.name}
+      </option>
     ));
 
     return (
@@ -111,7 +115,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         onChange={event =>
           this.setState({
             parameterA: 5,
-            active_art_name: event.target.value
+            active_art_name: event.target.value,
           })
         }
       >
@@ -123,7 +127,9 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   renderReInit(): React.ReactNode {
     if (this.getActiveArt().uses_random_pool) {
       return (
-        <button name="reinit" onClick={this.initRandomPool.bind(this)}>~</button>
+        <button name="reinit" onClick={this.initRandomPool.bind(this)}>
+          ~
+        </button>
       );
     }
   }
@@ -167,7 +173,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           value={String(this.state.parameterA)}
           onChange={event =>
             this.setState({
-              parameterA: Number(event.target.value)
+              parameterA: Number(event.target.value),
             })
           }
         />
