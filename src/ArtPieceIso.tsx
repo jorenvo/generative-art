@@ -18,16 +18,37 @@ class Point3D {
     this.z = z;
   }
 
+  private componentOperation(
+    other: Point3D,
+    fn: (a: number, b: number) => number
+  ) {
+    this.x = fn(this.x, other.x);
+    this.y = fn(this.y, other.y);
+    this.z = fn(this.z, other.z);
+  }
+
   add(other: Point3D) {
-    this.x += other.x;
-    this.y += other.y;
-    this.z += other.z;
+    this.componentOperation(other, (a, b) => a + b);
   }
 
   subtract(other: Point3D) {
-    this.x -= other.x;
-    this.y -= other.y;
-    this.z -= other.z;
+    this.componentOperation(other, (a, b) => a - b);
+  }
+
+  multiply(other: Point3D) {
+    this.componentOperation(other, (a, b) => a * b);
+  }
+
+  divide(other: Point3D) {
+    this.componentOperation(other, (a, b) => a / b);
+  }
+
+  min(other: Point3D) {
+    this.componentOperation(other, (a, b) => Math.min(a, b));
+  }
+
+  max(other: Point3D) {
+    this.componentOperation(other, (a, b) => Math.max(a, b));
   }
 
   private rotate(axis1: string, axis2: string, radians: number) {
