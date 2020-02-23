@@ -113,12 +113,8 @@ class IsoUtils {
     const parameter = this.canvas.state.parameterA - 5;
     faces.forEach(face => {
       face.forEach(p => {
-        // const center_translation = new Point3D(0.5, 0.5, 0.5);
-
         if (rotate_radians) {
-          // p.subtract(center_translation);
           p.rotate_xz(rotate_radians);
-          // p.add(center_translation);
         }
 
         p.add(bottom_left_front);
@@ -249,6 +245,9 @@ class IsoUtils {
         new Point3D(0, 0, 0), // bottom left front
       ],
     ];
+    cube.forEach(face =>
+      face.forEach(vertex => vertex.subtract(new Point3D(0.5, 0.5, 0.5)))
+    );
     this.transformShape(cube, bottom_left_front, randomize, rotate_radians);
     return cube;
   }
@@ -467,7 +466,7 @@ abstract class IsoShapeRotate extends ArtPiece {
     this.rotating_shape_radians += elapsed_ms * rotation_per_ms;
 
     const shape_coords = this.generateShape(
-      new Point3D(0, 0.3, 0),
+      new Point3D(0, 0, 0),
       false,
       this.rotating_shape_radians
     );
