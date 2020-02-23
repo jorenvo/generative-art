@@ -18,6 +18,10 @@ class Point3D {
     this.z = z;
   }
 
+  copy(): Point3D {
+    return new Point3D(this.x, this.y, this.z);
+  }
+
   private componentOperation(
     other: Point3D,
     fn: (a: number, b: number) => number
@@ -96,6 +100,100 @@ class IsoUtils {
     c.z = temp_z;
   }
 
+  transformShape(
+    faces: Point3D[][],
+    bottom_left_front: Point3D,
+    randomize: boolean,
+    rotate_radians?: number
+  ) {
+    bottom_left_front.y *= -1;
+
+    let random_index = Math.floor(Math.random() * 99999);
+    const scale = 20;
+    const parameter = this.canvas.state.parameterA - 5;
+    faces.forEach(face => {
+      face.forEach(p => {
+        // const center_translation = new Point3D(0.5, 0.5, 0.5);
+
+        if (rotate_radians) {
+          // p.subtract(center_translation);
+          p.rotate_xz(rotate_radians);
+          // p.add(center_translation);
+        }
+
+        p.add(bottom_left_front);
+
+        if (randomize) {
+          const random = new Point3D(
+            (this.canvas.state.random_pool[random_index++] * parameter) / scale,
+            (this.canvas.state.random_pool[random_index++] * parameter) / scale,
+            0
+          );
+
+          if (this.canvas.state.random_pool[random_index++] > 0.5) {
+            p.add(random);
+          } else {
+            p.subtract(random);
+          }
+        }
+      });
+    });
+  }
+
+  generateCarousel(
+    bottom_left_front: Point3D,
+    randomize: boolean,
+    rotate_radians?: number
+  ): Point3D[][] {
+    const sides = 9;
+    const degrees_per_side = (2 * Math.PI) / sides;
+    const carousel = [];
+    const horizontal_side_length = 2 / sides;
+    const vertical_side_length = 0.25;
+    const side = [
+      new Point3D(0, 0, 0),
+      new Point3D(horizontal_side_length, 0, 0),
+      new Point3D(horizontal_side_length, vertical_side_length, 0),
+      new Point3D(0, vertical_side_length, 0),
+      new Point3D(0, 0, 0),
+    ];
+    const min_of_shape = new Point3D();
+    const max_of_shape = new Point3D();
+
+    for (let i = 0; i < sides; i++) {
+      let last_face_bottom_right = new Point3D(0, 0, 0);
+      if (carousel.length) {
+        last_face_bottom_right = carousel[carousel.length - 1][1];
+      }
+
+      const new_side = side.map(
+        vertex => new Point3D(vertex.x, vertex.y, vertex.z)
+      );
+      new_side.forEach(vertex => {
+        vertex.rotate_xz(degrees_per_side * i);
+        vertex.add(last_face_bottom_right);
+        min_of_shape.min(vertex);
+        max_of_shape.max(vertex);
+      });
+      carousel.push(new_side);
+    }
+
+    const size = max_of_shape.copy();
+    size.subtract(min_of_shape);
+    size.divide(new Point3D(2, 2, 2));
+
+    carousel.forEach(face =>
+      face.forEach(vertex => {
+        vertex.subtract(min_of_shape);
+        vertex.subtract(size);
+      })
+    );
+
+    // this will do its own centering, the shape's origin should be at (0, 0, 0)
+    this.transformShape(carousel, bottom_left_front, randomize, rotate_radians);
+    return carousel;
+  }
+
   generateCube(
     bottom_left_front: Point3D,
     randomize: boolean,
@@ -151,39 +249,7 @@ class IsoUtils {
         new Point3D(0, 0, 0), // bottom left front
       ],
     ];
-    bottom_left_front.y *= -1;
-
-    let random_index = Math.floor(Math.random() * 99999);
-    const scale = 20;
-    const parameter = this.canvas.state.parameterA - 5;
-    cube.forEach(face => {
-      face.forEach(p => {
-        const center_translation = new Point3D(0.5, 0.5, 0.5);
-
-        if (rotate_radians) {
-          p.subtract(center_translation);
-          p.rotate_xz(rotate_radians);
-          p.add(center_translation);
-        }
-
-        p.add(bottom_left_front);
-
-        if (randomize) {
-          const random = new Point3D(
-            (this.canvas.state.random_pool[random_index++] * parameter) / scale,
-            (this.canvas.state.random_pool[random_index++] * parameter) / scale,
-            0
-          );
-
-          if (this.canvas.state.random_pool[random_index++] > 0.5) {
-            p.add(random);
-          } else {
-            p.subtract(random);
-          }
-        }
-      });
-    });
-
+    this.transformShape(cube, bottom_left_front, randomize, rotate_radians);
     return cube;
   }
 
@@ -373,13 +439,15 @@ export class IsoCubeColor extends ArtPiece {
   }
 }
 
-export class IsoCubeRotate extends ArtPiece {
-  private rotating_cube_radians: number;
+abstract class IsoShapeRotate extends ArtPiece {
+  private rotating_shape_radians: number;
   private last_render_ms: number | undefined;
+  protected iso_utils: IsoUtils;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
-    this.rotating_cube_radians = 0;
+    this.rotating_shape_radians = 0;
+    this.iso_utils = new IsoUtils(this.canvas);
   }
 
   private renderAnimationFrame(render_fn: () => void) {
@@ -392,35 +460,68 @@ export class IsoCubeRotate extends ArtPiece {
     ctx.restore();
   }
 
-  private drawArtRotatingCubeFrame() {
-    const utils = new IsoUtils(this.canvas);
+  private drawArtRotatingShapeFrame() {
     const rotation_per_ms = 0.0005 * (this.canvas.state.parameterA - 4);
     const current_render_ms = performance.now();
     const elapsed_ms = current_render_ms - (this.last_render_ms || 0);
-    this.rotating_cube_radians += elapsed_ms * rotation_per_ms;
+    this.rotating_shape_radians += elapsed_ms * rotation_per_ms;
 
-    const cube_coords = utils.generateCube(
-      new Point3D(0, 0.8, 0),
+    const shape_coords = this.generateShape(
+      new Point3D(0, 0.3, 0),
       false,
-      this.rotating_cube_radians
+      this.rotating_shape_radians
     );
     this.renderAnimationFrame(() =>
-      utils.paintIsoArt(1, 1, cube_coords, false)
+      this.iso_utils.paintIsoArt(1, 1, shape_coords, false)
     );
 
     this.last_render_ms = current_render_ms;
     this.canvas.animation_id = requestAnimationFrame(
-      this.drawArtRotatingCubeFrame.bind(this)
+      this.drawArtRotatingShapeFrame.bind(this)
     );
   }
 
-  private drawArtRotatingCube() {
+  private drawArtRotatingShape() {
     this.canvas.animation_id = requestAnimationFrame(
-      this.drawArtRotatingCubeFrame.bind(this)
+      this.drawArtRotatingShapeFrame.bind(this)
     );
   }
 
   draw() {
-    this.drawArtRotatingCube();
+    this.drawArtRotatingShape();
+  }
+
+  abstract generateShape(
+    bottom_left_front: Point3D,
+    randomize: boolean,
+    rotate_radians?: number
+  ): Point3D[][];
+}
+
+export class IsoCubeRotate extends IsoShapeRotate {
+  generateShape(
+    bottom_left_front: Point3D,
+    randomize: boolean,
+    rotate_radians?: number
+  ): Point3D[][] {
+    return this.iso_utils.generateCube(
+      bottom_left_front,
+      randomize,
+      rotate_radians
+    );
+  }
+}
+
+export class IsoCarouselRotate extends IsoShapeRotate {
+  generateShape(
+    bottom_left_front: Point3D,
+    randomize: boolean,
+    rotate_radians?: number
+  ): Point3D[][] {
+    return this.iso_utils.generateCarousel(
+      bottom_left_front,
+      randomize,
+      rotate_radians
+    );
   }
 }

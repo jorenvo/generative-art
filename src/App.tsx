@@ -6,7 +6,7 @@ import { Diamond } from "./ArtPieceDiamond";
 import { Moiré1, Moiré2 } from "./ArtPieceMoire";
 import { Maze } from "./ArtPieceMaze";
 import { Fredkin1, Fredkin2 } from "./ArtPieceFredkin";
-import { IsoCube, IsoCubeColor, IsoCubeRotate } from "./ArtPieceIso";
+import { IsoCube, IsoCubeColor, IsoCubeRotate, IsoCarouselRotate } from "./ArtPieceIso";
 import "./App.css";
 
 interface ArtCanvasState {
@@ -52,6 +52,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       new IsoCube("Iso", !!"uses_random_pool", this),
       new IsoCubeColor("Isocolor", !!"uses_random_pool", this),
       new IsoCubeRotate("Rotate", !"doesn't use random pool", this),
+      new IsoCarouselRotate("Carousel", !"doesn't use random pool", this),
     ];
 
     this.state = {
