@@ -185,7 +185,6 @@ class IsoUtils {
       })
     );
 
-    // this will do its own centering, the shape's origin should be at (0, 0, 0)
     this.transformShape(carousel, bottom_left_front, randomize, rotate_radians);
     return carousel;
   }
