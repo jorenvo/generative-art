@@ -141,7 +141,7 @@ class IsoUtils {
     randomize: boolean,
     rotate_radians?: number
   ): Point3D[][] {
-    const sides = 9;
+    const sides = Math.ceil(this.canvas.state.parameterA) + 2;
     const degrees_per_side = (2 * Math.PI) / sides;
     const carousel = [];
     const horizontal_side_length = 2 / sides;
@@ -439,14 +439,14 @@ export class IsoCubeColor extends ArtPiece {
 }
 
 abstract class IsoShapeRotate extends ArtPiece {
-  private rotating_shape_radians: number;
   private last_render_ms: number | undefined;
+  protected rotating_shape_radians: number;
   protected iso_utils: IsoUtils;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
-    this.rotating_shape_radians = 0;
     this.iso_utils = new IsoUtils(this.canvas);
+    this.rotating_shape_radians = 0;
   }
 
   private renderAnimationFrame(render_fn: () => void) {
@@ -460,15 +460,13 @@ abstract class IsoShapeRotate extends ArtPiece {
   }
 
   private drawArtRotatingShapeFrame() {
-    const rotation_per_ms = 0.0005 * (this.canvas.state.parameterA - 4);
     const current_render_ms = performance.now();
     const elapsed_ms = current_render_ms - (this.last_render_ms || 0);
-    this.rotating_shape_radians += elapsed_ms * rotation_per_ms;
 
     const shape_coords = this.generateShape(
       new Point3D(0, 0, 0),
       false,
-      this.rotating_shape_radians
+      elapsed_ms
     );
     this.renderAnimationFrame(() =>
       this.iso_utils.paintIsoArt(1, 1, shape_coords, false)
@@ -493,7 +491,7 @@ abstract class IsoShapeRotate extends ArtPiece {
   abstract generateShape(
     bottom_left_front: Point3D,
     randomize: boolean,
-    rotate_radians?: number
+    elapsed_ms: number
   ): Point3D[][];
 }
 
@@ -501,12 +499,15 @@ export class IsoCubeRotate extends IsoShapeRotate {
   generateShape(
     bottom_left_front: Point3D,
     randomize: boolean,
-    rotate_radians?: number
+    elapsed_ms: number
   ): Point3D[][] {
+    const rotation_per_ms = 0.0005 * (this.canvas.state.parameterA - 4);
+    this.rotating_shape_radians += elapsed_ms * rotation_per_ms;
+
     return this.iso_utils.generateCube(
       bottom_left_front,
       randomize,
-      rotate_radians
+      this.rotating_shape_radians
     );
   }
 }
@@ -515,12 +516,13 @@ export class IsoCarouselRotate extends IsoShapeRotate {
   generateShape(
     bottom_left_front: Point3D,
     randomize: boolean,
-    rotate_radians?: number
+    elapsed_ms: number
   ): Point3D[][] {
+    this.rotating_shape_radians += elapsed_ms * 0.0005;
     return this.iso_utils.generateCarousel(
       bottom_left_front,
       randomize,
-      rotate_radians
+      this.rotating_shape_radians
     );
   }
 }
