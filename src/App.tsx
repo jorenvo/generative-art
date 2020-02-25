@@ -87,7 +87,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       const [name, value] = p.split("=");
       switch (name) {
         case "art":
-          this.setState({ active_art_name: value });
+          this.setState({ active_art_name: decodeURI(value) });
           break;
         case "param_a":
           this.setState({ parameterA: parseFloat(value) });
