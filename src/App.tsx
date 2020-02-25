@@ -81,7 +81,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private setArtFromURL() {
-    // #art=Schotter&a=7
     const params = window.location.hash.substr(1);
     params.split("&").forEach(p => {
       const [name, value] = p.split("=");
