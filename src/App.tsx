@@ -6,7 +6,12 @@ import { Diamond } from "./ArtPieceDiamond";
 import { Moiré1, Moiré2 } from "./ArtPieceMoire";
 import { Maze } from "./ArtPieceMaze";
 import { Fredkin1, Fredkin2 } from "./ArtPieceFredkin";
-import { IsoCube, IsoCubeColor, IsoCubeRotate, IsoCarouselRotate } from "./ArtPieceIso";
+import {
+  IsoCube,
+  IsoCubeColor,
+  IsoCubeRotate,
+  IsoCarouselRotate,
+} from "./ArtPieceIso";
 import "./App.css";
 
 interface ArtCanvasState {
@@ -67,10 +72,34 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.dom_element.width = this.width;
     this.dom_element.height = this.height;
     this.initRandomPool();
+    this.setArtFromURL();
   }
 
   componentDidUpdate() {
     this.drawArt();
+    this.setURLFromArt();
+  }
+
+  private setArtFromURL() {
+    // #art=Schotter&a=7
+    const params = window.location.hash.substr(1);
+    params.split("&").forEach(p => {
+      const [name, value] = p.split("=");
+      switch (name) {
+        case "art":
+          this.setState({ active_art_name: value });
+          break;
+        case "param_a":
+          this.setState({ parameterA: parseFloat(value) });
+          break;
+        default:
+          console.warn(`unknown URL parameter: ${p}`);
+      }
+    });
+  }
+
+  private setURLFromArt() {
+    window.location.hash = `#art=${this.state.active_art_name}&param_a=${this.state.parameterA}`;
   }
 
   initRandomPool() {
