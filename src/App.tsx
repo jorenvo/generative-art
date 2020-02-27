@@ -11,6 +11,7 @@ import {
   IsoCubeColor,
   IsoCubeRotate,
   IsoCarouselRotate,
+  Perlin,
 } from "./ArtPieceIso";
 import "./App.css";
 
@@ -44,20 +45,21 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.draw_height = Math.floor(this.draw_width * this.width_to_height_ratio);
     this.height = this.draw_height + this.margin;
     this.animation_id = undefined;
-
+    
     this.art_pieces = [
-      new Schotter("Schotter", !!"uses_random_pool", this),
-      new Linien("Linien", !!"uses_random_pool", this),
+      new Schotter("Schotter", !!"uses random pool", this),
+      new Linien("Linien", !!"uses random pool", this),
       new Diamond("Diamond", !"doesn't use random pool", this),
       new Moiré1("Moiré 1", !"doesn't use random pool", this),
       new Moiré2("Moiré 2", !"doesn't use random pool", this),
-      new Maze("Maze", !!"uses_random_pool", this),
+      new Maze("Maze", !!"uses random pool", this),
       new Fredkin1("Fredkin 1", !"doesn't use random pool", this),
       new Fredkin2("Fredkin 2", !"doesn't use random pool", this),
-      new IsoCube("Iso", !!"uses_random_pool", this),
-      new IsoCubeColor("Isocolor", !!"uses_random_pool", this),
+      new IsoCube("Iso", !!"uses random pool", this),
+      new IsoCubeColor("Isocolor", !!"uses random pool", this),
       new IsoCubeRotate("Rotate", !"doesn't use random pool", this),
       new IsoCarouselRotate("Carousel", !"doesn't use random pool", this),
+      new Perlin("Perlin", !!"uses random pool", this),
     ];
 
     this.state = {

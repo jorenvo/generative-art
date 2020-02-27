@@ -525,3 +525,99 @@ export class IsoCarouselRotate extends IsoShapeRotate {
     );
   }
 }
+
+// http://www.huttar.net/lars-kathy/graphics/perlin-noise/perlin-noise.html
+export class Perlin extends ArtPiece {
+  private readonly gridcells: number;
+  private readonly gridsize: number;
+  private gradients: Point3D[][];
+
+  constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
+    super(name, uses_random_pool, canvas);
+    this.gridcells = 5;
+    this.gridsize = 20;
+    this.gradients = [];
+  }
+
+  private initGradients() {
+    for (let i = 0; i <= this.gridcells; i++) {
+      this.gradients.push([]);
+      for (let j = 0; j <= this.gridcells; j++) {
+        let angle_unit_circle =
+          this.canvas.state.random_pool[i * this.gridcells + j] * Math.PI * 2;
+        this.gradients[i].push(
+          new Point3D(Math.cos(angle_unit_circle), Math.sin(angle_unit_circle))
+        );
+      }
+    }
+  }
+
+  private linearlyInterpolate(x1: number, x2: number, weight: number): number {
+    return (1 - weight) * x1 + weight * x2;
+  }
+
+  private dotProduct(distance: Point3D, gradient: Point3D): number {
+    return distance.x * gradient.x + distance.y * gradient.y;
+  }
+
+  private perlin(x: number, y: number): number {
+    x /= this.gridsize;
+    y /= this.gridsize;
+
+    // grid cell coordinates
+    const x0 = Math.floor(x);
+    const x1 = x0 + 1;
+    const y0 = Math.floor(y);
+    const y1 = y0 + 1;
+
+    const weight_x = x - x0;
+    const weight_y = y - y0;
+
+    let dp1 = this.dotProduct(new Point3D(x - x0, y - y0), this.gradients[y0][x0]);
+    let dp2 = this.dotProduct(new Point3D(x - x1, y - y0), this.gradients[y0][x1]);
+    let interpolated1 = this.linearlyInterpolate(dp1, dp2, weight_x);
+
+    dp1 = this.dotProduct(new Point3D(x - x0, y - y1), this.gradients[y1][x0]);
+    dp2 = this.dotProduct(new Point3D(x - x1, y - y1), this.gradients[y1][x1]);
+    let interpolated2 = this.linearlyInterpolate(dp1, dp2, weight_x);
+
+    return this.linearlyInterpolate(interpolated1, interpolated2, weight_y);
+  }
+
+  draw() {
+    if (this.gradients.length === 0) {
+      this.initGradients();
+    }
+
+    let min = Infinity;
+    let max = -Infinity;
+    for (let j = 0; j < this.gridcells * this.gridsize; j++) {
+      for (let i = 0; i < this.gridcells * this.gridsize; i++) {
+        const res = this.perlin(i, j);
+
+        min = Math.min(min, res);
+        max = Math.max(max, res);
+      }
+    }
+
+    console.log("range: ", min, max);
+  }
+}
+
+// export class IsoMoonRotate extends IsoShapeRotate {
+//   generateMoon(bottom_left_front: Point3D, radians: number): Point3D[][] {
+
+//   }
+
+//   generateShape(
+//     bottom_left_front: Point3D,
+//     randomize: boolean,
+//     elapsed_ms: number
+//   ): Point3D[][] {
+//     this.rotating_shape_radians += elapsed_ms * 0.0005;
+//     return this.generateMoon(
+//       bottom_left_front,
+//       this.rotating_shape_radians
+//     );
+//   }
+// }
