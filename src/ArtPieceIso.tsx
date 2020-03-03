@@ -534,12 +534,13 @@ export class Perlin extends ArtPiece {
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
-    this.gridcells = 5;
-    this.gridsize = 20;
+    this.gridcells = 10;
+    this.gridsize = 0.1;
     this.gradients = [];
   }
 
   private initGradients() {
+    this.gradients = [];
     for (let i = 0; i <= this.gridcells; i++) {
       this.gradients.push([]);
       for (let j = 0; j <= this.gridcells; j++) {
@@ -550,6 +551,10 @@ export class Perlin extends ArtPiece {
         );
       }
     }
+  }
+
+  private fade(x: number): number {
+    return 3 * x * x - 2 * x * x * x;
   }
 
   private linearlyInterpolate(x1: number, x2: number, weight: number): number {
@@ -570,11 +575,17 @@ export class Perlin extends ArtPiece {
     const y0 = Math.floor(y);
     const y1 = y0 + 1;
 
-    const weight_x = x - x0;
-    const weight_y = y - y0;
+    const weight_x = this.fade(x - x0);
+    const weight_y = this.fade(y - y0);
 
-    let dp1 = this.dotProduct(new Point3D(x - x0, y - y0), this.gradients[y0][x0]);
-    let dp2 = this.dotProduct(new Point3D(x - x1, y - y0), this.gradients[y0][x1]);
+    let dp1 = this.dotProduct(
+      new Point3D(x - x0, y - y0),
+      this.gradients[y0][x0]
+    );
+    let dp2 = this.dotProduct(
+      new Point3D(x - x1, y - y0),
+      this.gradients[y0][x1]
+    );
     let interpolated1 = this.linearlyInterpolate(dp1, dp2, weight_x);
 
     dp1 = this.dotProduct(new Point3D(x - x0, y - y1), this.gradients[y1][x0]);
@@ -585,22 +596,66 @@ export class Perlin extends ArtPiece {
   }
 
   draw() {
-    if (this.gradients.length === 0) {
-      this.initGradients();
-    }
+    this.initGradients();
+    const ctx = this.canvas.getContext();
+    // const noise: number[] = [];
+    // let min = Infinity;
+    // let max = -Infinity;
+    // for (let y = 0; y < this.canvas.draw_height; y++) {
+    //   for (let x = 0; x < this.canvas.draw_width; x++) {
+    //     let sample = this.perlin(
+    //       x / this.canvas.draw_width,
+    //       y / this.canvas.draw_height
+    //     );
+    //     sample += Math.sqrt(2) / 2;
+    //     sample /= Math.sqrt(2);
+    //     sample *= 255;
+    //     sample = Math.floor(sample);
+    //     min = Math.min(min, sample);
+    //     max = Math.max(max, sample);
+    //     noise.push(sample);
+    //   }
+    // }
 
-    let min = Infinity;
-    let max = -Infinity;
-    for (let j = 0; j < this.gridcells * this.gridsize; j++) {
-      for (let i = 0; i < this.gridcells * this.gridsize; i++) {
-        const res = this.perlin(i, j);
+    // for (let y = 0; y < this.canvas.draw_height; y++) {
+    //   for (let x = 0; x < this.canvas.draw_width; x++) {
+    //     let sample = noise[y * this.canvas.draw_width + x];
+    //     sample -= min;
+    //     sample /= max - min;
+    //     sample *= 255;
+    //     ctx.fillStyle = `rgb(${sample}, ${sample}, ${sample})`;
+    //     ctx.fillRect(x, y, 1, 1);
+    //   }
+    // }
 
-        min = Math.min(min, res);
-        max = Math.max(max, res);
+    const nr_vertices = 23;
+    const samples: number[][] = [];
+    for (let row = 0; row < nr_vertices; ++row) {
+      samples.push([]);
+      for (let col = 0; col < nr_vertices; ++col) {
+        samples[row].push(this.perlin(row / nr_vertices, col / nr_vertices));
       }
     }
 
-    console.log("range: ", min, max);
+    const face_vertices: Point3D[][] = [];
+    for (let row = 1; row < nr_vertices; ++row) {
+      for (let col = 1; col < nr_vertices; ++col) {
+        let row_coord = row;
+        let col_coord = col;
+        let face: Point3D[] = [];
+
+        face.push(new Point3D(col_coord, samples[row][col], row_coord));
+        face.push(new Point3D(col_coord, samples[row - 1][col], row_coord - 1));
+        face.push(new Point3D(col_coord - 1, samples[row - 1][col - 1], row_coord - 1));
+        face.push(new Point3D(col_coord - 1, samples[row][col - 1], row_coord));
+        face.push(new Point3D(col_coord, samples[row][col], row_coord));
+
+        face_vertices.push(face);
+      }
+    }
+
+    const utils = new IsoUtils(this.canvas);
+    utils.paintIsoArt(nr_vertices, nr_vertices, face_vertices, false);
   }
 }
 
