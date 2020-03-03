@@ -16,7 +16,7 @@ import {
 import "./App.css";
 
 interface ArtCanvasState {
-  active_art_name: string;
+  active_art_name: string | undefined;
   parameterA: number;
   random_pool: Array<number>;
 }
@@ -45,7 +45,13 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.draw_height = Math.floor(this.draw_width * this.width_to_height_ratio);
     this.height = this.draw_height + this.margin;
     this.animation_id = undefined;
-    
+
+    this.state = {
+      active_art_name: undefined,
+      parameterA: 5,
+      random_pool: this.initRandomPool(),
+    };
+
     this.art_pieces = [
       new Schotter("Schotter", !!"uses random pool", this),
       new Linien("Linien", !!"uses random pool", this),
@@ -65,7 +71,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.state = {
       active_art_name: this.art_pieces[0].name,
       parameterA: 5,
-      random_pool: [],
+      random_pool: this.state.random_pool,
     };
   }
 
@@ -73,7 +79,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.dom_element = this.element.current!;
     this.dom_element.width = this.width;
     this.dom_element.height = this.height;
-    this.initRandomPool();
+    this.drawArt();
     this.setArtFromURL();
   }
 
@@ -108,8 +114,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     for (let i = 0; i < 100_000; i++) {
       random_pool.push(Math.random());
     }
-
-    this.setState({ random_pool: random_pool });
+    return random_pool;
   }
 
   getContext() {
@@ -126,7 +131,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
   }
 
-  getActiveArt(): ArtPiece {
+  getActiveArt(): ArtPiece | undefined {
     return this.art_pieces.find(
       art => art.name === this.state.active_art_name
     )!;
@@ -156,9 +161,13 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   renderReInit(): React.ReactNode {
-    if (this.getActiveArt().uses_random_pool) {
+    const active_art = this.getActiveArt();
+    if (active_art && active_art.uses_random_pool) {
       return (
-        <button name="reinit" onClick={this.initRandomPool.bind(this)}>
+        <button
+          name="reinit"
+          onClick={e => this.setState({ random_pool: this.initRandomPool() })}
+        >
           ~
         </button>
       );
@@ -177,6 +186,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   private drawArt() {
     const ctx = this.getContext();
+    const active_art = this.getActiveArt();
     this.clear();
 
     if (this.animation_id !== undefined) {
@@ -186,7 +196,9 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     ctx.save();
     this.center();
-    this.getActiveArt().draw();
+    if (active_art) {
+      active_art.draw();
+    }
     ctx.restore();
   }
 

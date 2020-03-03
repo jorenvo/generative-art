@@ -527,30 +527,47 @@ export class IsoCarouselRotate extends IsoShapeRotate {
 }
 
 // http://www.huttar.net/lars-kathy/graphics/perlin-noise/perlin-noise.html
-export class Perlin extends ArtPiece {
+export class Perlin extends IsoShapeRotate {
   private readonly gridcells: number;
   private readonly gridsize: number;
   private gradients: Point3D[][];
+  private samples: number[][];
+  private vertices: number;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
     this.gridcells = 10;
     this.gridsize = 0.1;
-    this.gradients = [];
+    this.vertices = 17;
+    this.gradients = this.initGradients();
+    this.samples = this.initSamples();
+
   }
 
   private initGradients() {
-    this.gradients = [];
+    const gradients: Point3D[][] = [];
     for (let i = 0; i <= this.gridcells; i++) {
-      this.gradients.push([]);
+      gradients.push([]);
       for (let j = 0; j <= this.gridcells; j++) {
         let angle_unit_circle =
           this.canvas.state.random_pool[i * this.gridcells + j] * Math.PI * 2;
-        this.gradients[i].push(
+        gradients[i].push(
           new Point3D(Math.cos(angle_unit_circle), Math.sin(angle_unit_circle))
         );
       }
     }
+    return gradients;
+  }
+
+  private initSamples() {
+    const samples: number[][] = [];
+    for (let row = 0; row < this.vertices; ++row) {
+      samples.push([]);
+      for (let col = 0; col < this.vertices; ++col) {
+        samples[row].push(this.perlin(row / this.vertices, col / this.vertices));
+      }
+    }
+    return samples;
   }
 
   private fade(x: number): number {
@@ -595,8 +612,11 @@ export class Perlin extends ArtPiece {
     return this.linearlyInterpolate(interpolated1, interpolated2, weight_y);
   }
 
-  draw() {
-    this.initGradients();
+  generateShape(
+    bottom_left_front: Point3D,
+    randomize: boolean,
+    elapsed_ms: number
+  ): Point3D[][] {
     const ctx = this.canvas.getContext();
     // const noise: number[] = [];
     // let min = Infinity;
@@ -628,34 +648,40 @@ export class Perlin extends ArtPiece {
     //   }
     // }
 
-    const nr_vertices = 23;
-    const samples: number[][] = [];
-    for (let row = 0; row < nr_vertices; ++row) {
-      samples.push([]);
-      for (let col = 0; col < nr_vertices; ++col) {
-        samples[row].push(this.perlin(row / nr_vertices, col / nr_vertices));
-      }
-    }
-
     const face_vertices: Point3D[][] = [];
-    for (let row = 1; row < nr_vertices; ++row) {
-      for (let col = 1; col < nr_vertices; ++col) {
+    for (let row = 1; row < this.vertices; ++row) {
+      for (let col = 1; col < this.vertices; ++col) {
         let row_coord = row;
         let col_coord = col;
         let face: Point3D[] = [];
 
-        face.push(new Point3D(col_coord, samples[row][col], row_coord));
-        face.push(new Point3D(col_coord, samples[row - 1][col], row_coord - 1));
-        face.push(new Point3D(col_coord - 1, samples[row - 1][col - 1], row_coord - 1));
-        face.push(new Point3D(col_coord - 1, samples[row][col - 1], row_coord));
-        face.push(new Point3D(col_coord, samples[row][col], row_coord));
+        face.push(new Point3D(col_coord, this.samples[row][col], row_coord));
+        face.push(new Point3D(col_coord, this.samples[row - 1][col], row_coord - 1));
+        face.push(
+          new Point3D(col_coord - 1, this.samples[row - 1][col - 1], row_coord - 1)
+        );
+        face.push(new Point3D(col_coord - 1, this.samples[row][col - 1], row_coord));
+        face.push(new Point3D(col_coord, this.samples[row][col], row_coord));
+
+        face.forEach(face => {
+          face.subtract(new Point3D(this.vertices / 2, 0, this.vertices / 2))
+          face.divide(new Point3D(this.vertices, 5, this.vertices));
+        });
 
         face_vertices.push(face);
       }
     }
 
     const utils = new IsoUtils(this.canvas);
-    utils.paintIsoArt(nr_vertices, nr_vertices, face_vertices, false);
+    const rotation_per_ms = 0.0005 * (this.canvas.state.parameterA - 4);
+    this.rotating_shape_radians += elapsed_ms * rotation_per_ms;
+    utils.transformShape(
+      face_vertices,
+      bottom_left_front,
+      randomize,
+      this.rotating_shape_radians
+    );
+    return face_vertices;
   }
 }
 
