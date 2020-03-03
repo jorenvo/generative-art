@@ -2,7 +2,7 @@ import { ArtPiece } from "./ArtPiece";
 
 export class Maze extends ArtPiece {
   draw() {
-    const ctx = this.canvas.getContext();
+    const ctx = this.canvas.getContext2d();
     const lines_per_row = 25;
     const lines_per_column = Math.ceil(
       lines_per_row * (this.canvas.draw_height / this.canvas.draw_width)

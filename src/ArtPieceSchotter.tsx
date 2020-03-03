@@ -2,7 +2,7 @@ import { ArtPiece } from "./ArtPiece";
 
 export class Schotter extends ArtPiece {
   draw() {
-    const ctx = this.canvas.getContext();
+    const ctx = this.canvas.getContext2d();
     const rect_per_row = 20;
     const rect_per_col =
       rect_per_row * (this.canvas.height / this.canvas.width);

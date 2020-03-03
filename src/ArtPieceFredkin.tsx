@@ -10,7 +10,7 @@ class FredkinUtils {
       center_col: number
     ) => void
   ) {
-    const ctx = canvas.getContext();
+    const ctx = canvas.getContext2d();
 
     // odd rows should be chosen so that cols is also odd for symmetry
     const rows = 107;

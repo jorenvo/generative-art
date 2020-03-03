@@ -2,7 +2,7 @@ import { ArtPiece } from "./ArtPiece";
 
 export class Linien extends ArtPiece {
   draw() {
-    const ctx = this.canvas.getContext();
+    const ctx = this.canvas.getContext2d();
     ctx.beginPath();
     ctx.lineWidth = 3;
 

@@ -6,7 +6,7 @@ interface Face {
   center: Point3D;
 }
 
-class Point3D {
+export class Point3D {
   [key: string]: any; // allow dynamic props
   x: number;
   y: number;
@@ -79,6 +79,10 @@ class Point3D {
     this.x = fn(this.x);
     this.y = fn(this.y);
     this.z = fn(this.z);
+  }
+
+  xyz() {
+    return [this.x, this.y, this.z];
   }
 }
 
@@ -325,7 +329,7 @@ class IsoUtils {
   }
 
   private renderIsoPath(face: Face, fill_color: string) {
-    const ctx = this.canvas.getContext();
+    const ctx = this.canvas.getContext2d();
     const debug_stroke_color = ["red", "green", "blue", "black"];
     const debug = false;
 
@@ -359,7 +363,7 @@ class IsoUtils {
     face_vertices: Point3D[][],
     color: boolean
   ) {
-    const ctx = this.canvas.getContext();
+    const ctx = this.canvas.getContext2d();
     // console.log("rendering", cubes.length / (5 * 6), "cubes");
 
     // range is:
@@ -449,7 +453,7 @@ abstract class IsoShapeRotate extends ArtPiece {
   }
 
   private renderAnimationFrame(render_fn: () => void) {
-    const ctx = this.canvas.getContext();
+    const ctx = this.canvas.getContext2d();
 
     this.canvas.clear();
     ctx.save();
@@ -523,165 +527,6 @@ export class IsoCarouselRotate extends IsoShapeRotate {
       randomize,
       this.rotating_shape_radians
     );
-  }
-}
-
-// http://www.huttar.net/lars-kathy/graphics/perlin-noise/perlin-noise.html
-export class Perlin extends IsoShapeRotate {
-  private readonly gridcells: number;
-  private readonly gridsize: number;
-  private gradients: Point3D[][];
-  private samples: number[][];
-  private vertices: number;
-
-  constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
-    super(name, uses_random_pool, canvas);
-    this.gridcells = 10;
-    this.gridsize = 0.1;
-    this.vertices = 17;
-    this.gradients = this.initGradients();
-    this.samples = this.initSamples();
-
-  }
-
-  private initGradients() {
-    const gradients: Point3D[][] = [];
-    for (let i = 0; i <= this.gridcells; i++) {
-      gradients.push([]);
-      for (let j = 0; j <= this.gridcells; j++) {
-        let angle_unit_circle =
-          this.canvas.state.random_pool[i * this.gridcells + j] * Math.PI * 2;
-        gradients[i].push(
-          new Point3D(Math.cos(angle_unit_circle), Math.sin(angle_unit_circle))
-        );
-      }
-    }
-    return gradients;
-  }
-
-  private initSamples() {
-    const samples: number[][] = [];
-    for (let row = 0; row < this.vertices; ++row) {
-      samples.push([]);
-      for (let col = 0; col < this.vertices; ++col) {
-        samples[row].push(this.perlin(row / this.vertices, col / this.vertices));
-      }
-    }
-    return samples;
-  }
-
-  private fade(x: number): number {
-    return 3 * x * x - 2 * x * x * x;
-  }
-
-  private linearlyInterpolate(x1: number, x2: number, weight: number): number {
-    return (1 - weight) * x1 + weight * x2;
-  }
-
-  private dotProduct(distance: Point3D, gradient: Point3D): number {
-    return distance.x * gradient.x + distance.y * gradient.y;
-  }
-
-  private perlin(x: number, y: number): number {
-    x /= this.gridsize;
-    y /= this.gridsize;
-
-    // grid cell coordinates
-    const x0 = Math.floor(x);
-    const x1 = x0 + 1;
-    const y0 = Math.floor(y);
-    const y1 = y0 + 1;
-
-    const weight_x = this.fade(x - x0);
-    const weight_y = this.fade(y - y0);
-
-    let dp1 = this.dotProduct(
-      new Point3D(x - x0, y - y0),
-      this.gradients[y0][x0]
-    );
-    let dp2 = this.dotProduct(
-      new Point3D(x - x1, y - y0),
-      this.gradients[y0][x1]
-    );
-    let interpolated1 = this.linearlyInterpolate(dp1, dp2, weight_x);
-
-    dp1 = this.dotProduct(new Point3D(x - x0, y - y1), this.gradients[y1][x0]);
-    dp2 = this.dotProduct(new Point3D(x - x1, y - y1), this.gradients[y1][x1]);
-    let interpolated2 = this.linearlyInterpolate(dp1, dp2, weight_x);
-
-    return this.linearlyInterpolate(interpolated1, interpolated2, weight_y);
-  }
-
-  generateShape(
-    bottom_left_front: Point3D,
-    randomize: boolean,
-    elapsed_ms: number
-  ): Point3D[][] {
-    const ctx = this.canvas.getContext();
-    // const noise: number[] = [];
-    // let min = Infinity;
-    // let max = -Infinity;
-    // for (let y = 0; y < this.canvas.draw_height; y++) {
-    //   for (let x = 0; x < this.canvas.draw_width; x++) {
-    //     let sample = this.perlin(
-    //       x / this.canvas.draw_width,
-    //       y / this.canvas.draw_height
-    //     );
-    //     sample += Math.sqrt(2) / 2;
-    //     sample /= Math.sqrt(2);
-    //     sample *= 255;
-    //     sample = Math.floor(sample);
-    //     min = Math.min(min, sample);
-    //     max = Math.max(max, sample);
-    //     noise.push(sample);
-    //   }
-    // }
-
-    // for (let y = 0; y < this.canvas.draw_height; y++) {
-    //   for (let x = 0; x < this.canvas.draw_width; x++) {
-    //     let sample = noise[y * this.canvas.draw_width + x];
-    //     sample -= min;
-    //     sample /= max - min;
-    //     sample *= 255;
-    //     ctx.fillStyle = `rgb(${sample}, ${sample}, ${sample})`;
-    //     ctx.fillRect(x, y, 1, 1);
-    //   }
-    // }
-
-    const face_vertices: Point3D[][] = [];
-    for (let row = 1; row < this.vertices; ++row) {
-      for (let col = 1; col < this.vertices; ++col) {
-        let row_coord = row;
-        let col_coord = col;
-        let face: Point3D[] = [];
-
-        face.push(new Point3D(col_coord, this.samples[row][col], row_coord));
-        face.push(new Point3D(col_coord, this.samples[row - 1][col], row_coord - 1));
-        face.push(
-          new Point3D(col_coord - 1, this.samples[row - 1][col - 1], row_coord - 1)
-        );
-        face.push(new Point3D(col_coord - 1, this.samples[row][col - 1], row_coord));
-        face.push(new Point3D(col_coord, this.samples[row][col], row_coord));
-
-        face.forEach(face => {
-          face.subtract(new Point3D(this.vertices / 2, 0, this.vertices / 2))
-          face.divide(new Point3D(this.vertices, 5, this.vertices));
-        });
-
-        face_vertices.push(face);
-      }
-    }
-
-    const utils = new IsoUtils(this.canvas);
-    const rotation_per_ms = 0.0005 * (this.canvas.state.parameterA - 4);
-    this.rotating_shape_radians += elapsed_ms * rotation_per_ms;
-    utils.transformShape(
-      face_vertices,
-      bottom_left_front,
-      randomize,
-      this.rotating_shape_radians
-    );
-    return face_vertices;
   }
 }
 

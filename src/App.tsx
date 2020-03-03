@@ -6,12 +6,12 @@ import { Diamond } from "./ArtPieceDiamond";
 import { Moiré1, Moiré2 } from "./ArtPieceMoire";
 import { Maze } from "./ArtPieceMaze";
 import { Fredkin1, Fredkin2 } from "./ArtPieceFredkin";
+import { Perlin } from "./ArtPieceIsoGL";
 import {
   IsoCube,
   IsoCubeColor,
   IsoCubeRotate,
   IsoCarouselRotate,
-  Perlin,
 } from "./ArtPieceIso";
 import "./App.css";
 
@@ -22,9 +22,9 @@ interface ArtCanvasState {
 }
 
 export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
-  private element: React.RefObject<HTMLCanvasElement>;
+  private canvas2D: React.RefObject<HTMLCanvasElement>;
+  private canvas3D: React.RefObject<HTMLCanvasElement>;
   private margin: number;
-  private dom_element: HTMLCanvasElement | undefined;
   private art_pieces: Array<ArtPiece>;
 
   width_to_height_ratio: number;
@@ -36,7 +36,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   constructor(props: any) {
     super(props);
-    this.element = React.createRef();
+    this.canvas2D = React.createRef();
+    this.canvas3D = React.createRef();
     this.margin = 100;
 
     this.width_to_height_ratio = 1.25;
@@ -45,13 +46,41 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.draw_height = Math.floor(this.draw_width * this.width_to_height_ratio);
     this.height = this.draw_height + this.margin;
     this.animation_id = undefined;
+    this.art_pieces = [];
 
     this.state = {
       active_art_name: undefined,
       parameterA: 5,
       random_pool: this.initRandomPool(),
     };
+  }
 
+  componentDidMount() {
+    this.canvas2D.current!.width = this.width;
+    this.canvas2D.current!.height = this.height;
+    this.canvas3D.current!.width = this.width;
+    this.canvas3D.current!.height = this.height;
+    this.setupArt();
+    this.drawArt();
+    this.setArtFromURL();
+  }
+
+  componentDidUpdate() {
+    const active_art = this.getActiveArt();
+    if (active_art) {
+      if (active_art.is_2d()) {
+        this.canvas2D.current!.style.display = "block";
+        this.canvas3D.current!.style.display = "none";
+      } else {
+        this.canvas3D.current!.style.display = "block";
+        this.canvas2D.current!.style.display = "none";
+      }
+    }
+    this.drawArt();
+    this.setURLFromArt();
+  }
+
+  private setupArt() {
     this.art_pieces = [
       new Schotter("Schotter", !!"uses random pool", this),
       new Linien("Linien", !!"uses random pool", this),
@@ -68,24 +97,11 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       new Perlin("Perlin", !!"uses random pool", this),
     ];
 
-    this.state = {
+    this.setState({
       active_art_name: this.art_pieces[0].name,
       parameterA: 5,
       random_pool: this.state.random_pool,
-    };
-  }
-
-  componentDidMount() {
-    this.dom_element = this.element.current!;
-    this.dom_element.width = this.width;
-    this.dom_element.height = this.height;
-    this.drawArt();
-    this.setArtFromURL();
-  }
-
-  componentDidUpdate() {
-    this.drawArt();
-    this.setURLFromArt();
+    });
   }
 
   private setArtFromURL() {
@@ -109,7 +125,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     window.location.hash = `#art=${this.state.active_art_name}&param_a=${this.state.parameterA}`;
   }
 
-  initRandomPool() {
+  private initRandomPool() {
     const random_pool = [];
     for (let i = 0; i < 100_000; i++) {
       random_pool.push(Math.random());
@@ -117,27 +133,37 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     return random_pool;
   }
 
-  getContext() {
-    const element = this.dom_element;
-    if (!element) {
-      throw new Error("Could not get canvas DOM element.");
+  getContext2d() {
+    const element = this.canvas2D.current!;
+    const ctx = element.getContext("2d");
+    if (!ctx) {
+      throw new Error("Could not get 2d context for canvas.");
     } else {
-      const ctx = element.getContext("2d");
-      if (!ctx) {
-        throw new Error("Could not get context for canvas.");
-      } else {
-        return ctx;
-      }
+      return ctx;
     }
   }
 
-  getActiveArt(): ArtPiece | undefined {
+  getContextGl() {
+    const element = this.canvas3D.current!;
+    const ctx = element.getContext("webgl");
+    if (!ctx) {
+      throw new Error("Could not get gl context for canvas.");
+    } else {
+      return ctx;
+    }
+  }
+
+  private getActiveArt(): ArtPiece | undefined {
     return this.art_pieces.find(
       art => art.name === this.state.active_art_name
     )!;
   }
 
   renderSelect(): React.ReactNode {
+    if (this.art_pieces.length === 0) {
+      return;
+    }
+
     const default_art = this.art_pieces[0].name;
     const options = this.art_pieces.map(art => (
       <option key={art.name} value={art.name}>
@@ -175,37 +201,41 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   center() {
-    const ctx = this.getContext();
+    const ctx = this.getContext2d();
     ctx.translate(this.margin / 2, this.margin / 2);
   }
 
   clear() {
-    const ctx = this.getContext();
+    const ctx = this.getContext2d();
     ctx.clearRect(0, 0, this.width, this.height);
   }
 
   private drawArt() {
-    const ctx = this.getContext();
     const active_art = this.getActiveArt();
-    this.clear();
 
     if (this.animation_id !== undefined) {
       cancelAnimationFrame(this.animation_id);
       this.animation_id = undefined;
     }
 
-    ctx.save();
-    this.center();
+    if (active_art && active_art.is_2d()) {
+      this.clear();
+      this.getContext2d().save();
+      this.center();
+    }
     if (active_art) {
       active_art.draw();
     }
-    ctx.restore();
+    if (active_art && active_art.is_2d()) {
+      this.getContext2d().restore();
+    }
   }
 
   render(): React.ReactNode {
     return (
       <div>
-        <canvas className="ArtCanvas" ref={this.element} />
+        <canvas className="ArtCanvas" ref={this.canvas2D} />
+        <canvas className="ArtCanvas" ref={this.canvas3D} />
         {this.renderSelect()}
         <input
           type="range"

@@ -11,5 +11,9 @@ export abstract class ArtPiece {
     this.canvas = canvas;
   }
 
+  is_2d() {
+    return true;
+  }
+
   abstract draw(): void;
 }

@@ -3,7 +3,7 @@ import { ArtCanvas } from "./App";
 
 class MoiréUtils {
   fillCanvas(canvas: ArtCanvas): number {
-    const ctx = canvas.getContext();
+    const ctx = canvas.getContext2d();
     const nr_rectangles = 6000;
     let random_index = 0;
     for (let i = 0; i < nr_rectangles; i++) {
@@ -21,7 +21,7 @@ class MoiréUtils {
 
 export class Moiré1 extends ArtPiece {
   draw() {
-    const ctx = this.canvas.getContext();
+    const ctx = this.canvas.getContext2d();
     const nr_rectangles = new MoiréUtils().fillCanvas(this.canvas);
 
     ctx.translate(this.canvas.draw_width / 2, this.canvas.draw_height / 2);
@@ -42,7 +42,7 @@ export class Moiré1 extends ArtPiece {
 
 export class Moiré2 extends ArtPiece {
   draw() {
-    const ctx = this.canvas.getContext();
+    const ctx = this.canvas.getContext2d();
     const nr_rectangles = new MoiréUtils().fillCanvas(this.canvas);
 
     ctx.translate(this.canvas.draw_width / 2, this.canvas.draw_height / 2);
