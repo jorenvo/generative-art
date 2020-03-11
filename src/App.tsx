@@ -164,7 +164,9 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       return;
     }
 
-    const default_art = this.art_pieces[0].name;
+    const active_art = this.getActiveArt();
+    const default_art: string =
+      (active_art && active_art.name) || this.art_pieces[0].name;
     const options = this.art_pieces.map(art => (
       <option key={art.name} value={art.name}>
         {art.name}
