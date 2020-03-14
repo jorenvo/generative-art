@@ -29,9 +29,11 @@ export class Schotter extends ArtPiece {
         );
 
         const angle = 0.01 * random_scale;
-        if (this.canvas.state.random_pool[random_index++] > 0.5)
+        if (this.canvas.state.random_pool[random_index++] > 0.5) {
           ctx.rotate(angle);
-        else ctx.rotate(-angle);
+        } else {
+          ctx.rotate(-angle);
+        }
 
         // translate back
         ctx.translate(

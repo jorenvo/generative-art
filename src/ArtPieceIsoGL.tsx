@@ -23,10 +23,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     this.setupComplete = false;
   }
 
-  abstract generateShape(
-    bottom_left_front: Point3D,
-    elapsed_ms: number
-  ): Point3D[][];
+  abstract generateShape(): Point3D[][];
 
   is_2d() {
     return false;
@@ -206,7 +203,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
 
     this.positionBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer!);
-    const faces = this.generateShape(new Point3D(), 0);
+    const faces = this.generateShape();
     this.setVertices(faces);
 
     this.colorBuffer = this.gl.createBuffer();
@@ -265,20 +262,17 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     );
 
     const current_render_ms = performance.now();
-    this.rotating_shape_radians += (current_render_ms - (this.last_render_ms || 0)) * 0.0004;
+    this.rotating_shape_radians +=
+      (current_render_ms - (this.last_render_ms || 0)) * 0.0004;
     this.last_render_ms = current_render_ms;
     const translation = [0, 150, 0];
-    const rotation = [
-      Math.PI / 5,
-      this.rotating_shape_radians,
-      0,
-    ];
+    const rotation = [Math.PI / 5, this.rotating_shape_radians, 0];
     const scale = [this.canvas.width, this.canvas.height, 1];
     const m4 = new Matrix4();
     let matrix = m4.projection(
       (this.gl.canvas as HTMLCanvasElement).clientWidth,
       (this.gl.canvas as HTMLCanvasElement).clientHeight,
-      400,
+      400
     );
     matrix = m4.translate(
       matrix,
@@ -349,7 +343,6 @@ export class Perlin extends IsoShapeRotateGL {
         samples[row].push(sample);
       }
     }
-    console.log("perlin", samples);
     return samples;
   }
 
@@ -395,8 +388,8 @@ export class Perlin extends IsoShapeRotateGL {
     return this.linearlyInterpolate(interpolated1, interpolated2, weight_y);
   }
 
-  generateShape(bottom_left_front: Point3D, elapsed_ms: number): Point3D[][] {
-     const face_vertices: Point3D[][] = [];
+  generateShape(): Point3D[][] {
+    const face_vertices: Point3D[][] = [];
     for (let row = 1; row < this.vertices; ++row) {
       for (let col = 1; col < this.vertices; ++col) {
         let row_coord = row;
@@ -426,8 +419,6 @@ export class Perlin extends IsoShapeRotateGL {
       }
     }
 
-    const rotation_per_ms = 0.0005 * (this.canvas.state.parameterA - 4);
-    this.rotating_shape_radians += elapsed_ms * rotation_per_ms;
     return face_vertices;
   }
 }
