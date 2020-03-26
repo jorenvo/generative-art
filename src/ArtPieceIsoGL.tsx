@@ -7,7 +7,6 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
   private last_render_ms: number | undefined;
   private gl: WebGLRenderingContext;
   protected rotating_shape_radians: number;
-  private setupComplete: boolean;
   private program: WebGLProgram | undefined;
   private positionLocation: number | undefined;
   private colorLocation: number | undefined;
@@ -15,12 +14,13 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
   private positionBuffer: WebGLBuffer | null | undefined;
   private colorBuffer: WebGLBuffer | null | undefined;
   private amount_of_vertices: number | undefined;
+  private random_pool_i: number;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
     this.rotating_shape_radians = 0;
     this.gl = this.canvas.getContextGl();
-    this.setupComplete = false;
+    this.random_pool_i = 0;
   }
 
   abstract generateShape(): Point3D[][];
@@ -65,7 +65,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
 
   // Returns a random integer from 0 to range - 1.
   private randomInt(range: number) {
-    return Math.floor(Math.random() * range);
+    return Math.floor(this.canvas.state.random_pool[this.random_pool_i++] * range);
   }
 
   private printTriangles(vertices: number[]) {
@@ -146,23 +146,19 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     }
   }
 
-  private setup() {
-    if (this.setupComplete) {
-      return;
-    }
-
+  public setup() {
     const vertex_shader_src = `
     attribute vec4 a_position;
     attribute vec4 a_color;
-    
+
     uniform mat4 u_matrix;
-    
+
     varying vec4 v_color;
-    
+
     void main() {
       // Multiply the position by the matrix
       gl_Position = u_matrix * a_position;
-    
+
       // Pass color to the fragment shader
       v_color = a_color;
     }
@@ -174,10 +170,10 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
 
     const fragment_shader_src = `
     precision mediump float;
-    
+
     // comes from the vertex shader
     varying vec4 v_color;
-    
+
     void main() {
        gl_FragColor = v_color;
     }
@@ -211,12 +207,13 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     this.setColors(faces);
 
     this.amount_of_vertices = faces.length * 6;
-
-    this.setupComplete = true;
+    this.random_pool_i = 0;
   }
 
-  draw() {
-    this.setup();
+  draw(init = true) {
+    if (init) {
+      this.setup();
+    }
     // Tell WebGL how to convert from clip space to pixels
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
 
@@ -295,7 +292,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     offset = 0;
     this.gl.drawArrays(primitiveType, offset, this.amount_of_vertices!);
 
-    this.canvas.animation_id = requestAnimationFrame(this.draw.bind(this));
+    this.canvas.animation_id = requestAnimationFrame(() => this.draw(false));
   }
 }
 
@@ -312,8 +309,14 @@ export class Perlin extends IsoShapeRotateGL {
     this.gridcells = 5; // gridcells * gridsize should be 1
     this.gridsize = 0.2;
     this.vertices = 91;
+    this.gradients = [];
+    this.samples = [];
+  }
+
+  setup() {
     this.gradients = this.initGradients();
     this.samples = this.initSamples();
+    super.setup();
   }
 
   private initGradients() {
