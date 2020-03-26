@@ -3,6 +3,33 @@ import { ArtCanvas } from "./App";
 import { Matrix4 } from "./UtilMatrix4";
 import { Point3D } from "./ArtPieceIso";
 
+class Color {
+  r: number;
+  g: number;
+  b: number;
+
+  constructor(r = 0, g = 0, b = 0) {
+    this.r = r;
+    this.g = g;
+    this.b = b;
+  }
+
+  private clamp(min: number, x: number, max: number): number {
+    return Math.min(max, Math.max(min, Math.floor(x)));
+  }
+
+  randomize() {
+    const intensity = 32;
+    this.r += Math.random() * intensity - intensity / 2;
+    this.g += Math.random() * intensity - intensity / 2;
+    this.b += Math.random() * intensity - intensity / 2;
+
+    this.r = this.clamp(0, this.r, 255);
+    this.g = this.clamp(0, this.g, 255);
+    this.b = this.clamp(0, this.b, 255);
+  }
+}
+
 export abstract class IsoShapeRotateGL extends ArtPiece {
   private last_render_ms: number | undefined;
   private gl: WebGLRenderingContext;
@@ -24,6 +51,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
   }
 
   abstract generateShape(): Point3D[][];
+  abstract generateColor(): Color[];
 
   is_2d() {
     return false;
@@ -63,21 +91,6 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     }
   }
 
-  // Returns a random integer from 0 to range - 1.
-  private randomInt(range: number) {
-    return Math.floor(this.canvas.state.random_pool[this.random_pool_i++] * range);
-  }
-
-  private printTriangles(vertices: number[]) {
-    for (let i = 0; i < vertices.length; i += 3) {
-      if (i % (3 * 3) === 0) {
-        console.log("-----");
-      }
-
-      console.log(`${vertices[i]}, ${vertices[i + 1]}, ${vertices[i + 2]}`);
-    }
-  }
-
   private setVertices(faces: Point3D[][]) {
     let vertices: number[] = [];
     faces.forEach(f => {
@@ -101,26 +114,38 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
   }
 
   private setColors(faces: Point3D[][]) {
-    const colors: number[] = [];
     const vertices_per_face = 6;
+    const gl_colors: number[] = [];
 
-    for (let i = 0; i < faces.length; i++) {
-      const r = this.randomInt(255);
-      const g = this.randomInt(255);
-      const b = this.randomInt(255);
+    for (const face of faces) {
+      // small values = tall mountains, so flip it
+      const height = face.reduce((acc, curr) => acc + curr.y, 0) / face.length;
+
+      let color;
+      // todo i think 1 / 4 is the max
+      if (height < 0.08) { // snow
+        color = new Color(255, 255, 255);
+      } else if (height < 0.14) { // rock
+        color = new Color(170, 164, 157);
+      } else if (height < 0.17) { // gras
+        color = new Color(96, 128, 56);
+      } else if (height < 0.19) { // sand
+        color = new Color(194, 178, 128);
+      } else { // water
+        color = new Color(0, 0, 230);
+      }
+      color.randomize();
 
       for (let j = 0; j < vertices_per_face; j++) {
-        colors.push(r);
-        colors.push(g);
-        colors.push(b);
+        gl_colors.push(color.r);
+        gl_colors.push(color.g);
+        gl_colors.push(color.b);
       }
     }
 
-    // console.log("colors");
-    // this.printTriangles(colors);
     this.gl.bufferData(
       this.gl.ARRAY_BUFFER,
-      Uint8Array.from(colors),
+      Uint8Array.from(gl_colors),
       this.gl.STATIC_DRAW
     );
   }
@@ -400,22 +425,25 @@ class PerlinData {
 export class Perlin extends IsoShapeRotateGL {
   private samples_per_row: number;
   private terrain: PerlinData;
+  private color: PerlinData;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
     this.samples_per_row = 91;
     this.terrain = new PerlinData(canvas, this.samples_per_row);
+    this.color = new PerlinData(canvas, this.samples_per_row);
   }
 
   setup() {
     this.terrain.init();
+    this.color.init();
     super.setup();
   }
 
   generateShape(): Point3D[][] {
     const samples = this.terrain.getSamples();
-
     const face_vertices: Point3D[][] = [];
+
     for (let row = 1; row < this.samples_per_row; ++row) {
       for (let col = 1; col < this.samples_per_row; ++col) {
         let row_coord = row;
@@ -438,7 +466,8 @@ export class Perlin extends IsoShapeRotateGL {
         );
 
         face.forEach(vertex => {
-          vertex.divide(new Point3D(this.samples_per_row, 4, this.samples_per_row));
+          vertex.divide(new Point3D(this.samples_per_row, 3.5, this.samples_per_row));
+          vertex.y = Math.min(vertex.y, 0.19);
         });
 
         face_vertices.push(face);
@@ -446,5 +475,35 @@ export class Perlin extends IsoShapeRotateGL {
     }
 
     return face_vertices;
+  }
+
+  generateColor(): Color[] {
+    const samples = this.color.getSamples();
+    const flattened = [];
+
+    let random_i = 0;
+    const greens = [new Color(108, 135, 0), new Color(92, 158, 0), new Color(23, 199, 0)];
+    const browns = [new Color(210, 105, 30), new Color(135, 104, 0), new Color(179, 121, 0)];
+    for (let row of samples) {
+      for (let sample of row) {
+        let color_i = Math.floor(this.canvas.state.random_pool[random_i++] * 3);
+        if (sample > 0.4) {
+          flattened.push(greens[color_i]);
+        } else {
+          flattened.push(browns[color_i]);
+        }
+
+        // sample *= Math.pow(256, 3) - 1;
+
+        // let r = sample % 256;
+        // sample = Math.floor(sample / 256);
+        // let g = sample % 256;
+        // sample = Math.floor(sample / 256);
+        // let b = sample % 256;
+        // flattened.push(new Color(r, g, b));
+      }
+    }
+
+    return flattened;
   }
 }
