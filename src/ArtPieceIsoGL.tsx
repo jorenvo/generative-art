@@ -296,6 +296,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
   }
 }
 
+// http://www.huttar.net/lars-kathy/graphics/perlin-noise/perlin-noise.html
 class PerlinData {
   private readonly gridcells: number;
   private readonly gridsize: number;
@@ -304,12 +305,12 @@ class PerlinData {
   private samples_per_row: number;
   private canvas: ArtCanvas;
 
-  constructor(canvas: ArtCanvas) {
+  constructor(canvas: ArtCanvas, samples_per_row: number) {
     this.gridcells = 5; // gridcells * gridsize should be 1
     this.gridsize = 0.2;
     this.gradients = [];
     this.samples = [];
-    this.samples_per_row = 91;
+    this.samples_per_row = samples_per_row;
     this.canvas = canvas;
     this.init();
   }
@@ -391,7 +392,29 @@ class PerlinData {
     return this.linearlyInterpolate(interpolated1, interpolated2, weight_y);
   }
 
-  getMap(): Point3D[][] {
+  getSamples(): number[][] {
+    return this.samples;
+  }
+}
+
+export class Perlin extends IsoShapeRotateGL {
+  private samples_per_row: number;
+  private terrain: PerlinData;
+
+  constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
+    super(name, uses_random_pool, canvas);
+    this.samples_per_row = 91;
+    this.terrain = new PerlinData(canvas, this.samples_per_row);
+  }
+
+  setup() {
+    this.terrain.init();
+    super.setup();
+  }
+
+  generateShape(): Point3D[][] {
+    const samples = this.terrain.getSamples();
+
     const face_vertices: Point3D[][] = [];
     for (let row = 1; row < this.samples_per_row; ++row) {
       for (let col = 1; col < this.samples_per_row; ++col) {
@@ -399,19 +422,19 @@ class PerlinData {
         let col_coord = col;
         let face: Point3D[] = [];
 
-        face.push(new Point3D(col_coord, this.samples[row][col], row_coord));
+        face.push(new Point3D(col_coord, samples[row][col], row_coord));
         face.push(
-          new Point3D(col_coord, this.samples[row - 1][col], row_coord - 1)
+          new Point3D(col_coord, samples[row - 1][col], row_coord - 1)
         );
         face.push(
           new Point3D(
             col_coord - 1,
-            this.samples[row - 1][col - 1],
+            samples[row - 1][col - 1],
             row_coord - 1
           )
         );
         face.push(
-          new Point3D(col_coord - 1, this.samples[row][col - 1], row_coord)
+          new Point3D(col_coord - 1, samples[row][col - 1], row_coord)
         );
 
         face.forEach(vertex => {
@@ -423,24 +446,5 @@ class PerlinData {
     }
 
     return face_vertices;
-  }
-}
-
-// http://www.huttar.net/lars-kathy/graphics/perlin-noise/perlin-noise.html
-export class Perlin extends IsoShapeRotateGL {
-  private terrain: PerlinData;
-
-  constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
-    super(name, uses_random_pool, canvas);
-    this.terrain = new PerlinData(canvas);
-  }
-
-  setup() {
-    this.terrain.init();
-    super.setup();
-  }
-
-  generateShape(): Point3D[][] {
-    return this.terrain.getMap();
   }
 }
