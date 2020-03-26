@@ -301,7 +301,7 @@ class PerlinData {
   private readonly gridsize: number;
   private gradients: Point3D[][];
   private samples: number[][];
-  private vertices: number;  // todo rename to samples_per_row
+  private samples_per_row: number;
   private canvas: ArtCanvas;
 
   constructor(canvas: ArtCanvas) {
@@ -309,7 +309,7 @@ class PerlinData {
     this.gridsize = 0.2;
     this.gradients = [];
     this.samples = [];
-    this.vertices = 91;
+    this.samples_per_row = 91;
     this.canvas = canvas;
     this.init();
   }
@@ -337,10 +337,10 @@ class PerlinData {
   private initSamples() {
     const samples: number[][] = [];
     const half_range = Math.sqrt(2) / 2;
-    for (let row = 0; row < this.vertices; ++row) {
+    for (let row = 0; row < this.samples_per_row; ++row) {
       samples.push([]);
-      for (let col = 0; col < this.vertices; ++col) {
-        let sample = this.perlin(row / this.vertices, col / this.vertices);
+      for (let col = 0; col < this.samples_per_row; ++col) {
+        let sample = this.perlin(row / this.samples_per_row, col / this.samples_per_row);
         sample += half_range;
         sample /= 2 * half_range;
         samples[row].push(sample);
@@ -393,8 +393,8 @@ class PerlinData {
 
   getMap(): Point3D[][] {
     const face_vertices: Point3D[][] = [];
-    for (let row = 1; row < this.vertices; ++row) {
-      for (let col = 1; col < this.vertices; ++col) {
+    for (let row = 1; row < this.samples_per_row; ++row) {
+      for (let col = 1; col < this.samples_per_row; ++col) {
         let row_coord = row;
         let col_coord = col;
         let face: Point3D[] = [];
@@ -415,7 +415,7 @@ class PerlinData {
         );
 
         face.forEach(vertex => {
-          vertex.divide(new Point3D(this.vertices, 4, this.vertices));
+          vertex.divide(new Point3D(this.samples_per_row, 4, this.samples_per_row));
         });
 
         face_vertices.push(face);
