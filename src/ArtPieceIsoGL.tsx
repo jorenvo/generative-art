@@ -296,27 +296,27 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
   }
 }
 
-// http://www.huttar.net/lars-kathy/graphics/perlin-noise/perlin-noise.html
-export class Perlin extends IsoShapeRotateGL {
+class PerlinData {
   private readonly gridcells: number;
   private readonly gridsize: number;
   private gradients: Point3D[][];
   private samples: number[][];
-  private vertices: number;
+  private vertices: number;  // todo rename to samples_per_row
+  private canvas: ArtCanvas;
 
-  constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
-    super(name, uses_random_pool, canvas);
+  constructor(canvas: ArtCanvas) {
     this.gridcells = 5; // gridcells * gridsize should be 1
     this.gridsize = 0.2;
-    this.vertices = 91;
     this.gradients = [];
     this.samples = [];
+    this.vertices = 91;
+    this.canvas = canvas;
+    this.init();
   }
 
-  setup() {
+  public init() {
     this.gradients = this.initGradients();
     this.samples = this.initSamples();
-    super.setup();
   }
 
   private initGradients() {
@@ -391,7 +391,7 @@ export class Perlin extends IsoShapeRotateGL {
     return this.linearlyInterpolate(interpolated1, interpolated2, weight_y);
   }
 
-  generateShape(): Point3D[][] {
+  getMap(): Point3D[][] {
     const face_vertices: Point3D[][] = [];
     for (let row = 1; row < this.vertices; ++row) {
       for (let col = 1; col < this.vertices; ++col) {
@@ -423,5 +423,24 @@ export class Perlin extends IsoShapeRotateGL {
     }
 
     return face_vertices;
+  }
+}
+
+// http://www.huttar.net/lars-kathy/graphics/perlin-noise/perlin-noise.html
+export class Perlin extends IsoShapeRotateGL {
+  private terrain: PerlinData;
+
+  constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
+    super(name, uses_random_pool, canvas);
+    this.terrain = new PerlinData(canvas);
+  }
+
+  setup() {
+    this.terrain.init();
+    super.setup();
+  }
+
+  generateShape(): Point3D[][] {
+    return this.terrain.getMap();
   }
 }
