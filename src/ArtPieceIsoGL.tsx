@@ -115,35 +115,36 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     );
   }
 
+  private getCenterY(points: Point3D[]): number {
+    return points.reduce((acc, curr) => acc + curr.y, 0) / points.length;
+  }
+
   private setColors(rows: Point3D[][][]) {
     const colors: Color[][] = [];
     const gl_colors: number[] = [];
 
-    let max_height: number = -Infinity;
-    let highest_i = 0;
-    let highest_j = 0;
-
+    let random_i = 0;
+    const river_sources: [number, number][] = [];
     rows.forEach((row, i) => {
       let color_row: Color[] = [];
       row.forEach((face, j) => {
-        // small values = tall mountains, so flip it
-        const height =
-          face.reduce((acc, curr) => acc + curr.y, 0) / face.length;
-
-        if (height > max_height) {
-          max_height = height;
-          highest_i = i;
-          highest_j = j;
-        }
+        // small values = tall mountains
+        const height = this.getCenterY(face);
 
         let color;
         // todo i think 1 / 4 is the max
         if (height < 0.08) {
           // snow
           color = new Color(255, 255, 255);
+          if (this.canvas.state.random_pool[random_i++] > 0.998) {
+            river_sources.push([i, j]);
+          }
         } else if (height < 0.14) {
           // rock
           color = new Color(170, 164, 157);
+          if (this.canvas.state.random_pool[random_i++] > 0.999) {
+            river_sources.push([i, j]);
+          }
         } else if (height < 0.17) {
           // gras
           color = new Color(96, 128, 56);
@@ -154,16 +155,67 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
           // water
           color = new Color(0, 0, 230);
         }
-        color.randomize();
+        //color.randomize();
         color_row.push(color);
       });
       colors.push(color_row);
     });
 
-    // let local_min = false;
-    // while (!local_min) {
+    river_sources.forEach(source => {
+      let [row, col] = source;
+      let path = [];
+      while (true) {
+        path.push([row, col]);
+        let height = this.getCenterY(rows[row][col]);
+        let lower_positions: [number, number][] = [];
+        // up
+        if (row - 1 >= 0) {
+          let new_height = this.getCenterY(rows[row - 1][col]);
+          if (new_height > height) {
+            lower_positions.push([row - 1, col]);
+          }
+        }
 
-    // }
+        // down
+        if (row + 1 < rows.length) {
+          let new_height = this.getCenterY(rows[row + 1][col]);
+          if (new_height > height) {
+            lower_positions.push([row + 1, col]);
+          }
+        }
+
+        // left
+        if (col - 1 >= 0) {
+          let new_height = this.getCenterY(rows[row][col - 1]);
+          if (new_height > height) {
+            lower_positions.push([row, col - 1]);
+          }
+        }
+
+        // right
+        if (col + 1 < rows[0].length) {
+          let new_height = this.getCenterY(rows[row][col + 1]);
+          if (new_height > height) {
+            lower_positions.push([row, col + 1]);
+          }
+        }
+
+        // found local minimum
+        if (lower_positions.length === 0) {
+          break;
+        } else {
+          let i = Math.floor(this.canvas.state.random_pool[random_i++] * lower_positions.length);
+          [row, col] = lower_positions[i];
+        }
+      }
+
+      const ending_height = this.getCenterY(rows[row][col]);
+      if (ending_height >= 0.19) { // only color if it ends in water
+        path.forEach(([row, col]) => {
+          colors[row][col] = new Color(0, 0, 255);
+        });
+      }
+    });
 
     const vertices_per_face = 6;
     colors.forEach(row =>
@@ -465,7 +517,7 @@ export class Perlin extends IsoShapeRotateGL {
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
-    this.samples_per_row = 91;
+    this.samples_per_row = 210;
     this.terrain = new PerlinData(canvas, this.samples_per_row);
     this.color = new PerlinData(canvas, this.samples_per_row);
   }
@@ -496,7 +548,7 @@ export class Perlin extends IsoShapeRotateGL {
 
         face.forEach(vertex => {
           vertex.divide(
-            new Point3D(this.samples_per_row, 3.2, this.samples_per_row)
+            new Point3D(this.samples_per_row, 3, this.samples_per_row)
           );
           vertex.y = Math.min(vertex.y, 0.19);
         });
