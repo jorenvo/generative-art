@@ -191,74 +191,73 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     // colors[colors.length - 1][0] = new Color(cloud_intensity, cloud_intensity, cloud_intensity, 150);
     // colors[colors.length - 1][1] = new Color(cloud_intensity, cloud_intensity, cloud_intensity, 150);
 
-    river_sources.forEach(source => {
-      return;
-      let [row, col] = source;
-      let path = [];
-      while (true) {
-        path.push([row, col]);
-        let height = faces[row][col].height;
-        let lower_positions: [number, number][] = [];
-        // up
-        if (row - 1 >= 0) {
-          let new_height = faces[row - 1][col].height;
-          if (new_height > height) {
-            lower_positions.push([row - 1, col]);
-          }
-        }
+    // river_sources.forEach(source => {
+    //   let [row, col] = source;
+    //   let path = [];
+    //   while (true) {
+    //     path.push([row, col]);
+    //     let height = faces[row][col].height;
+    //     let lower_positions: [number, number][] = [];
+    //     // up
+    //     if (row - 1 >= 0) {
+    //       let new_height = faces[row - 1][col].height;
+    //       if (new_height > height) {
+    //         lower_positions.push([row - 1, col]);
+    //       }
+    //     }
 
-        // down
-        if (row + 1 < faces.length) {
-          let new_height = faces[row + 1][col].height;
-          if (new_height > height) {
-            lower_positions.push([row + 1, col]);
-          }
-        }
+    //     // down
+    //     if (row + 1 < faces.length) {
+    //       let new_height = faces[row + 1][col].height;
+    //       if (new_height > height) {
+    //         lower_positions.push([row + 1, col]);
+    //       }
+    //     }
 
-        // left
-        if (col - 1 >= 0) {
-          let new_height = faces[row][col - 1].height;
-          if (new_height > height) {
-            lower_positions.push([row, col - 1]);
-          }
-        }
+    //     // left
+    //     if (col - 1 >= 0) {
+    //       let new_height = faces[row][col - 1].height;
+    //       if (new_height > height) {
+    //         lower_positions.push([row, col - 1]);
+    //       }
+    //     }
 
-        // right
-        if (col + 1 < faces[0].length) {
-          let new_height = faces[row][col + 1].height;
-          if (new_height > height) {
-            lower_positions.push([row, col + 1]);
-          }
-        }
+    //     // right
+    //     if (col + 1 < faces[0].length) {
+    //       let new_height = faces[row][col + 1].height;
+    //       if (new_height > height) {
+    //         lower_positions.push([row, col + 1]);
+    //       }
+    //     }
 
-        // found local minimum
-        if (lower_positions.length === 0) {
-          break;
-        } else {
-          let i = Math.floor(
-            this.canvas.state.random_pool[random_i++] * lower_positions.length
-          );
-          [row, col] = lower_positions[i];
-        }
-      }
+    //     // found local minimum
+    //     if (lower_positions.length === 0) {
+    //       break;
+    //     } else {
+    //       let i = Math.floor(
+    //         this.canvas.state.random_pool[random_i++] * lower_positions.length
+    //       );
+    //       [row, col] = lower_positions[i];
+    //     }
+    //   }
 
-      const ending_height = faces[row][col].height;
-      if (ending_height >= 0.19) {
-        // only color if it ends in water
-        path.forEach(([row, col]) => {
-          colors[row][col] = new Color(0, 0, 255);
-        });
-      }
-    });
+    //   const ending_height = faces[row][col].height;
+    //   if (ending_height >= 0.19) {
+    //     // only color if it ends in water
+    //     path.forEach(([row, col]) => {
+    //       colors[row][col] = new Color(0, 0, 255);
+    //     });
+    //   }
+    // });
 
     const vertices_per_face = 6;
-    colors.forEach(row =>
-      row.forEach(color => {
+    faces.forEach(row =>
+      row.forEach(face => {
         for (let j = 0; j < vertices_per_face; j++) {
-          gl_colors.push(color.r);
-          gl_colors.push(color.g);
-          gl_colors.push(color.b);
-          gl_colors.push(color.a);
+          gl_colors.push(face.color.r);
+          gl_colors.push(face.color.g);
+          gl_colors.push(face.color.b);
+          gl_colors.push(face.color.a);
         }
       })
     );
@@ -606,8 +605,29 @@ export class Perlin extends IsoShapeRotateGL {
           new Point3D(col_coord, samples[row][col], row_coord),
           new Point3D(col_coord, samples[row - 1][col], row_coord - 1),
           new Point3D(col_coord - 1, samples[row - 1][col - 1], row_coord - 1),
-          new Point3D(col_coord - 1, samples[row][col - 1], row_coord)
+          new Point3D(col_coord - 1, samples[row][col - 1], row_coord),
         ]);
+
+        // small values = tall mountains
+        let color;
+        if (face.height < 0.24) {
+          // snow
+          color = new Color(255, 255, 255);
+        } else if (face.height < 0.45) {
+          // rock
+          color = new Color(170, 164, 157);
+        } else if (face.height < 0.6) {
+          // gras
+          color = new Color(96, 128, 56);
+        } else if (face.height < 0.7) {
+          // sand
+          color = new Color(194, 178, 128);
+        } else {
+          // water
+          color = new Color(0, 0, 230);
+        }
+        color.randomize();
+        face.color = color;
 
         face.vertices.forEach(vertex => {
           vertex.divide(
