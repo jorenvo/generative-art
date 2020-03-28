@@ -155,7 +155,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
           // water
           color = new Color(0, 0, 230);
         }
-        //color.randomize();
+        color.randomize();
         color_row.push(color);
       });
       colors.push(color_row);
