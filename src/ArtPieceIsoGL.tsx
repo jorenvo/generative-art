@@ -3,15 +3,37 @@ import { ArtCanvas } from "./App";
 import { Matrix4 } from "./UtilMatrix4";
 import { Point3D } from "./ArtPieceIso";
 
+class Face {
+  vertices: [Point3D, Point3D, Point3D, Point3D];
+  height: number;
+  color: Color;
+
+  constructor(vertices: [Point3D, Point3D, Point3D, Point3D]) {
+    this.vertices = vertices;
+    this.height = 0;
+    this.color = new Color();
+
+    this.setHeight();
+  }
+
+  private setHeight() {
+    this.height =
+      this.vertices.reduce((acc, curr) => acc + curr.y, 0) /
+      this.vertices.length;
+  }
+}
+
 class Color {
   r: number;
   g: number;
   b: number;
+  a: number;
 
-  constructor(r = 0, g = 0, b = 0) {
+  constructor(r = 0, g = 0, b = 0, a = 255) {
     this.r = r;
     this.g = g;
     this.b = b;
+    this.a = a;
   }
 
   private clamp(min: number, x: number, max: number): number {
@@ -50,7 +72,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     this.random_pool_i = 0;
   }
 
-  abstract generateShape(): Point3D[][][];
+  abstract generateShape(): Face[][];
   abstract generateColor(): Color[];
 
   is_2d() {
@@ -91,17 +113,21 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     }
   }
 
-  private setVertices(rows: Point3D[][][]) {
+  private setVertices(faces: Face[][]) {
+    let amount_of_vertices = 0;
     let vertices: number[] = [];
-    rows.forEach(row =>
+    faces.forEach(row =>
       row.forEach(f => {
-        vertices.push(...f[0].xyz());
-        vertices.push(...f[2].xyz());
-        vertices.push(...f[1].xyz());
+        const v = f.vertices;
+        vertices.push(...v[0].xyz());
+        vertices.push(...v[2].xyz());
+        vertices.push(...v[1].xyz());
 
-        vertices.push(...f[0].xyz());
-        vertices.push(...f[3].xyz());
-        vertices.push(...f[2].xyz());
+        vertices.push(...v[0].xyz());
+        vertices.push(...v[3].xyz());
+        vertices.push(...v[2].xyz());
+
+        amount_of_vertices += 6;
       })
     );
 
@@ -113,42 +139,42 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
       Float32Array.from(vertices),
       this.gl.STATIC_DRAW
     );
+
+    return amount_of_vertices;
   }
 
   private getCenterY(points: Point3D[]): number {
     return points.reduce((acc, curr) => acc + curr.y, 0) / points.length;
   }
 
-  private setColors(rows: Point3D[][][]) {
+  private setColors(faces: Face[][]) {
     const colors: Color[][] = [];
     const gl_colors: number[] = [];
 
     let random_i = 0;
     const river_sources: [number, number][] = [];
-    rows.forEach((row, i) => {
+    faces.forEach((row, i) => {
       let color_row: Color[] = [];
       row.forEach((face, j) => {
         // small values = tall mountains
-        const height = this.getCenterY(face);
-
         let color;
         // todo i think 1 / 4 is the max
-        if (height < 0.08) {
+        if (face.height < 0.08) {
           // snow
           color = new Color(255, 255, 255);
           if (this.canvas.state.random_pool[random_i++] > 0.998) {
             river_sources.push([i, j]);
           }
-        } else if (height < 0.14) {
+        } else if (face.height < 0.14) {
           // rock
           color = new Color(170, 164, 157);
           if (this.canvas.state.random_pool[random_i++] > 0.999) {
             river_sources.push([i, j]);
           }
-        } else if (height < 0.17) {
+        } else if (face.height < 0.17) {
           // gras
           color = new Color(96, 128, 56);
-        } else if (height < 0.19) {
+        } else if (face.height < 0.19) {
           // sand
           color = new Color(194, 178, 128);
         } else {
@@ -161,24 +187,29 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
       colors.push(color_row);
     });
 
+    // const cloud_intensity = 180;
+    // colors[colors.length - 1][0] = new Color(cloud_intensity, cloud_intensity, cloud_intensity, 150);
+    // colors[colors.length - 1][1] = new Color(cloud_intensity, cloud_intensity, cloud_intensity, 150);
+
     river_sources.forEach(source => {
+      return;
       let [row, col] = source;
       let path = [];
       while (true) {
         path.push([row, col]);
-        let height = this.getCenterY(rows[row][col]);
+        let height = faces[row][col].height;
         let lower_positions: [number, number][] = [];
         // up
         if (row - 1 >= 0) {
-          let new_height = this.getCenterY(rows[row - 1][col]);
+          let new_height = faces[row - 1][col].height;
           if (new_height > height) {
             lower_positions.push([row - 1, col]);
           }
         }
 
         // down
-        if (row + 1 < rows.length) {
-          let new_height = this.getCenterY(rows[row + 1][col]);
+        if (row + 1 < faces.length) {
+          let new_height = faces[row + 1][col].height;
           if (new_height > height) {
             lower_positions.push([row + 1, col]);
           }
@@ -186,15 +217,15 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
 
         // left
         if (col - 1 >= 0) {
-          let new_height = this.getCenterY(rows[row][col - 1]);
+          let new_height = faces[row][col - 1].height;
           if (new_height > height) {
             lower_positions.push([row, col - 1]);
           }
         }
 
         // right
-        if (col + 1 < rows[0].length) {
-          let new_height = this.getCenterY(rows[row][col + 1]);
+        if (col + 1 < faces[0].length) {
+          let new_height = faces[row][col + 1].height;
           if (new_height > height) {
             lower_positions.push([row, col + 1]);
           }
@@ -204,13 +235,16 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
         if (lower_positions.length === 0) {
           break;
         } else {
-          let i = Math.floor(this.canvas.state.random_pool[random_i++] * lower_positions.length);
+          let i = Math.floor(
+            this.canvas.state.random_pool[random_i++] * lower_positions.length
+          );
           [row, col] = lower_positions[i];
         }
       }
 
-      const ending_height = this.getCenterY(rows[row][col]);
-      if (ending_height >= 0.19) { // only color if it ends in water
+      const ending_height = faces[row][col].height;
+      if (ending_height >= 0.19) {
+        // only color if it ends in water
         path.forEach(([row, col]) => {
           colors[row][col] = new Color(0, 0, 255);
         });
@@ -224,6 +258,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
           gl_colors.push(color.r);
           gl_colors.push(color.g);
           gl_colors.push(color.b);
+          gl_colors.push(color.a);
         }
       })
     );
@@ -254,6 +289,34 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     } else {
       return location;
     }
+  }
+
+  private add_transparent_test(): Point3D[][][] {
+    const cubes: Point3D[][][] = [];
+    const row: Point3D[][] = [];
+
+    let a = 0.1;
+    let b = 0.9;
+    row.push([
+      new Point3D(a, 0, a),
+      new Point3D(a, 0, b),
+      new Point3D(b, 0, b),
+      new Point3D(b, 0, a),
+      new Point3D(a, 0, a),
+    ]);
+
+    // a = 0.4;
+    // b = 0.6;
+    row.push([
+      new Point3D(a, 0.1, a),
+      new Point3D(a, 0.1, b),
+      new Point3D(b, 0.1, b),
+      new Point3D(b, 0.1, a),
+      new Point3D(a, 0.1, a),
+    ]);
+
+    cubes.push(row);
+    return cubes;
   }
 
   public setup() {
@@ -309,14 +372,15 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
 
     this.positionBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer!);
-    const rows = this.generateShape();
-    this.setVertices(rows);
+    let rows = this.generateShape();
+    // rows = rows.concat(this.add_transparent_test());
+    this.amount_of_vertices = this.setVertices(rows);
 
     this.colorBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer!);
     this.setColors(rows);
 
-    this.amount_of_vertices = rows.length * rows[0].length * 6;
+    // this.amount_of_vertices = rows.length * rows[0].length * 6;
     this.random_pool_i = 0;
   }
 
@@ -331,7 +395,8 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
     this.gl.enable(this.gl.CULL_FACE);
-
+    this.gl.enable(this.gl.BLEND);
+    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.useProgram(this.program!);
     this.gl.enableVertexAttribArray(this.positionLocation!);
@@ -354,7 +419,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     this.gl.enableVertexAttribArray(this.colorLocation!);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer!);
 
-    size = 3; // 3 components per iteration
+    size = 4; // 3 components per iteration
     type = this.gl.UNSIGNED_BYTE; // the data is 8bit unsigned values
     normalize = true; // normalize the data (convert from 0-255 to 0-1)
     stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
@@ -517,7 +582,7 @@ export class Perlin extends IsoShapeRotateGL {
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
-    this.samples_per_row = 210;
+    this.samples_per_row = 91;
     this.terrain = new PerlinData(canvas, this.samples_per_row);
     this.color = new PerlinData(canvas, this.samples_per_row);
   }
@@ -528,25 +593,23 @@ export class Perlin extends IsoShapeRotateGL {
     super.setup();
   }
 
-  generateShape(): Point3D[][][] {
+  generateShape(): Face[][] {
     const samples = this.terrain.getSamples();
-    const face_vertices: Point3D[][][] = [];
+    const faces: Face[][] = [];
 
     for (let row = 1; row < this.samples_per_row; ++row) {
-      const current_row: Point3D[][] = [];
+      const current_row: Face[] = [];
       for (let col = 1; col < this.samples_per_row; ++col) {
         let row_coord = row;
         let col_coord = col;
-        let face: Point3D[] = [];
+        let face = new Face([
+          new Point3D(col_coord, samples[row][col], row_coord),
+          new Point3D(col_coord, samples[row - 1][col], row_coord - 1),
+          new Point3D(col_coord - 1, samples[row - 1][col - 1], row_coord - 1),
+          new Point3D(col_coord - 1, samples[row][col - 1], row_coord)
+        ]);
 
-        face.push(new Point3D(col_coord, samples[row][col], row_coord));
-        face.push(new Point3D(col_coord, samples[row - 1][col], row_coord - 1));
-        face.push(
-          new Point3D(col_coord - 1, samples[row - 1][col - 1], row_coord - 1)
-        );
-        face.push(new Point3D(col_coord - 1, samples[row][col - 1], row_coord));
-
-        face.forEach(vertex => {
+        face.vertices.forEach(vertex => {
           vertex.divide(
             new Point3D(this.samples_per_row, 3, this.samples_per_row)
           );
@@ -555,10 +618,10 @@ export class Perlin extends IsoShapeRotateGL {
 
         current_row.push(face);
       }
-      face_vertices.push(current_row);
+      faces.push(current_row);
     }
 
-    return face_vertices;
+    return faces;
   }
 
   generateColor(): Color[] {
