@@ -60,6 +60,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
   private positionLocation: number | undefined;
   private colorLocation: number | undefined;
   private matrixLocation: WebGLUniformLocation | undefined;
+  private cloudTranslation: WebGLUniformLocation | undefined;
   private positionBuffer: WebGLBuffer | null | undefined;
   private colorBuffer: WebGLBuffer | null | undefined;
   private amount_of_vertices: number | undefined;
@@ -289,12 +290,24 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     attribute vec4 a_color;
 
     uniform mat4 u_matrix;
+    uniform float cloud_translation;
 
     varying vec4 v_color;
 
     void main() {
+      vec4 final_pos = a_position;
+      
+      // slide clouds
+      if (a_color.a < 1.0) {
+        final_pos.x += cloud_translation;
+
+        if (final_pos.x > 1.0) {
+          final_pos.x -= 1.0;
+        }
+      }
+      
       // Multiply the position by the matrix
-      gl_Position = u_matrix * a_position;
+      gl_Position = u_matrix * final_pos;
 
       // Pass color to the fragment shader
       v_color = a_color;
@@ -332,6 +345,10 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     this.matrixLocation = this.getUniformLocationAndCheck(
       this.program,
       "u_matrix"
+    );
+    this.cloudTranslation = this.getUniformLocationAndCheck(
+      this.program,
+      "cloud_translation"
     );
 
     this.positionBuffer = this.gl.createBuffer();
@@ -398,7 +415,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
 
     const current_render_ms = performance.now();
     this.rotating_shape_radians +=
-      (current_render_ms - (this.last_render_ms || 0)) * 0.0004;
+      (current_render_ms - (this.last_render_ms || 0)) * 0.0002;
     this.last_render_ms = current_render_ms;
     const translation = [0, 150, 0];
     const rotation = [Math.PI / 5, this.rotating_shape_radians, 0];
@@ -424,6 +441,13 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
 
     // Set the matrix.
     this.gl.uniformMatrix4fv(this.matrixLocation!, false, matrix);
+
+    // Set the current time
+    const seconds_cloud_cycle = 15;
+    this.gl.uniform1f(
+      this.cloudTranslation!,
+      ((current_render_ms / 1000) % seconds_cloud_cycle) / seconds_cloud_cycle
+    );
 
     // Draw the geometry.
     const primitiveType = this.gl.TRIANGLES;
@@ -558,7 +582,7 @@ export class Perlin extends IsoShapeRotateGL {
     this.clouds = new PerlinData(
       canvas,
       this.samples_per_row,
-      this.canvas.state.random_pool[80085]
+      1 - this.canvas.state.random_pool[0]
     );
   }
 
@@ -611,10 +635,34 @@ export class Perlin extends IsoShapeRotateGL {
     const samples = this.clouds.getSamples();
     const cloud_intensity = 120;
     const cloud_alpha = 100;
+    const center = this.samples_per_row / 2;
     let cloud_height = 0.075;
     let faces = [];
+    let sample = samples[row][col];
 
-    for (let sample = samples[row][col]; sample < 0.45; sample += 0.05) {
+    const distance_to_center = Math.sqrt(
+      Math.pow(row - center, 2) + Math.pow(col - center, 2)
+    );
+
+    const max_distance = this.samples_per_row * Math.sqrt(2);
+    if (distance_to_center > center / 1.2) {
+      // fade
+      const offset = (distance_to_center / center) * 0.3;
+      if (Math.random() > 0.9)
+        console.log(
+          "Fade. Distance to center",
+          distance_to_center,
+          "Row, Col",
+          row,
+          col,
+          "Sample",
+          sample,
+          "Offset",
+          offset
+        );
+      sample += offset;
+    }
+    for (; sample < 0.45; sample += 0.05) {
       const face = new Face([
         new Point3D(col, cloud_height, row),
         new Point3D(col, cloud_height, row - 1),
@@ -636,7 +684,6 @@ export class Perlin extends IsoShapeRotateGL {
       });
 
       faces.push(face);
-
       cloud_height -= 0.005;
     }
 
