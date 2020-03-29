@@ -547,19 +547,61 @@ class PerlinData {
 export class Perlin extends IsoShapeRotateGL {
   private samples_per_row: number;
   private terrain: PerlinData;
-  private color: PerlinData;
+  private clouds: PerlinData;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
     this.samples_per_row = 91;
     this.terrain = new PerlinData(canvas, this.samples_per_row);
-    this.color = new PerlinData(canvas, this.samples_per_row);
+    this.clouds = new PerlinData(canvas, this.samples_per_row);
   }
 
   setup() {
     this.terrain.init();
-    this.color.init();
+    this.clouds.init();
     super.setup();
+  }
+
+  private generateTerrainFace(
+    samples: number[][],
+    row: number,
+    col: number
+  ): Face {
+    let face = new Face([
+      new Point3D(col, samples[row][col], row),
+      new Point3D(col, samples[row - 1][col], row - 1),
+      new Point3D(col - 1, samples[row - 1][col - 1], row - 1),
+      new Point3D(col - 1, samples[row][col - 1], row),
+    ]);
+
+    // small values = tall mountains
+    let color;
+    const water_level = 0.68;
+    if (face.height < 0.24) {
+      // snow
+      color = new Color(255, 255, 255);
+    } else if (face.height < 0.5) {
+      // rock
+      color = new Color(170, 164, 157);
+    } else if (face.height < 0.6) {
+      // gras
+      color = new Color(96, 128, 56);
+    } else if (face.height < water_level) {
+      // sand
+      color = new Color(194, 178, 128);
+    } else {
+      // water
+      color = new Color(0, 0, 230);
+    }
+    color.randomize();
+    face.color = color;
+
+    face.vertices.forEach(vertex => {
+      vertex.y = Math.min(vertex.y, water_level - 0.04);
+      vertex.divide(new Point3D(this.samples_per_row, 3, this.samples_per_row));
+    });
+
+    return face;
   }
 
   generateShape(): Face[][] {
@@ -569,45 +611,7 @@ export class Perlin extends IsoShapeRotateGL {
     for (let row = 1; row < this.samples_per_row; ++row) {
       const current_row: Face[] = [];
       for (let col = 1; col < this.samples_per_row; ++col) {
-        let row_coord = row;
-        let col_coord = col;
-        let face = new Face([
-          new Point3D(col_coord, samples[row][col], row_coord),
-          new Point3D(col_coord, samples[row - 1][col], row_coord - 1),
-          new Point3D(col_coord - 1, samples[row - 1][col - 1], row_coord - 1),
-          new Point3D(col_coord - 1, samples[row][col - 1], row_coord),
-        ]);
-
-        // small values = tall mountains
-        let color;
-        const water_level = 0.68;
-        if (face.height < 0.24) {
-          // snow
-          color = new Color(255, 255, 255);
-        } else if (face.height < 0.5) {
-          // rock
-          color = new Color(170, 164, 157);
-        } else if (face.height < 0.6) {
-          // gras
-          color = new Color(96, 128, 56);
-        } else if (face.height < water_level) {
-          // sand
-          color = new Color(194, 178, 128);
-        } else {
-          // water
-          color = new Color(0, 0, 230);
-        }
-        color.randomize();
-        face.color = color;
-
-        face.vertices.forEach(vertex => {
-          vertex.y = Math.min(vertex.y, water_level - 0.04);
-          vertex.divide(
-            new Point3D(this.samples_per_row, 3, this.samples_per_row)
-          );
-        });
-
-        current_row.push(face);
+        current_row.push(this.generateTerrainFace(samples, row, col));
       }
       faces.push(current_row);
     }
@@ -616,7 +620,7 @@ export class Perlin extends IsoShapeRotateGL {
   }
 
   generateColor(): Color[] {
-    const samples = this.color.getSamples();
+    const samples = this.clouds.getSamples();
     const flattened = [];
 
     let random_i = 0;
