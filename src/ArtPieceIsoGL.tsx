@@ -63,13 +63,11 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
   private positionBuffer: WebGLBuffer | null | undefined;
   private colorBuffer: WebGLBuffer | null | undefined;
   private amount_of_vertices: number | undefined;
-  private random_pool_i: number;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
     this.rotating_shape_radians = 0;
     this.gl = this.canvas.getContextGl();
-    this.random_pool_i = 0;
   }
 
   abstract generateShape(): Face[][];
@@ -347,9 +345,6 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     this.colorBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer!);
     this.setColors(flattened_faces);
-
-    // this.amount_of_vertices = rows.length * rows[0].length * 6;
-    this.random_pool_i = 0;
   }
 
   draw(init = true) {
