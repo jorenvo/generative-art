@@ -338,7 +338,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer!);
     const faces = this.generateShape();
     let flattened_faces = faces.flat();
-    flattened_faces = flattened_faces.concat(this.add_transparent_test());
+    // flattened_faces = flattened_faces.concat(this.add_transparent_test());
     flattened_faces.sort((a, b) => b.height - a.height); // painter's algorithm
     this.amount_of_vertices = this.setVertices(flattened_faces);
 
@@ -382,7 +382,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     this.gl.enableVertexAttribArray(this.colorLocation!);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer!);
 
-    size = 4; // 3 components per iteration
+    size = 4; // 4 components per iteration
     type = this.gl.UNSIGNED_BYTE; // the data is 8bit unsigned values
     normalize = true; // normalize the data (convert from 0-255 to 0-1)
     stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
@@ -441,14 +441,16 @@ class PerlinData {
   private gradients: Point3D[][];
   private samples: number[][];
   private samples_per_row: number;
+  private seed: number;
   private canvas: ArtCanvas;
 
-  constructor(canvas: ArtCanvas, samples_per_row: number) {
+  constructor(canvas: ArtCanvas, samples_per_row: number, seed: number) {
     this.gridcells = 5; // gridcells * gridsize should be 1
     this.gridsize = 0.2;
     this.gradients = [];
     this.samples = [];
     this.samples_per_row = samples_per_row;
+    this.seed = Math.floor(seed * 9_999);
     this.canvas = canvas;
     this.init();
   }
@@ -464,7 +466,9 @@ class PerlinData {
       gradients.push([]);
       for (let j = 0; j <= this.gridcells; j++) {
         let angle_unit_circle =
-          this.canvas.state.random_pool[i * this.gridcells + j] * Math.PI * 2;
+          this.canvas.state.random_pool[i * this.gridcells + j + this.seed] *
+          Math.PI *
+          2;
         gradients[i].push(
           new Point3D(Math.cos(angle_unit_circle), Math.sin(angle_unit_circle))
         );
@@ -546,8 +550,16 @@ export class Perlin extends IsoShapeRotateGL {
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
     this.samples_per_row = 91;
-    this.terrain = new PerlinData(canvas, this.samples_per_row);
-    this.clouds = new PerlinData(canvas, this.samples_per_row);
+    this.terrain = new PerlinData(
+      canvas,
+      this.samples_per_row,
+      this.canvas.state.random_pool[0]
+    );
+    this.clouds = new PerlinData(
+      canvas,
+      this.samples_per_row,
+      this.canvas.state.random_pool[80085]
+    );
   }
 
   setup() {
@@ -556,11 +568,8 @@ export class Perlin extends IsoShapeRotateGL {
     super.setup();
   }
 
-  private generateTerrainFace(
-    samples: number[][],
-    row: number,
-    col: number
-  ): Face {
+  private generateTerrainFace(row: number, col: number): Face {
+    const samples = this.terrain.getSamples();
     let face = new Face([
       new Point3D(col, samples[row][col], row),
       new Point3D(col, samples[row - 1][col], row - 1),
@@ -571,7 +580,7 @@ export class Perlin extends IsoShapeRotateGL {
     // small values = tall mountains
     let color;
     const water_level = 0.68;
-    if (face.height < 0.24) {
+    if (face.height < 0.24 && Math.random() < 0.96) {
       // snow
       color = new Color(255, 255, 255);
     } else if (face.height < 0.5) {
@@ -598,14 +607,50 @@ export class Perlin extends IsoShapeRotateGL {
     return face;
   }
 
+  private generateCloudFaces(row: number, col: number): Face[] {
+    const samples = this.clouds.getSamples();
+    const cloud_intensity = 120;
+    const cloud_alpha = 100;
+    let cloud_height = 0.075;
+    let faces = [];
+
+    for (let sample = samples[row][col]; sample < 0.45; sample += 0.05) {
+      const face = new Face([
+        new Point3D(col, cloud_height, row),
+        new Point3D(col, cloud_height, row - 1),
+        new Point3D(col - 1, cloud_height, row - 1),
+        new Point3D(col - 1, cloud_height, row),
+      ]);
+      face.color = new Color(
+        cloud_intensity,
+        cloud_intensity,
+        cloud_intensity,
+        cloud_alpha
+      );
+
+      // todo generalize
+      face.vertices.forEach(vertex => {
+        vertex.divide(
+          new Point3D(this.samples_per_row, 1, this.samples_per_row)
+        );
+      });
+
+      faces.push(face);
+
+      cloud_height -= 0.005;
+    }
+
+    return faces;
+  }
+
   generateShape(): Face[][] {
-    const samples = this.terrain.getSamples();
     const faces: Face[][] = [];
 
     for (let row = 1; row < this.samples_per_row; ++row) {
-      const current_row: Face[] = [];
+      let current_row: Face[] = [];
       for (let col = 1; col < this.samples_per_row; ++col) {
-        current_row.push(this.generateTerrainFace(samples, row, col));
+        current_row.push(this.generateTerrainFace(row, col));
+        current_row = current_row.concat(this.generateCloudFaces(row, col));
       }
       faces.push(current_row);
     }
