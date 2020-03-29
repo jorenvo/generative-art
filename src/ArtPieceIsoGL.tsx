@@ -73,7 +73,6 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
   }
 
   abstract generateShape(): Face[][];
-  abstract generateColor(): Color[];
 
   is_2d() {
     return false;
@@ -617,43 +616,5 @@ export class Perlin extends IsoShapeRotateGL {
     }
 
     return faces;
-  }
-
-  generateColor(): Color[] {
-    const samples = this.clouds.getSamples();
-    const flattened = [];
-
-    let random_i = 0;
-    const greens = [
-      new Color(108, 135, 0),
-      new Color(92, 158, 0),
-      new Color(23, 199, 0),
-    ];
-    const browns = [
-      new Color(210, 105, 30),
-      new Color(135, 104, 0),
-      new Color(179, 121, 0),
-    ];
-    for (let row of samples) {
-      for (let sample of row) {
-        let color_i = Math.floor(this.canvas.state.random_pool[random_i++] * 3);
-        if (sample > 0.4) {
-          flattened.push(greens[color_i]);
-        } else {
-          flattened.push(browns[color_i]);
-        }
-
-        // sample *= Math.pow(256, 3) - 1;
-
-        // let r = sample % 256;
-        // sample = Math.floor(sample / 256);
-        // let g = sample % 256;
-        // sample = Math.floor(sample / 256);
-        // let b = sample % 256;
-        // flattened.push(new Color(r, g, b));
-      }
-    }
-
-    return flattened;
   }
 }
