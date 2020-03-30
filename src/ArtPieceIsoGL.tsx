@@ -239,51 +239,6 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     }
   }
 
-  private add_transparent_test(): Face[] {
-    const extra = [];
-    const cloud_intensity = 120;
-    const cloud_alpha = 100;
-    let a = 0.4;
-    let b = 0.6;
-    extra.push(
-      new Face(
-        [
-          new Point3D(a, 0, a),
-          new Point3D(a, 0, b),
-          new Point3D(b, 0, b),
-          new Point3D(b, 0, a),
-        ],
-        new Color(
-          cloud_intensity,
-          cloud_intensity,
-          cloud_intensity,
-          cloud_alpha
-        )
-      )
-    );
-
-    // a = 0.4;
-    // b = 0.6;
-    extra.push(
-      new Face(
-        [
-          new Point3D(a, 0.1, a),
-          new Point3D(a, 0.1, b),
-          new Point3D(b, 0.1, b),
-          new Point3D(b, 0.1, a),
-        ],
-        new Color(
-          cloud_intensity,
-          cloud_intensity,
-          cloud_intensity,
-          cloud_alpha
-        )
-      )
-    );
-
-    return extra;
-  }
-
   public setup() {
     const vertex_shader_src = `
     attribute vec4 a_position;
@@ -364,7 +319,6 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer!);
     const faces = this.generateShape();
     let flattened_faces = faces.flat();
-    // flattened_faces = flattened_faces.concat(this.add_transparent_test());
     flattened_faces.sort((a, b) => b.height - a.height); // painter's algorithm
     this.amount_of_vertices = this.setVertices(flattened_faces);
 
@@ -646,7 +600,7 @@ export class Perlin extends IsoShapeRotateGL {
     const cloud_intensity = 120;
     const cloud_alpha = 100;
     const center = this.samples_per_row / 2;
-    let cloud_height = 0.075;
+    let cloud_height = 0.07;
     let faces = [];
     let sample = samples[row][col];
 
@@ -654,7 +608,6 @@ export class Perlin extends IsoShapeRotateGL {
       Math.pow(row - center, 2) + Math.pow(col - center, 2)
     );
 
-    const max_distance = this.samples_per_row * Math.sqrt(2);
     if (distance_to_center > center / 1.2) {
       // fade
       const offset = (distance_to_center / center) * 0.3;
@@ -672,7 +625,7 @@ export class Perlin extends IsoShapeRotateGL {
       //   );
       sample += offset;
     }
-    for (; sample < 0.45; sample += 0.05) {
+    for (; sample < 0.50; sample += 0.05) {
       const face = new Face([
         new Point3D(col, cloud_height, row),
         new Point3D(col, cloud_height, row - 1),
