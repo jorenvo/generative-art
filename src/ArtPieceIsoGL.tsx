@@ -296,21 +296,30 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
 
     void main() {
       vec4 final_pos = a_position;
+      vec4 final_color = a_color;
       
-      // slide clouds
+      // clouds
       if (a_color.a < 1.0) {
         final_pos.x += cloud_translation;
-
+        
         if (final_pos.x > 1.0) {
           final_pos.x -= 1.0;
         }
+
+        float edge = 0.3;
+        vec4 transparent = vec4(1, 1, 1, 0);
+        if (final_pos.x < edge) {
+          final_color = mix(transparent, final_color, final_pos.x / edge);
+        } else if (final_pos.x > 1.0 - edge) {
+          final_color = mix(transparent, final_color, 1.0 - (final_pos.x - (1.0 - edge)) / edge);
+        }
       }
-      
+
       // Multiply the position by the matrix
       gl_Position = u_matrix * final_pos;
 
       // Pass color to the fragment shader
-      v_color = a_color;
+      v_color = final_color;
     }
         `;
     const vertex_shader = this.createShader(
@@ -372,6 +381,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
 
     // Clear the canvas.
+    this.gl.clearColor(0.8, 0.8, 0.8, 1.0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
     this.gl.enable(this.gl.CULL_FACE);
@@ -648,18 +658,18 @@ export class Perlin extends IsoShapeRotateGL {
     if (distance_to_center > center / 1.2) {
       // fade
       const offset = (distance_to_center / center) * 0.3;
-      if (Math.random() > 0.9)
-        console.log(
-          "Fade. Distance to center",
-          distance_to_center,
-          "Row, Col",
-          row,
-          col,
-          "Sample",
-          sample,
-          "Offset",
-          offset
-        );
+      // if (Math.random() > 0.9)
+      //   console.log(
+      //     "Fade. Distance to center",
+      //     distance_to_center,
+      //     "Row, Col",
+      //     row,
+      //     col,
+      //     "Sample",
+      //     sample,
+      //     "Offset",
+      //     offset
+      //   );
       sample += offset;
     }
     for (; sample < 0.45; sample += 0.05) {
