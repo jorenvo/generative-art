@@ -256,6 +256,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
             name="less"
             onTouchStart={_ => this.moreLessStart(!"less")}
             onTouchEnd={_ => this.moreLessStop(!"less")}
+            disabled={this.state.parameterA === 0}
           >
             -
           </button>
@@ -263,6 +264,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
             name="more"
             onTouchStart={_ => this.moreLessStart(!!"more")}
             onTouchEnd={_ => this.moreLessStop(!!"more")}
+            disabled={this.state.parameterA === 10}
           >
             +
           </button>
