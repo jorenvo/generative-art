@@ -40,11 +40,11 @@ class Color {
     return Math.min(max, Math.max(min, Math.floor(x)));
   }
 
-  randomize() {
+  randomize(random: number) {
     const intensity = 32;
-    this.r += Math.random() * intensity - intensity / 2;
-    this.g += Math.random() * intensity - intensity / 2;
-    this.b += Math.random() * intensity - intensity / 2;
+    this.r += random * intensity - intensity / 2;
+    this.g += random * intensity - intensity / 2;
+    this.b += random * intensity - intensity / 2;
 
     this.r = this.clamp(0, this.r, 255);
     this.g = this.clamp(0, this.g, 255);
@@ -640,7 +640,8 @@ export class Perlin extends IsoShapeRotateGL {
     // small values = tall mountains
     let color;
     const water_level = 0.68;
-    if (face.height < 0.24 && Math.random() < 0.96) {
+    const random = this.canvas.state.random_pool[row * col];
+    if (face.height < 0.24 && random < 0.96) {
       // snow
       color = new Color(255, 255, 255);
     } else if (face.height < 0.5) {
@@ -656,7 +657,7 @@ export class Perlin extends IsoShapeRotateGL {
       // water
       color = new Color(0, 0, 230);
     }
-    color.randomize();
+    color.randomize(random);
     face.color = color;
 
     face.vertices.forEach(vertex => {
