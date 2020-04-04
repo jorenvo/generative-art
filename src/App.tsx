@@ -192,13 +192,51 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     );
   }
 
+  renderParameter(): React.ReactNode {
+    return (
+      <>
+        <input
+          type="range"
+          name="parameter_a"
+          min="0"
+          max="10"
+          step="0.2"
+          value={String(this.state.parameterA)}
+          onChange={event =>
+            this.setState({
+              parameterA: Number(event.target.value),
+            })
+          }
+        />
+        <div id="mobile_controls">
+          <button
+            name="less"
+            onClick={_ =>
+              this.setState({ parameterA: this.state.parameterA - 0.2 })
+            }
+          >
+            -
+          </button>
+          <button
+            name="more"
+            onClick={_ =>
+              this.setState({ parameterA: this.state.parameterA + 0.2 })
+            }
+          >
+            +
+          </button>
+        </div>
+      </>
+    );
+  }
+
   renderReInit(): React.ReactNode {
     const active_art = this.getActiveArt();
     if (active_art && active_art.uses_random_pool) {
       return (
         <button
           name="reinit"
-          onClick={e => this.setState({ random_pool: this.initRandomPool() })}
+          onClick={_ => this.setState({ random_pool: this.initRandomPool() })}
         >
           ~
         </button>
@@ -243,19 +281,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         <canvas className="ArtCanvas" ref={this.canvas2D} />
         <canvas className="ArtCanvas" ref={this.canvas3D} />
         {this.renderSelect()}
-        <input
-          type="range"
-          name="parameter_a"
-          min="0"
-          max="10"
-          step="0.2"
-          value={String(this.state.parameterA)}
-          onChange={event =>
-            this.setState({
-              parameterA: Number(event.target.value),
-            })
-          }
-        />
+        {this.renderParameter()}
         {this.renderReInit()}
       </div>
     );

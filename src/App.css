@@ -10,9 +10,27 @@ button,
   margin: 20px auto;
 }
 
+#mobile_controls {
+  display: none;
+}
+
 @media screen and (max-width: 640px) {
   .ArtCanvas {
     width: 100%;
+  }
+
+  input[name="parameter_a"] {
+    display: none;
+  }
+
+  #mobile_controls {
+    display: block;
+    text-align: center;
+  }
+
+  #mobile_controls button {
+    display: inline-block;
+    margin: 0px 10px;
   }
 }
 
