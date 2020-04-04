@@ -8,6 +8,7 @@ button,
 .ArtCanvas {
   display: block;
   margin: 20px auto;
+  width: 100%; /* todo temp */
 }
 
 @media screen and (max-width: 640px) {

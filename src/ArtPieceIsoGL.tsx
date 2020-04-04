@@ -64,11 +64,15 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
   private positionBuffer: WebGLBuffer | null | undefined;
   private colorBuffer: WebGLBuffer | null | undefined;
   private amount_of_vertices: number | undefined;
+  private vertex_range_min: Point3D;
+  private vertex_range_max: Point3D;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
     this.rotating_shape_radians = 0;
     this.gl = this.canvas.getContextGl();
+    this.vertex_range_min = new Point3D();
+    this.vertex_range_max = new Point3D();
   }
 
   abstract generateShape(): Face[][];
@@ -111,9 +115,55 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     }
   }
 
+  private setVertexRange(faces: Face[]) {
+    this.vertex_range_min = new Point3D(Infinity, Infinity, Infinity);
+    this.vertex_range_max = new Point3D(-Infinity, -Infinity, -Infinity);
+
+    faces.forEach(f => {
+      this.vertex_range_min.x = Math.min(
+        this.vertex_range_min.x,
+        ...f.vertices.map(v => v.x)
+      );
+      this.vertex_range_min.y = Math.min(
+        this.vertex_range_min.y,
+        ...f.vertices.map(v => v.y)
+      );
+      this.vertex_range_min.z = Math.min(
+        this.vertex_range_min.z,
+        ...f.vertices.map(v => v.z)
+      );
+
+      this.vertex_range_max.x = Math.max(
+        this.vertex_range_max.x,
+        ...f.vertices.map(v => v.x)
+      );
+      this.vertex_range_max.y = Math.max(
+        this.vertex_range_max.y,
+        ...f.vertices.map(v => v.y)
+      );
+      this.vertex_range_max.z = Math.max(
+        this.vertex_range_max.z,
+        ...f.vertices.map(v => v.z)
+      );
+    });
+
+    console.log(
+      `x range: [${this.vertex_range_min.x}, ${this.vertex_range_max.x}]`
+    );
+    console.log(
+      `y range: [${this.vertex_range_min.y}, ${this.vertex_range_max.y}]`
+    );
+    console.log(
+      `z range: [${this.vertex_range_min.z}, ${this.vertex_range_max.z}]`
+    );
+  }
+
   private setVertices(faces: Face[]) {
     let amount_of_vertices = 0;
     let vertices: number[] = [];
+
+    this.setVertexRange(faces);
+
     faces.forEach(f => {
       const v = f.vertices;
       vertices.push(...v[0].xyz());
@@ -252,11 +302,11 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     void main() {
       vec4 final_pos = a_position;
       vec4 final_color = a_color;
-      
+
       // clouds
       if (a_color.a < 1.0) {
         final_pos.x += cloud_translation;
-        
+
         if (final_pos.x > 1.0) {
           final_pos.x -= 1.0;
         }
@@ -331,8 +381,21 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     if (init) {
       this.setup();
     }
+
     // Tell WebGL how to convert from clip space to pixels
-    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+    // console.log(displayWidth, displayHeight);
+    // this.gl.viewport(0, 0, 50, 50);
+    // this.gl.viewport(0, 0, this.canvas.html_element.clientWidth, this.canvas.html_element.clientHeight);
+    this.gl.viewport(
+      0,
+      0,
+      this.gl.drawingBufferWidth,
+      this.gl.drawingBufferHeight
+    );
+
+    if (Math.random() > 0.95) {
+      console.log(this.gl.drawingBufferWidth, this.gl.drawingBufferHeight);
+    }
 
     // Clear the canvas.
     this.gl.clearColor(0.8, 0.8, 0.8, 1.0);
@@ -378,30 +441,48 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     );
 
     const current_render_ms = performance.now();
-    this.rotating_shape_radians +=
-      (current_render_ms - (this.last_render_ms || 0)) * 0.0002;
+    // this.rotating_shape_radians +=
+    //   (current_render_ms - (this.last_render_ms || 0)) * 0.0002;
     this.last_render_ms = current_render_ms;
-    const translation = [0, 150, 0];
-    const rotation = [Math.PI / 5, this.rotating_shape_radians, 0];
-    const scale = [this.canvas.width, this.canvas.height, 1];
+    const scale_factor = this.canvas.html_element.clientHeight;
+    const x_offset =
+      (this.canvas.html_element.clientWidth -
+        this.canvas.html_element.clientHeight) /
+      2;
+    const y_offset =
+      (this.canvas.html_element.clientHeight *
+        (1 - this.vertex_range_max.y - this.vertex_range_min.y)) /
+      2;
+
+    // 0.2 is y range / x range: this.gl.drawingBufferHeight * 0.2
+    const translation = [x_offset, y_offset, 0];
+    // const rotation = [Math.PI / 5, this.rotating_shape_radians, 0];
+    const rotation = [Math.PI / 2 - (this.canvas.state.parameterA / 10), 0, 0];
+    const scale = [scale_factor, scale_factor, 0.1];
     const m4 = new Matrix4();
     let matrix = m4.projection(
       (this.gl.canvas as HTMLCanvasElement).clientWidth,
       (this.gl.canvas as HTMLCanvasElement).clientHeight,
       400
     );
+    // this happens last
     matrix = m4.translate(
       matrix,
       translation[0],
       translation[1],
       translation[2]
     );
+    const y_center =
+      -this.vertex_range_min.y -
+      (this.vertex_range_max.y - this.vertex_range_min.y) / 2;
+    console.log(y_center);
     matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
-    matrix = m4.translate(matrix, 0.5, 0.5, 0.5);
+    matrix = m4.translate(matrix, 0.5, -y_center, 0.5);
     matrix = m4.xRotate(matrix, rotation[0]);
     matrix = m4.yRotate(matrix, rotation[1]);
     matrix = m4.zRotate(matrix, rotation[2]);
-    matrix = m4.translate(matrix, -0.5, -0.5, -0.5);
+    // this happens first
+    matrix = m4.translate(matrix, -0.5, y_center, -0.5);
 
     // Set the matrix.
     this.gl.uniformMatrix4fv(this.matrixLocation!, false, matrix);
@@ -418,7 +499,7 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     offset = 0;
     this.gl.drawArrays(primitiveType, offset, this.amount_of_vertices!);
 
-    this.canvas.animation_id = requestAnimationFrame(() => this.draw(false));
+    // this.canvas.animation_id = requestAnimationFrame(() => this.draw(false));
   }
 }
 
@@ -540,12 +621,12 @@ export class Perlin extends IsoShapeRotateGL {
     this.samples_per_row = 91;
     this.terrain = new PerlinData(
       canvas,
-      this.samples_per_row,
+      this.samples_per_row + 1, // + 1 because of fenceposting
       this.canvas.state.random_pool[0]
     );
     this.clouds = new PerlinData(
       canvas,
-      this.samples_per_row,
+      this.samples_per_row + 1,
       1 - this.canvas.state.random_pool[0]
     );
   }
@@ -559,10 +640,10 @@ export class Perlin extends IsoShapeRotateGL {
   private generateTerrainFace(row: number, col: number): Face {
     const samples = this.terrain.getSamples();
     let face = new Face([
+      new Point3D(col + 1, samples[row + 1][col + 1], row + 1),
+      new Point3D(col + 1, samples[row][col + 1], row),
       new Point3D(col, samples[row][col], row),
-      new Point3D(col, samples[row - 1][col], row - 1),
-      new Point3D(col - 1, samples[row - 1][col - 1], row - 1),
-      new Point3D(col - 1, samples[row][col - 1], row),
+      new Point3D(col, samples[row + 1][col], row + 1),
     ]);
 
     // small values = tall mountains
@@ -625,12 +706,12 @@ export class Perlin extends IsoShapeRotateGL {
       //   );
       sample += offset;
     }
-    for (; sample < 0.50; sample += 0.05) {
+    for (; sample < 0.5; sample += 0.05) {
       const face = new Face([
+        new Point3D(col + 1, cloud_height, row + 1),
+        new Point3D(col + 1, cloud_height, row),
         new Point3D(col, cloud_height, row),
-        new Point3D(col, cloud_height, row - 1),
-        new Point3D(col - 1, cloud_height, row - 1),
-        new Point3D(col - 1, cloud_height, row),
+        new Point3D(col, cloud_height, row + 1),
       ]);
       face.color = new Color(
         cloud_intensity,
@@ -656,9 +737,9 @@ export class Perlin extends IsoShapeRotateGL {
   generateShape(): Face[][] {
     const faces: Face[][] = [];
 
-    for (let row = 1; row < this.samples_per_row; ++row) {
+    for (let row = 0; row < this.samples_per_row; ++row) {
       let current_row: Face[] = [];
-      for (let col = 1; col < this.samples_per_row; ++col) {
+      for (let col = 0; col < this.samples_per_row; ++col) {
         current_row.push(this.generateTerrainFace(row, col));
         current_row = current_row.concat(this.generateCloudFaces(row, col));
       }
