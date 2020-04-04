@@ -21,6 +21,11 @@ interface ArtCanvasState {
   random_pool: Array<number>;
 }
 
+enum Interval {
+  Less = "less_interval",
+  More = "more_interval",
+}
+
 export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private canvas2D: React.RefObject<HTMLCanvasElement>;
   private canvas3D: React.RefObject<HTMLCanvasElement>;
@@ -200,6 +205,36 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     return Math.min(max, Math.max(min, x));
   }
 
+  private moreLessStart(more: boolean) {
+    let interval = Interval.Less;
+    let change = 0.2;
+    if (more) {
+      interval = Interval.More;
+      change = -change;
+    }
+    console.log("start");
+
+    if (!this[interval]) {
+      this[interval] = window.setInterval(() => {
+        console.log("running");
+        this.setState({
+          parameterA: this.clamp(0, this.state.parameterA - change, 10),
+        });
+      }, 50);
+    }
+  }
+
+  private moreLessStop(more: boolean) {
+    let interval = Interval.Less;
+
+    console.log("stopping");
+    if (more) {
+      interval = Interval.More;
+    }
+    window.clearInterval(this[interval]);
+    this[interval] = 0;
+  }
+
   renderParameter(): React.ReactNode {
     return (
       <>
@@ -219,31 +254,15 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         <div id="mobile_controls">
           <button
             name="less"
-            onMouseDown={_ => {
-              this.less_interval = window.setInterval(
-                () =>
-                  this.setState({
-                    parameterA: this.clamp(0, this.state.parameterA - 0.2, 10),
-                  }),
-                50
-              );
-            }}
-            onMouseUp={_ => clearInterval(this.less_interval)}
+            onTouchStart={_ => this.moreLessStart(!"less")}
+            onTouchEnd={_ => this.moreLessStop(!"less")}
           >
             -
           </button>
           <button
             name="more"
-            onMouseDown={_ => {
-              this.more_interval = window.setInterval(
-                () =>
-                  this.setState({
-                    parameterA: this.clamp(0, this.state.parameterA + 0.2, 10),
-                  }),
-                50
-              );
-            }}
-            onMouseUp={_ => clearInterval(this.more_interval)}
+            onTouchStart={_ => this.moreLessStart(!!"more")}
+            onTouchEnd={_ => this.moreLessStop(!!"more")}
           >
             +
           </button>
@@ -299,7 +318,12 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   render(): React.ReactNode {
     return (
-      <div>
+      <div
+        onTouchEnd={_ => {
+          this.moreLessStop(!"less");
+          this.moreLessStop(!!"more");
+        }}
+      >
         <canvas className="ArtCanvas" ref={this.canvas2D} />
         <canvas className="ArtCanvas" ref={this.canvas3D} />
         {this.renderSelect()}
