@@ -26,6 +26,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private canvas3D: React.RefObject<HTMLCanvasElement>;
   private margin: number;
   private art_pieces: Array<ArtPiece>;
+  private less_interval: number;
+  private more_interval: number;
 
   width_to_height_ratio: number;
   draw_width: number;
@@ -47,6 +49,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.height = this.draw_height + this.margin;
     this.animation_id = undefined;
     this.art_pieces = [];
+    this.less_interval = 0;
+    this.more_interval = 0;
 
     this.state = {
       active_art_name: undefined,
@@ -192,6 +196,10 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     );
   }
 
+  private clamp(min: number, x: number, max: number): number {
+    return Math.min(max, Math.max(min, x));
+  }
+
   renderParameter(): React.ReactNode {
     return (
       <>
@@ -211,17 +219,31 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         <div id="mobile_controls">
           <button
             name="less"
-            onClick={_ =>
-              this.setState({ parameterA: this.state.parameterA - 0.2 })
-            }
+            onMouseDown={_ => {
+              this.less_interval = window.setInterval(
+                () =>
+                  this.setState({
+                    parameterA: this.clamp(0, this.state.parameterA - 0.2, 10),
+                  }),
+                50
+              );
+            }}
+            onMouseUp={_ => clearInterval(this.less_interval)}
           >
             -
           </button>
           <button
             name="more"
-            onClick={_ =>
-              this.setState({ parameterA: this.state.parameterA + 0.2 })
-            }
+            onMouseDown={_ => {
+              this.more_interval = window.setInterval(
+                () =>
+                  this.setState({
+                    parameterA: this.clamp(0, this.state.parameterA + 0.2, 10),
+                  }),
+                50
+              );
+            }}
+            onMouseUp={_ => clearInterval(this.more_interval)}
           >
             +
           </button>
