@@ -378,24 +378,18 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
   }
 
   draw(init = true) {
+    // console.time("iso_setup");
     if (init) {
       this.setup();
     }
 
     // Tell WebGL how to convert from clip space to pixels
-    // console.log(displayWidth, displayHeight);
-    // this.gl.viewport(0, 0, 50, 50);
-    // this.gl.viewport(0, 0, this.canvas.html_element.clientWidth, this.canvas.html_element.clientHeight);
     this.gl.viewport(
       0,
       0,
       this.gl.drawingBufferWidth,
       this.gl.drawingBufferHeight
     );
-
-    if (Math.random() > 0.95) {
-      console.log(this.gl.drawingBufferWidth, this.gl.drawingBufferHeight);
-    }
 
     // Clear the canvas.
     this.gl.clearColor(0.8, 0.8, 0.8, 1.0);
@@ -441,23 +435,18 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     );
 
     const current_render_ms = performance.now();
-    // this.rotating_shape_radians +=
-    //   (current_render_ms - (this.last_render_ms || 0)) * 0.0002;
+    this.rotating_shape_radians +=
+      (current_render_ms - (this.last_render_ms || 0)) * 0.0002;
     this.last_render_ms = current_render_ms;
-    const scale_factor = this.canvas.html_element.clientHeight;
-    const x_offset =
-      (this.canvas.html_element.clientWidth -
-        this.canvas.html_element.clientHeight) /
-      2;
-    const y_offset =
-      (this.canvas.html_element.clientHeight *
-        (1 - this.vertex_range_max.y - this.vertex_range_min.y)) /
-      2;
 
-    // 0.2 is y range / x range: this.gl.drawingBufferHeight * 0.2
+    const map_size = this.canvas.html_element.clientHeight * 0.9;
+    const scale_factor = map_size;
+    const x_offset = (this.canvas.html_element.clientWidth - map_size) / 2;
+    const y_offset =
+      (map_size * (1 - this.vertex_range_max.y - this.vertex_range_min.y)) / 2;
+
     const translation = [x_offset, y_offset, 0];
-    // const rotation = [Math.PI / 5, this.rotating_shape_radians, 0];
-    const rotation = [Math.PI / 2 - (this.canvas.state.parameterA / 10), 0, 0];
+    const rotation = [Math.PI / 4, this.rotating_shape_radians, 0];
     const scale = [scale_factor, scale_factor, 0.1];
     const m4 = new Matrix4();
     let matrix = m4.projection(
@@ -475,7 +464,6 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     const y_center =
       -this.vertex_range_min.y -
       (this.vertex_range_max.y - this.vertex_range_min.y) / 2;
-    console.log(y_center);
     matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
     matrix = m4.translate(matrix, 0.5, -y_center, 0.5);
     matrix = m4.xRotate(matrix, rotation[0]);
@@ -497,9 +485,12 @@ export abstract class IsoShapeRotateGL extends ArtPiece {
     // Draw the geometry.
     const primitiveType = this.gl.TRIANGLES;
     offset = 0;
+    // console.timeEnd("iso_setup");
+    // console.time("iso_render");
     this.gl.drawArrays(primitiveType, offset, this.amount_of_vertices!);
+    // console.timeEnd("iso_render");
 
-    // this.canvas.animation_id = requestAnimationFrame(() => this.draw(false));
+    this.canvas.animation_id = requestAnimationFrame(() => this.draw(false));
   }
 }
 

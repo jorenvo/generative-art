@@ -58,24 +58,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   componentDidMount() {
     this.canvas2D.current!.width = this.width;
     this.canvas2D.current!.height = this.height;
-
-
-    const realToCSSPixels = window.devicePixelRatio;
-
-    // Lookup the size the browser is displaying the canvas in CSS pixels
-    // and compute a size needed to make our drawingbuffer match it in
-    // device pixels.
-    const displayWidth  = Math.floor(this.canvas3D.current!.clientWidth  * realToCSSPixels);
-    const displayHeight = Math.floor(this.canvas3D.current!.clientHeight * realToCSSPixels);
-    console.log(this.canvas3D.current!.clientWidth, realToCSSPixels, displayWidth);
-    console.log(this.canvas3D.current!.clientHeight, realToCSSPixels, displayHeight);
-
-    // this.canvas3D.current!.width = this.width; // 304
-    // this.canvas3D.current!.height = this.height; // 365
-    // this.canvas3D.current!.style.width = `${this.width}px`;
-    // this.canvas3D.current!.style.height = `${this.height}px`;
-    this.canvas3D.current!.width = displayWidth;
-    this.canvas3D.current!.height = displayHeight;
+    this.canvas3D.current!.width = this.width + 265; // todo remove magic
+    this.canvas3D.current!.height = this.height;
     this.setupArt();
     this.drawArt();
     this.setArtFromURL();
