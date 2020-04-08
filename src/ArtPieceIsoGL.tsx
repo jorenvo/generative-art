@@ -662,7 +662,13 @@ export class Perlin extends IsoShapeRotateGL {
 
     face.vertices.forEach(vertex => {
       vertex.y = Math.min(vertex.y, water_level - 0.04);
-      vertex.divide(new Point3D(this.samples_per_row, 1.3 + this.canvas.state.parameterA / 4, this.samples_per_row));
+      vertex.divide(
+        new Point3D(
+          this.samples_per_row,
+          1.3 + (10 - this.canvas.state.parameterA) / 4,
+          this.samples_per_row
+        )
+      );
     });
 
     return face;

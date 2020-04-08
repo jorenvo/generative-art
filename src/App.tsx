@@ -205,9 +205,20 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     return Math.min(max, Math.max(min, x));
   }
 
+  private throttle(fn: () => void, wait_ms: number): () => void {
+    let last_call = 0;
+    return () => {
+      let current = performance.now();
+      if (current - last_call >= wait_ms) {
+        last_call = current;
+        fn();
+      }
+    };
+  }
+
   private moreLessStart(more: boolean) {
     let interval = Interval.Less;
-    let change = 0.2;
+    let change = 1;
     if (more) {
       interval = Interval.More;
       change = -change;
@@ -215,12 +226,15 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     console.log("start");
 
     if (!this[interval]) {
+      this.setState({
+        parameterA: this.clamp(0, this.state.parameterA - change, 10),
+      });
       this[interval] = window.setInterval(() => {
-        console.log("running");
+        console.log("repeat");
         this.setState({
           parameterA: this.clamp(0, this.state.parameterA - change, 10),
         });
-      }, 50);
+      }, 1000);
     }
   }
 
