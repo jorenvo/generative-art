@@ -4,6 +4,7 @@ body {
 
 h1 {
   text-align: center;
+  margin-bottom: 0px;
 }
 
 select,
@@ -11,14 +12,19 @@ input,
 button,
 .ArtCanvas {
   display: block;
-  margin: 20px auto;
+  margin: 0px auto;
+}
+
+input[name="parameter_a"], select[name="artpiece_selector"] {
+  margin-bottom: 20px;
 }
 
 #mobile_controls {
   display: none;
 }
 
-@media screen and (max-width: 640px) {
+/* was 640 */
+@media screen and (max-width: 2000px) {
   .ArtCanvas {
     width: 100%;
   }
@@ -32,11 +38,25 @@ button,
     text-align: center;
   }
 
-  #mobile_controls button {
-    display: inline-block;
-    margin: 0px 10px;
+  #mobile_controls #slider {
+    width: 70%;
+    height: 130px;
+    margin: 0 auto;
+    background-color: rgb(28, 28, 30);
+    border-radius: 30px;
+  }
 
-    touch-action: none; /* disable zooming with double tap */
+  #mobile_controls #touch {
+    position: absolute;
+    background: rgb(253, 253, 253);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+
+    transition: all 0.1s ease;
+
+    /* do not become a target for touch events */
+    pointer-events: none;
   }
 }
 

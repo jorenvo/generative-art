@@ -188,6 +188,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     return (
       <select
+        name="artpiece_selector"
         defaultValue={default_art}
         onChange={event =>
           this.setState({
@@ -205,51 +206,40 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     return Math.min(max, Math.max(min, x));
   }
 
-  private throttle(fn: () => void, wait_ms: number): () => void {
+  private throttle(
+    fn: (...args: any[]) => void,
+    wait_ms: number
+  ): (...args: any[]) => void {
     let last_call = 0;
-    return () => {
+    let pending_call = 0;
+    return (...args: any[]) => {
+      clearTimeout(pending_call);
       let current = performance.now();
       if (current - last_call >= wait_ms) {
         last_call = current;
-        fn();
+        fn(...args);
+      } else {
+        pending_call = window.setTimeout(() => fn(...args), wait_ms);
       }
     };
   }
 
-  private moreLessStart(more: boolean) {
-    let interval = Interval.Less;
-    let change = 1;
-    if (more) {
-      interval = Interval.More;
-      change = -change;
-    }
-    console.log("start");
+  private handleTouchMove(e: MouseEvent) {
+    const touch = document.getElementById("touch")!; // todo do this better
+    const slider = document.getElementById("slider")!; // todo do this better
 
-    if (!this[interval]) {
-      this.setState({
-        parameterA: this.clamp(0, this.state.parameterA - change, 10),
-      });
-      this[interval] = window.setInterval(() => {
-        console.log("repeat");
-        this.setState({
-          parameterA: this.clamp(0, this.state.parameterA - change, 10),
-        });
-      }, 1000);
-    }
-  }
+    touch.style.left = `${e.clientX - touch.clientWidth / 2}px`;
+    touch.style.top = `${e.clientY - touch.clientHeight / 2}px`;
 
-  private moreLessStop(more: boolean) {
-    let interval = Interval.Less;
-
-    console.log("stopping");
-    if (more) {
-      interval = Interval.More;
-    }
-    window.clearInterval(this[interval]);
-    this[interval] = 0;
+    console.log(`offsetX: ${e.offsetX}, x: ${e.offsetX / slider.clientWidth}`);
+    console.log(`offsetY: ${e.offsetY}, y: ${e.offsetY / slider.clientHeight}`);
   }
 
   renderParameter(): React.ReactNode {
+    const throttled = this.throttle(
+      (e: MouseEvent) => this.handleTouchMove(e),
+      100
+    );
     return (
       <>
         <input
@@ -266,22 +256,13 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           }
         />
         <div id="mobile_controls">
-          <button
-            name="less"
-            onTouchStart={_ => this.moreLessStart(!"less")}
-            onTouchEnd={_ => this.moreLessStop(!"less")}
-            disabled={this.state.parameterA === 0}
+          <div
+            id="slider"
+            onMouseMove={e => throttled(e.nativeEvent)}
+            // onMouseMove={(e) => this.handleTouchMove(e.nativeEvent)}
           >
-            -
-          </button>
-          <button
-            name="more"
-            onTouchStart={_ => this.moreLessStart(!!"more")}
-            onTouchEnd={_ => this.moreLessStop(!!"more")}
-            disabled={this.state.parameterA === 10}
-          >
-            +
-          </button>
+            <div id="touch" />
+          </div>
         </div>
       </>
     );
@@ -334,12 +315,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   render(): React.ReactNode {
     return (
-      <div
-        onTouchEnd={_ => {
-          this.moreLessStop(!"less");
-          this.moreLessStop(!!"more");
-        }}
-      >
+      <div>
         <canvas className="ArtCanvas" ref={this.canvas2D} />
         <canvas className="ArtCanvas" ref={this.canvas3D} />
         {this.renderSelect()}
