@@ -47,7 +47,7 @@ input[name="parameter_a"], select[name="artpiece_selector"] {
   }
 
   #mobile_controls #touch {
-    position: absolute;
+    position: fixed;
     background: rgb(253, 253, 253);
     width: 20px;
     height: 20px;

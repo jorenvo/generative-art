@@ -231,8 +231,11 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     touch.style.left = `${e.clientX - touch.clientWidth / 2}px`;
     touch.style.top = `${e.clientY - touch.clientHeight / 2}px`;
 
-    console.log(`offsetX: ${e.offsetX}, x: ${e.offsetX / slider.clientWidth}`);
-    console.log(`offsetY: ${e.offsetY}, y: ${e.offsetY / slider.clientHeight}`);
+    const x = e.offsetX / slider.clientWidth;
+    const y = e.offsetY / slider.clientHeight;
+    console.log(`x: ${x}, y: ${y}`);
+
+    this.setState({ parameterA: x * 10 });
   }
 
   renderParameter(): React.ReactNode {
