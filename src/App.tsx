@@ -6,7 +6,7 @@ import { Diamond } from "./ArtPieceDiamond";
 import { Moiré1, Moiré2 } from "./ArtPieceMoire";
 import { Maze } from "./ArtPieceMaze";
 import { Fredkin1, Fredkin2 } from "./ArtPieceFredkin";
-import { Perlin } from "./ArtPieceIsoGL";
+import { IsoShapeRotateGL } from "./ArtPieceIsoGL";
 import {
   IsoCube,
   IsoCubeColor,
@@ -21,18 +21,11 @@ interface ArtCanvasState {
   random_pool: Array<number>;
 }
 
-enum Interval {
-  Less = "less_interval",
-  More = "more_interval",
-}
-
 export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private canvas2D: React.RefObject<HTMLCanvasElement>;
   private canvas3D: React.RefObject<HTMLCanvasElement>;
   private margin: number;
   private art_pieces: Array<ArtPiece>;
-  private less_interval: number;
-  private more_interval: number;
 
   width_to_height_ratio: number;
   draw_width: number;
@@ -54,8 +47,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.height = this.draw_height + this.margin;
     this.animation_id = undefined;
     this.art_pieces = [];
-    this.less_interval = 0;
-    this.more_interval = 0;
 
     this.state = {
       active_art_name: undefined,
@@ -107,7 +98,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       new IsoCubeColor("Isocolor", !!"uses random pool", this),
       new IsoCubeRotate("Rotate", !"doesn't use random pool", this),
       new IsoCarouselRotate("Carousel", !"doesn't use random pool", this),
-      new Perlin("Perlin", !!"uses random pool", this),
+      new IsoShapeRotateGL("Perlin", !!"uses random pool", this),
     ];
 
     this.setState({
@@ -233,15 +224,13 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     const x = e.offsetX / slider.clientWidth;
     const y = e.offsetY / slider.clientHeight;
-    console.log(`x: ${x}, y: ${y}`);
-
     this.setState({ parameterA: x * 10 });
   }
 
   renderParameter(): React.ReactNode {
     const throttled = this.throttle(
       (e: MouseEvent) => this.handleTouchMove(e),
-      100
+      10
     );
     return (
       <>
