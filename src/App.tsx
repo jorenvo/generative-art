@@ -26,6 +26,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private canvas3D: React.RefObject<HTMLCanvasElement>;
   private margin: number;
   private art_pieces: Array<ArtPiece>;
+  private throttledMouseMoveHandler: (...args: any[]) => void;
 
   width_to_height_ratio: number;
   draw_width: number;
@@ -47,6 +48,10 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.height = this.draw_height + this.margin;
     this.animation_id = undefined;
     this.art_pieces = [];
+    this.throttledMouseMoveHandler = this.throttle(
+      (e: MouseEvent) => this.handleTouchMove(e),
+      Math.ceil(1000 / 60)
+    );
 
     this.state = {
       active_art_name: undefined,
@@ -126,7 +131,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private setURLFromArt() {
-    window.location.hash = `#art=${this.state.active_art_name}&param_a=${this.state.parameterA}`;
+    // todo
+    // window.location.hash = `#art=${this.state.active_art_name}&param_a=${this.state.parameterA}`;
   }
 
   private initRandomPool() {
@@ -228,10 +234,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   renderParameter(): React.ReactNode {
-    const throttled = this.throttle(
-      (e: MouseEvent) => this.handleTouchMove(e),
-      10
-    );
     return (
       <>
         <input
@@ -250,8 +252,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         <div id="mobile_controls">
           <div
             id="slider"
-            onMouseMove={e => throttled(e.nativeEvent)}
-            // onMouseMove={(e) => this.handleTouchMove(e.nativeEvent)}
+            onMouseMove={e => this.throttledMouseMoveHandler(e.nativeEvent)}
           >
             <div id="touch" />
           </div>

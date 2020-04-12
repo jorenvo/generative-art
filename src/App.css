@@ -53,7 +53,7 @@ input[name="parameter_a"], select[name="artpiece_selector"] {
     height: 20px;
     border-radius: 50%;
 
-    transition: all 0.1s ease;
+    /* transition: all 0.01s ease; */
 
     /* do not become a target for touch events */
     pointer-events: none;

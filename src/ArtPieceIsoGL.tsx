@@ -4,8 +4,13 @@ import { Matrix4 } from "./UtilMatrix4";
 
 // https://webpack.js.org/loaders/worker-loader/#integrating-with-typescript
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import Worker from "worker-loader!./ArtPieceIsoGLWorker";
+import WorkerManager from "worker-loader!./ArtPieceIsoGLWorkerManager";
 import { Point3D } from "./ArtPieceIso";
+
+export interface IsoShapeRotateGLDataToWorkerManager {
+  random_pool?: number[]; // only sent during init
+  parameter_a: number;
+}
 
 export interface IsoShapeRotateGLDataToWorker {
   random_pool: number[];
@@ -34,7 +39,8 @@ export class IsoShapeRotateGL extends ArtPiece {
   private amount_of_vertices: number;
   private vertex_range_min: Point3D;
   private vertex_range_max: Point3D;
-  private worker: Worker | undefined;
+  private worker_manager: WorkerManager;
+  private worker_manager_has_random_pool: boolean;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
@@ -43,6 +49,9 @@ export class IsoShapeRotateGL extends ArtPiece {
     this.amount_of_vertices = 0;
     this.vertex_range_min = new Point3D();
     this.vertex_range_max = new Point3D();
+
+    this.worker_manager = new WorkerManager();
+    this.worker_manager_has_random_pool = false;
 
     this.setupWhenLoading();
   }
@@ -184,18 +193,18 @@ export class IsoShapeRotateGL extends ArtPiece {
   }
 
   public setup() {
-    if (this.worker) {
-      this.worker.terminate();
-    }
-
-    this.worker = new Worker();
-    this.amount_of_vertices = 0; // prevent rendering
-    const data: IsoShapeRotateGLDataToWorker = {
-      random_pool: this.canvas.state.random_pool,
+    // this.amount_of_vertices = 0; // prevent rendering
+    const data: IsoShapeRotateGLDataToWorkerManager = {
       parameter_a: this.canvas.state.parameterA,
     };
-    this.worker.postMessage(data);
-    this.worker.onmessage = e => {
+    if (!this.worker_manager_has_random_pool) {
+      data.random_pool = this.canvas.state.random_pool;
+      this.worker_manager_has_random_pool = true;
+    }
+    console.time("postMessage");
+    this.worker_manager.postMessage(data);
+    console.timeEnd("postMessage");
+    this.worker_manager.onmessage = e => {
       console.log(`Got data from worker.`);
       const data = e.data as IsoShapeRotateGLDataToMain;
 
@@ -229,8 +238,9 @@ export class IsoShapeRotateGL extends ArtPiece {
 
   draw(init = true) {
     if (init) {
-      // console.time("main_draw");
+      console.time("setup");
       this.setup();
+      console.timeEnd("setup");
     }
 
     if (this.amount_of_vertices === 0) {
@@ -341,12 +351,11 @@ export class IsoShapeRotateGL extends ArtPiece {
     // Draw the geometry.
     const primitiveType = this.gl.TRIANGLES;
     offset = 0;
-    // console.timeEnd("iso_setup");
-    // console.time("iso_render");
-    this.gl.drawArrays(primitiveType, offset, this.amount_of_vertices!);
-    // console.timeEnd("iso_render");
+    this.gl.drawArrays(primitiveType, offset, this.amount_of_vertices);
 
-    this.canvas.animation_id = requestAnimationFrame(() => this.draw(false));
+    this.canvas.animation_id = requestAnimationFrame(() => {
+      this.draw(false);
+    });
     // console.timeEnd("main_draw");
   }
 }
