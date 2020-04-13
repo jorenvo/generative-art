@@ -41,6 +41,8 @@ export class IsoShapeRotateGL extends ArtPiece {
   private vertex_range_max: Point3D;
   private worker_manager: WorkerManager;
   private worker_manager_has_random_pool: boolean;
+  private animation_id: number | undefined;
+  private animation_loop_started: boolean;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
@@ -49,14 +51,23 @@ export class IsoShapeRotateGL extends ArtPiece {
     this.amount_of_vertices = 0;
     this.vertex_range_min = new Point3D();
     this.vertex_range_max = new Point3D();
-
     this.worker_manager = new WorkerManager();
     this.worker_manager_has_random_pool = false;
+    this.animation_loop_started = false;
 
     this.setupWhenLoading();
   }
 
-  is_2d() {
+  cleanUp() {
+    super.cleanUp();
+    if (this.animation_id) {
+      cancelAnimationFrame(this.animation_id);
+      this.animation_id = undefined;
+      this.animation_loop_started = false;
+    }
+  }
+
+  is2d() {
     return false;
   }
 
@@ -201,9 +212,9 @@ export class IsoShapeRotateGL extends ArtPiece {
       data.random_pool = this.canvas.state.random_pool;
       this.worker_manager_has_random_pool = true;
     }
-    console.time("postMessage");
+    // console.time("postMessage");
     this.worker_manager.postMessage(data);
-    console.timeEnd("postMessage");
+    // console.timeEnd("postMessage");
     this.worker_manager.onmessage = e => {
       console.log(`Got data from worker.`);
       const data = e.data as IsoShapeRotateGLDataToMain;
@@ -236,16 +247,10 @@ export class IsoShapeRotateGL extends ArtPiece {
     // this.setColors(flattened_faces);
   }
 
-  draw(init = true) {
-    if (init) {
-      console.time("setup");
-      this.setup();
-      console.timeEnd("setup");
-    }
-
+  private animationLoop() {
     if (this.amount_of_vertices === 0) {
       console.log("data not ready, waiting on worker?");
-      this.canvas.animation_id = requestAnimationFrame(() => this.draw(false)); // todo dedup
+      this.animation_id = requestAnimationFrame(() => this.animationLoop()); // todo dedup
       return;
     }
 
@@ -353,9 +358,22 @@ export class IsoShapeRotateGL extends ArtPiece {
     offset = 0;
     this.gl.drawArrays(primitiveType, offset, this.amount_of_vertices);
 
-    this.canvas.animation_id = requestAnimationFrame(() => {
-      this.draw(false);
+    this.animation_id = requestAnimationFrame(() => {
+      this.animationLoop();
     });
     // console.timeEnd("main_draw");
+  }
+
+  draw(init = true) {
+    if (init) {
+      // console.time("setup");
+      this.setup();
+      // console.timeEnd("setup");
+    }
+
+    if (!this.animation_loop_started) {
+      this.animation_loop_started = true;
+      this.animationLoop();
+    }
   }
 }

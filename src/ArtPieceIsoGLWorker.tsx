@@ -361,16 +361,6 @@ class Perlin {
       );
     });
 
-    console.log(
-      `x range: [${vertex_range_min.x}, ${vertex_range_max.x}]`
-    );
-    console.log(
-      `y range: [${vertex_range_min.y}, ${vertex_range_max.y}]`
-    );
-    console.log(
-      `z range: [${vertex_range_min.z}, ${vertex_range_max.z}]`
-    );
-
     return [vertex_range_min, vertex_range_max];
   }
 

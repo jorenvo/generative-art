@@ -11,7 +11,11 @@ export abstract class ArtPiece {
     this.canvas = canvas;
   }
 
-  is_2d() {
+  cleanUp() {
+    console.log("cleaning up...");
+  }
+
+  is2d() {
     return true;
   }
 

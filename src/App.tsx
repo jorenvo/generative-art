@@ -17,6 +17,7 @@ import "./App.css";
 
 interface ArtCanvasState {
   active_art_name: string | undefined;
+  previous_art: ArtPiece | undefined;
   parameterA: number;
   random_pool: Array<number>;
 }
@@ -33,7 +34,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   width: number;
   draw_height: number;
   height: number;
-  animation_id: number | undefined;
 
   constructor(props: any) {
     super(props);
@@ -46,7 +46,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.width = this.draw_width + this.margin;
     this.draw_height = Math.floor(this.draw_width * this.width_to_height_ratio);
     this.height = this.draw_height + this.margin;
-    this.animation_id = undefined;
     this.art_pieces = [];
     this.throttledMouseMoveHandler = this.throttle(
       (e: MouseEvent) => this.handleTouchMove(e),
@@ -55,6 +54,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     this.state = {
       active_art_name: undefined,
+      previous_art: undefined,
       parameterA: 5,
       random_pool: this.initRandomPool(),
     };
@@ -73,7 +73,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   componentDidUpdate() {
     const active_art = this.getActiveArt();
     if (active_art) {
-      if (active_art.is_2d()) {
+      if (active_art.is2d()) {
         this.canvas2D.current!.style.display = "block";
         this.canvas3D.current!.style.display = "none";
       } else {
@@ -190,6 +190,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         onChange={event =>
           this.setState({
             parameterA: 5,
+            previous_art: this.getActiveArt(),
             active_art_name: event.target.value,
           })
         }
@@ -288,12 +289,11 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private drawArt() {
     const active_art = this.getActiveArt();
 
-    if (this.animation_id !== undefined) {
-      cancelAnimationFrame(this.animation_id);
-      this.animation_id = undefined;
+    if (this.state.previous_art) {
+      this.state.previous_art.cleanUp();
     }
 
-    if (active_art && active_art.is_2d()) {
+    if (active_art && active_art.is2d()) {
       this.clear();
       this.getContext2d().save();
       this.center();
@@ -301,7 +301,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     if (active_art) {
       active_art.draw();
     }
-    if (active_art && active_art.is_2d()) {
+    if (active_art && active_art.is2d()) {
       this.getContext2d().restore();
     }
   }

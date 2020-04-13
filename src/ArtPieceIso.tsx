@@ -443,6 +443,7 @@ export class IsoCubeColor extends ArtPiece {
 
 abstract class IsoShapeRotate extends ArtPiece {
   private last_render_ms: number | undefined;
+  private animation_id: number | undefined;
   protected rotating_shape_radians: number;
   protected iso_utils: IsoUtils;
 
@@ -450,6 +451,14 @@ abstract class IsoShapeRotate extends ArtPiece {
     super(name, uses_random_pool, canvas);
     this.iso_utils = new IsoUtils(this.canvas);
     this.rotating_shape_radians = 0;
+  }
+
+  cleanUp() {
+    super.cleanUp();
+    if (this.animation_id) {
+      cancelAnimationFrame(this.animation_id);
+      this.animation_id = undefined;
+    }
   }
 
   private renderAnimationFrame(render_fn: () => void) {
@@ -476,13 +485,13 @@ abstract class IsoShapeRotate extends ArtPiece {
     );
 
     this.last_render_ms = current_render_ms;
-    this.canvas.animation_id = requestAnimationFrame(
+    this.animation_id = requestAnimationFrame(
       this.drawArtRotatingShapeFrame.bind(this)
     );
   }
 
   private drawArtRotatingShape() {
-    this.canvas.animation_id = requestAnimationFrame(
+    this.animation_id = requestAnimationFrame(
       this.drawArtRotatingShapeFrame.bind(this)
     );
   }
