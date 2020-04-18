@@ -8,8 +8,8 @@ class MoiréUtils {
     let random_index = 0;
     for (let i = 0; i < nr_rectangles; i++) {
       ctx.fillRect(
-        canvas.state.random_pool[random_index++] * canvas.draw_width,
-        canvas.state.random_pool[random_index++] * canvas.draw_height,
+        canvas.random_pool.get(random_index++) * canvas.draw_width,
+        canvas.random_pool.get(random_index++) * canvas.draw_height,
         3,
         3
       );
@@ -31,8 +31,8 @@ export class Moiré1 extends ArtPiece {
     let random_index = 0;
     for (let i = 0; i < nr_rectangles; i++) {
       ctx.fillRect(
-        this.canvas.state.random_pool[random_index++] * this.canvas.draw_width,
-        this.canvas.state.random_pool[random_index++] * this.canvas.draw_height,
+        this.canvas.random_pool.get(random_index++) * this.canvas.draw_width,
+        this.canvas.random_pool.get(random_index++) * this.canvas.draw_height,
         3,
         3
       );
@@ -54,8 +54,8 @@ export class Moiré2 extends ArtPiece {
     ctx.translate(x_translation, 0);
     for (let i = 0; i < nr_rectangles; i++) {
       ctx.fillRect(
-        this.canvas.state.random_pool[random_index++] * this.canvas.draw_width,
-        this.canvas.state.random_pool[random_index++] * this.canvas.draw_height,
+        this.canvas.random_pool.get(random_index++) * this.canvas.draw_width,
+        this.canvas.random_pool.get(random_index++) * this.canvas.draw_height,
         3,
         3
       );

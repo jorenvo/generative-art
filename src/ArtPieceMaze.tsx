@@ -15,7 +15,7 @@ export class Maze extends ArtPiece {
 
     for (let row = 0; row < lines_per_column; row++) {
       for (let col = 0; col < lines_per_row; col++) {
-        const random = this.canvas.state.random_pool[random_index++];
+        const random = this.canvas.random_pool.get(random_index++);
 
         if (row === 0) {
           ctx.moveTo(col * line_length, row * line_length);

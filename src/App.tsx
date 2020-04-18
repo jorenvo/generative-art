@@ -7,6 +7,7 @@ import { Moiré1, Moiré2 } from "./ArtPieceMoire";
 import { Maze } from "./ArtPieceMaze";
 import { Fredkin1, Fredkin2 } from "./ArtPieceFredkin";
 import { IsoShapeRotateGL } from "./ArtPieceIsoGL";
+import { RandomPool } from "./RandomPool";
 import {
   IsoCube,
   IsoCubeColor,
@@ -19,7 +20,7 @@ interface ArtCanvasState {
   active_art_name: string | undefined;
   previous_art: ArtPiece | undefined;
   parameterA: number;
-  random_pool: Array<number>;
+  seed: string;
 }
 
 export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
@@ -29,6 +30,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private art_pieces: Array<ArtPiece>;
   private throttledMouseMoveHandler: (...args: any[]) => void;
 
+  random_pool: RandomPool;
   width_to_height_ratio: number;
   draw_width: number;
   width: number;
@@ -47,6 +49,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.draw_height = Math.floor(this.draw_width * this.width_to_height_ratio);
     this.height = this.draw_height + this.margin;
     this.art_pieces = [];
+    this.random_pool = new RandomPool("");
     this.throttledMouseMoveHandler = this.throttle(
       (e: MouseEvent) => this.handleTouchMove(e),
       Math.ceil(1000 / 60)
@@ -56,7 +59,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       active_art_name: undefined,
       previous_art: undefined,
       parameterA: 5,
-      random_pool: this.initRandomPool(),
+      seed: "",
     };
   }
 
@@ -81,6 +84,11 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         this.canvas2D.current!.style.display = "none";
       }
     }
+
+    if (this.random_pool.seed !== this.state.seed) {
+      this.random_pool = new RandomPool(this.state.seed);
+    }
+
     this.drawArt();
     this.setURLFromArt();
   }
@@ -109,7 +117,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.setState({
       active_art_name: this.art_pieces[0].name,
       parameterA: 5,
-      random_pool: this.state.random_pool,
+      seed: this.getNewSeed(),
     });
   }
 
@@ -135,12 +143,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     // window.location.hash = `#art=${this.state.active_art_name}&param_a=${this.state.parameterA}`;
   }
 
-  private initRandomPool() {
-    const random_pool = [];
-    for (let i = 0; i < 100_000; i++) {
-      random_pool.push(Math.random());
-    }
-    return random_pool;
+  private getNewSeed() {
+    return String(Math.random());
   }
 
   getContext2d() {
@@ -268,7 +272,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       return (
         <button
           name="reinit"
-          onClick={_ => this.setState({ random_pool: this.initRandomPool() })}
+          onClick={_ => this.setState({ seed: this.getNewSeed() })}
         >
           ~
         </button>

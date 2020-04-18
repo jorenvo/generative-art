@@ -431,7 +431,7 @@ class Perlin {
     //       break;
     //     } else {
     //       let i = Math.floor(
-    //         this.canvas.state.random_pool[random_i++] * lower_positions.length
+    //         this.canvas.random_pool.get(random_i++) * lower_positions.length
     //       );
     //       [row, col] = lower_positions[i];
     //     }

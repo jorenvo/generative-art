@@ -125,12 +125,12 @@ class IsoUtils {
 
         if (randomize) {
           const random = new Point3D(
-            (this.canvas.state.random_pool[random_index++] * parameter) / scale,
-            (this.canvas.state.random_pool[random_index++] * parameter) / scale,
+            (this.canvas.random_pool.get(random_index++) * parameter) / scale,
+            (this.canvas.random_pool.get(random_index++) * parameter) / scale,
             0
           );
 
-          if (this.canvas.state.random_pool[random_index++] > 0.5) {
+          if (this.canvas.random_pool.get(random_index++) > 0.5) {
             p.add(random);
           } else {
             p.subtract(random);
@@ -274,7 +274,7 @@ class IsoUtils {
 
         column_height[row][col] = prev_height;
         if (
-          this.canvas.state.random_pool[random_index++] <
+          this.canvas.random_pool.get(random_index++) <
           col / horizontal_cubes
         ) {
           column_height[row][col]--;
