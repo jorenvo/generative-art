@@ -4,16 +4,11 @@ import { Matrix4 } from "./UtilMatrix4";
 
 // https://webpack.js.org/loaders/worker-loader/#integrating-with-typescript
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import WorkerManager from "worker-loader!./ArtPieceIsoGLWorkerManager";
+import GLWorker from "worker-loader!./ArtPieceIsoGLWorker";
 import { Point3D } from "./ArtPieceIso";
 
-export interface IsoShapeRotateGLDataToWorkerManager {
-  random_pool?: number[]; // only sent during init
-  parameter_a: number;
-}
-
 export interface IsoShapeRotateGLDataToWorker {
-  random_pool: number[];
+  seed: string;
   parameter_a: number;
 }
 
@@ -39,8 +34,7 @@ export class IsoShapeRotateGL extends ArtPiece {
   private amount_of_vertices: number;
   private vertex_range_min: Point3D;
   private vertex_range_max: Point3D;
-  private worker_manager: WorkerManager;
-  private worker_manager_has_random_pool: boolean;
+  private gl_worker: GLWorker;
   private animation_id: number | undefined;
   private animation_loop_started: boolean;
 
@@ -51,8 +45,7 @@ export class IsoShapeRotateGL extends ArtPiece {
     this.amount_of_vertices = 0;
     this.vertex_range_min = new Point3D();
     this.vertex_range_max = new Point3D();
-    this.worker_manager = new WorkerManager();
-    this.worker_manager_has_random_pool = false;
+    this.gl_worker = new GLWorker();
     this.animation_loop_started = false;
 
     this.setupWhenLoading();
@@ -205,46 +198,50 @@ export class IsoShapeRotateGL extends ArtPiece {
 
   public setup() {
     // this.amount_of_vertices = 0; // prevent rendering
-    const data: IsoShapeRotateGLDataToWorkerManager = {
+    if (this.gl_worker) {
+      this.gl_worker.terminate();
+    }
+    console.time("create GLWorker");
+    this.gl_worker = new GLWorker();
+    console.timeEnd("create GLWorker");
+    const data: IsoShapeRotateGLDataToWorker = {
+      seed: this.canvas.state.seed,
       parameter_a: this.canvas.state.parameterA,
     };
-    if (!this.worker_manager_has_random_pool) {
-      data.random_pool = this.canvas.state.random_pool;
-      this.worker_manager_has_random_pool = true;
+    console.time("postMessage");
+    this.gl_worker.postMessage(data);
+    console.timeEnd("postMessage");
+    
+    if (this.amount_of_vertices > 0) {
+      return;
     }
-    // console.time("postMessage");
-    this.worker_manager.postMessage(data);
-    // console.timeEnd("postMessage");
-    this.worker_manager.onmessage = e => {
-      console.log(`Got data from worker.`);
-      const data = e.data as IsoShapeRotateGLDataToMain;
 
-      this.positionBuffer = this.gl.createBuffer();
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer!);
-      this.gl.bufferData(
-        this.gl.ARRAY_BUFFER,
-        Float32Array.from(data.vertices),
-        this.gl.STATIC_DRAW
-      );
+    if (this.amount_of_vertices === 0) {
+      this.gl_worker.onmessage = e => {
+        console.log(`Got data from worker.`);
+        const data = e.data as IsoShapeRotateGLDataToMain;
 
-      this.colorBuffer = this.gl.createBuffer();
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer!);
-      this.gl.bufferData(
-        this.gl.ARRAY_BUFFER,
-        Uint8Array.from(data.colors),
-        this.gl.STATIC_DRAW
-      );
+        this.positionBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer!);
+        this.gl.bufferData(
+          this.gl.ARRAY_BUFFER,
+          Float32Array.from(data.vertices),
+          this.gl.STATIC_DRAW
+        );
 
-      this.amount_of_vertices = data.amount_of_vertices;
-      this.vertex_range_min = data.vertex_range_min;
-      this.vertex_range_max = data.vertex_range_max;
-    };
-    // move to worker
-    // const faces = this.generateShape();
-    // let flattened_faces = faces.flat();
-    // flattened_faces.sort((a, b) => b.height - a.height); // painter's algorithm
-    // this.amount_of_vertices = this.setVertices(flattened_faces);
-    // this.setColors(flattened_faces);
+        this.colorBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer!);
+        this.gl.bufferData(
+          this.gl.ARRAY_BUFFER,
+          Uint8Array.from(data.colors),
+          this.gl.STATIC_DRAW
+        );
+
+        this.amount_of_vertices = data.amount_of_vertices;
+        this.vertex_range_min = data.vertex_range_min;
+        this.vertex_range_max = data.vertex_range_max;
+      };
+    }
   }
 
   private animationLoop() {
@@ -366,9 +363,9 @@ export class IsoShapeRotateGL extends ArtPiece {
 
   draw(init = true) {
     if (init) {
-      // console.time("setup");
+      console.time("setup");
       this.setup();
-      // console.timeEnd("setup");
+      console.timeEnd("setup");
     }
 
     if (!this.animation_loop_started) {

@@ -1,21 +1,28 @@
 import { Point3D } from "./ArtPieceIso";
-import { IsoShapeRotateGLDataToWorker, IsoShapeRotateGLDataToMain } from "./ArtPieceIsoGL";
+import {
+  IsoShapeRotateGLDataToWorker,
+  IsoShapeRotateGLDataToMain,
+} from "./ArtPieceIsoGL";
+import { RandomPool } from "./RandomPool";
 
 const ctx: Worker = self as any;
 
 // Received message from parent thread
 ctx.addEventListener("message", e => {
-  console.time("worker");
-  console.log(`worker started and received data, starting perlin`);
+  // console.time("worker");
+  console.log("worker started and received data, starting perlin");
   const data = e.data as IsoShapeRotateGLDataToWorker;
-  const perlin = new Perlin(data.random_pool, data.parameter_a);
+  const random_pool = new RandomPool(data.seed);
+  const perlin = new Perlin(random_pool, data.parameter_a);
   const faces = perlin.generateShape();
   let flattened_faces = faces.flat();
   flattened_faces.sort((a, b) => b.height - a.height); // painter's algorithm
 
   const vertices = perlin.calcVertices(flattened_faces);
   const colors = perlin.calcColors(flattened_faces);
-  const [vertex_range_min, vertex_range_max] = perlin.calcVertexRange(flattened_faces);
+  const [vertex_range_min, vertex_range_max] = perlin.calcVertexRange(
+    flattened_faces
+  );
 
   const postData: IsoShapeRotateGLDataToMain = {
     vertices: vertices,
@@ -25,7 +32,7 @@ ctx.addEventListener("message", e => {
     vertex_range_max: vertex_range_max,
   };
 
-  console.timeEnd("worker");
+  // console.timeEnd("worker");
   ctx.postMessage(postData);
 });
 
@@ -86,9 +93,9 @@ class PerlinData {
   private samples: number[][];
   private samples_per_row: number;
   private seed: number;
-  private random_pool: number[];
+  private random_pool: RandomPool;
 
-  constructor(samples_per_row: number, seed: number, random_pool: number[]) {
+  constructor(samples_per_row: number, seed: number, random_pool: RandomPool) {
     this.gridcells = 5; // gridcells * gridsize should be 1
     this.gridsize = 0.2;
     this.gradients = [];
@@ -110,7 +117,9 @@ class PerlinData {
       gradients.push([]);
       for (let j = 0; j <= this.gridcells; j++) {
         let angle_unit_circle =
-          this.random_pool[i * this.gridcells + j + this.seed] * Math.PI * 2;
+          this.random_pool.get(i * this.gridcells + j + this.seed) *
+          Math.PI *
+          2;
         gradients[i].push(
           new Point3D(Math.cos(angle_unit_circle), Math.sin(angle_unit_circle))
         );
@@ -188,21 +197,21 @@ class Perlin {
   private samples_per_row: number;
   private terrain: PerlinData;
   private clouds: PerlinData;
-  private random_pool: number[];
+  private random_pool: RandomPool;
   private parameter_a: number;
 
-  constructor(random_pool: number[], parameter_a: number) {
+  constructor(random_pool: RandomPool, parameter_a: number) {
     this.samples_per_row = 91;
     this.random_pool = random_pool;
     this.parameter_a = parameter_a;
     this.terrain = new PerlinData(
       this.samples_per_row + 1, // + 1 because of fenceposting
-      random_pool[0],
+      random_pool.get(0),
       random_pool
     );
     this.clouds = new PerlinData(
       this.samples_per_row + 1,
-      1 - random_pool[0],
+      1 - random_pool.get(0),
       random_pool
     );
 
@@ -222,7 +231,7 @@ class Perlin {
     // small values = tall mountains
     let color;
     const water_level = 0.68;
-    const random = this.random_pool[row * col];
+    const random = this.random_pool.get(row * col);
     if (face.height < 0.24 && random < 0.96) {
       // snow
       color = new Color(255, 255, 255);

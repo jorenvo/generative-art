@@ -55,13 +55,11 @@ export class Linien extends ArtPiece {
         if (row < rect_per_col) {
           const new_row_x =
             col * rect_width +
-            (this.canvas.random_pool.get(random_index++) - 0.5) *
-              random_scale;
+            (this.canvas.random_pool.get(random_index++) - 0.5) * random_scale;
           const new_row_y =
             row * rect_height +
             rect_height +
-            (this.canvas.random_pool.get(random_index++) - 0.5) *
-              random_scale;
+            (this.canvas.random_pool.get(random_index++) - 0.5) * random_scale;
 
           ctx.moveTo(...coordinates[col]);
           ctx.lineTo(new_row_x, new_row_y);

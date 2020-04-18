@@ -15,7 +15,8 @@ button,
   margin: 0px auto;
 }
 
-input[name="parameter_a"], select[name="artpiece_selector"] {
+input[name="parameter_a"],
+select[name="artpiece_selector"] {
   margin-bottom: 20px;
 }
 

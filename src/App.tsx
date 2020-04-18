@@ -52,7 +52,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.random_pool = new RandomPool("");
     this.throttledMouseMoveHandler = this.throttle(
       (e: MouseEvent) => this.handleTouchMove(e),
-      Math.ceil(1000 / 60)
+      200,
+      // Math.ceil(1000 / 60)
     );
 
     this.state = {
@@ -230,8 +231,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const touch = document.getElementById("touch")!; // todo do this better
     const slider = document.getElementById("slider")!; // todo do this better
 
-    touch.style.left = `${e.clientX - touch.clientWidth / 2}px`;
-    touch.style.top = `${e.clientY - touch.clientHeight / 2}px`;
+    // touch.style.left = `${e.clientX - touch.clientWidth / 2}px`;
+    // touch.style.top = `${e.clientY - touch.clientHeight / 2}px`;
 
     const x = e.offsetX / slider.clientWidth;
     const y = e.offsetY / slider.clientHeight;
