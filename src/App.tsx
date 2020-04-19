@@ -100,19 +100,74 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   private setupArt() {
     this.art_pieces = [
-      new Schotter("Schotter", !!"uses random pool", !"doesn't use parameterB", this),
-      new Linien("Linien", !!"uses random pool", !"doesn't use parameterB", this),
-      new Diamond("Diamond", !"doesn't use random pool", !"doesn't use parameterB", this),
-      new Moiré1("Moiré 1", !"doesn't use random pool", !"doesn't use parameterB", this),
-      new Moiré2("Moiré 2", !"doesn't use random pool", !"doesn't use parameterB", this),
+      new Schotter(
+        "Schotter",
+        !!"uses random pool",
+        !"doesn't use parameterB",
+        this
+      ),
+      new Linien(
+        "Linien",
+        !!"uses random pool",
+        !"doesn't use parameterB",
+        this
+      ),
+      new Diamond(
+        "Diamond",
+        !"doesn't use random pool",
+        !"doesn't use parameterB",
+        this
+      ),
+      new Moiré1(
+        "Moiré 1",
+        !"doesn't use random pool",
+        !"doesn't use parameterB",
+        this
+      ),
+      new Moiré2(
+        "Moiré 2",
+        !"doesn't use random pool",
+        !"doesn't use parameterB",
+        this
+      ),
       new Maze("Maze", !!"uses random pool", !"doesn't use parameterB", this),
-      new Fredkin1("Fredkin 1", !"doesn't use random pool", !"doesn't use parameterB", this),
-      new Fredkin2("Fredkin 2", !"doesn't use random pool", !"doesn't use parameterB", this),
+      new Fredkin1(
+        "Fredkin 1",
+        !"doesn't use random pool",
+        !"doesn't use parameterB",
+        this
+      ),
+      new Fredkin2(
+        "Fredkin 2",
+        !"doesn't use random pool",
+        !"doesn't use parameterB",
+        this
+      ),
       new IsoCube("Iso", !!"uses random pool", !"doesn't use parameterB", this),
-      new IsoCubeColor("Isocolor", !!"uses random pool", !"doesn't use parameterB", this),
-      new IsoCubeRotate("Rotate", !"doesn't use random pool", !"doesn't use parameterB", this),
-      new IsoCarouselRotate("Carousel", !"doesn't use random pool", !"doesn't use parameterB", this),
-      new IsoShapeRotateGL("Perlin", !!"uses random pool", !"doesn't use parameterB", this),
+      new IsoCubeColor(
+        "Isocolor",
+        !!"uses random pool",
+        !"doesn't use parameterB",
+        this
+      ),
+      new IsoCubeRotate(
+        "Rotate",
+        !"doesn't use random pool",
+        !"doesn't use parameterB",
+        this
+      ),
+      new IsoCarouselRotate(
+        "Carousel",
+        !"doesn't use random pool",
+        !"doesn't use parameterB",
+        this
+      ),
+      new IsoShapeRotateGL(
+        "Perlin",
+        !!"uses random pool",
+        !"doesn't use parameterB",
+        this
+      ),
     ];
 
     this.setState({
@@ -246,7 +301,17 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const touch = document.getElementById("touch")!; // todo do this better
     const touch_event = e.touches[0];
     touch.style.left = `${touch_event.pageX - touch.clientWidth / 2}px`;
-    touch.style.top = `${touch_event.pageY - touch.clientHeight / 2}px`;
+
+    const art = this.getActiveArt();
+    if (art && art.uses_parameter_b) {
+      touch.style.top = `${touch_event.pageY - touch.clientHeight / 2}px`;
+    } else {
+      const rect = (e.target as HTMLDivElement).getBoundingClientRect();
+      touch.style.top = `${rect.top +
+        window.scrollY +
+        rect.height / 2 -
+        touch.clientHeight / 2}px`;
+    }
   }
 
   renderParameter(): React.ReactNode {
