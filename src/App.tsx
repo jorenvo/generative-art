@@ -52,8 +52,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.random_pool = new RandomPool("");
     this.throttledMouseMoveHandler = this.throttle(
       (e: TouchEvent) => this.handleTouchMoveState(e),
-      1000 / 10,
-      (e: TouchEvent) => this.handleTouchMoveUI(e),
+      1000 / 30,
+      (e: TouchEvent) => this.handleTouchMoveUI(e)
     );
 
     this.state = {
@@ -239,7 +239,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     // const offsetY = touch_event.pageY - rect.top;
     const x = offsetX / slider.clientWidth;
     // const y = offsetY / slider.clientHeight;
-    this.setState({ parameterA: x * 10 });
+    this.setState({ parameterA: x * 10, previous_art: this.getActiveArt() });
   }
 
   private handleTouchMoveUI(e: TouchEvent) {
@@ -262,6 +262,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           onChange={event =>
             this.setState({
               parameterA: Number(event.target.value),
+              previous_art: this.getActiveArt(),
             })
           }
         />
