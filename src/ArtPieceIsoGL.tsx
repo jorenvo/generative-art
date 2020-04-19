@@ -34,9 +34,10 @@ export class IsoShapeRotateGL extends ArtPiece {
   private amount_of_vertices: number;
   private vertex_range_min: Point3D;
   private vertex_range_max: Point3D;
-  private gl_worker: GLWorker;
   private animation_id: number | undefined;
   private animation_loop_started: boolean;
+  private worker_promise: Promise<unknown>;
+  private calc_id: number;
 
   constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
     super(name, uses_random_pool, canvas);
@@ -45,8 +46,9 @@ export class IsoShapeRotateGL extends ArtPiece {
     this.amount_of_vertices = 0;
     this.vertex_range_min = new Point3D();
     this.vertex_range_max = new Point3D();
-    this.gl_worker = new GLWorker();
     this.animation_loop_started = false;
+    this.worker_promise = Promise.resolve();
+    this.calc_id = 0;
 
     this.setupWhenLoading();
   }
@@ -198,50 +200,53 @@ export class IsoShapeRotateGL extends ArtPiece {
 
   public setup() {
     // this.amount_of_vertices = 0; // prevent rendering
-    if (this.gl_worker) {
-      this.gl_worker.terminate();
-    }
-    console.time("create GLWorker");
-    this.gl_worker = new GLWorker();
-    console.timeEnd("create GLWorker");
-    const data: IsoShapeRotateGLDataToWorker = {
-      seed: this.canvas.state.seed,
-      parameter_a: this.canvas.state.parameterA,
-    };
-    console.time("postMessage");
-    this.gl_worker.postMessage(data);
-    console.timeEnd("postMessage");
-    
-    if (this.amount_of_vertices > 0) {
-      return;
-    }
+    const calc_id = ++this.calc_id;
+    this.worker_promise = this.worker_promise.then(() => {
+      if (calc_id !== this.calc_id) {
+        console.log("later calls available, skipping this one");
+        return;
+      }
 
-    if (this.amount_of_vertices === 0) {
-      this.gl_worker.onmessage = e => {
-        console.log(`Got data from worker.`);
-        const data = e.data as IsoShapeRotateGLDataToMain;
-
-        this.positionBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer!);
-        this.gl.bufferData(
-          this.gl.ARRAY_BUFFER,
-          Float32Array.from(data.vertices),
-          this.gl.STATIC_DRAW
-        );
-
-        this.colorBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer!);
-        this.gl.bufferData(
-          this.gl.ARRAY_BUFFER,
-          Uint8Array.from(data.colors),
-          this.gl.STATIC_DRAW
-        );
-
-        this.amount_of_vertices = data.amount_of_vertices;
-        this.vertex_range_min = data.vertex_range_min;
-        this.vertex_range_max = data.vertex_range_max;
+      console.time("create GLWorker");
+      const gl_worker = new GLWorker();
+      console.timeEnd("create GLWorker");
+      const data: IsoShapeRotateGLDataToWorker = {
+        seed: this.canvas.state.seed,
+        parameter_a: this.canvas.state.parameterA,
       };
-    }
+
+      return new Promise(resolve => {
+        gl_worker.onmessage = e => {
+          console.log(`Got data from worker.`);
+          const data = e.data as IsoShapeRotateGLDataToMain;
+
+          this.positionBuffer = this.gl.createBuffer();
+          this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer!);
+          this.gl.bufferData(
+            this.gl.ARRAY_BUFFER,
+            Float32Array.from(data.vertices),
+            this.gl.STATIC_DRAW
+          );
+
+          this.colorBuffer = this.gl.createBuffer();
+          this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer!);
+          this.gl.bufferData(
+            this.gl.ARRAY_BUFFER,
+            Uint8Array.from(data.colors),
+            this.gl.STATIC_DRAW
+          );
+
+          this.amount_of_vertices = data.amount_of_vertices;
+          this.vertex_range_min = data.vertex_range_min;
+          this.vertex_range_max = data.vertex_range_max;
+          resolve();
+        };
+
+        console.time("postMessage");
+        gl_worker.postMessage(data);
+        console.timeEnd("postMessage");
+      });
+    });
   }
 
   private animationLoop() {

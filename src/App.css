@@ -41,20 +41,22 @@ select[name="artpiece_selector"] {
 
   #mobile_controls #slider {
     width: 70%;
-    height: 130px;
+    height: 100px;
     margin: 0 auto;
     background-color: rgb(28, 28, 30);
     border-radius: 30px;
+    
+    touch-action: none; /* prevent touches from scrolling */
   }
 
   #mobile_controls #touch {
-    position: fixed;
+    position: absolute;
     background: rgb(253, 253, 253);
     width: 20px;
     height: 20px;
     border-radius: 50%;
 
-    /* transition: all 0.01s ease; */
+    /* transition: all 0.033s linear; */
 
     /* do not become a target for touch events */
     pointer-events: none;

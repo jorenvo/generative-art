@@ -51,9 +51,9 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.art_pieces = [];
     this.random_pool = new RandomPool("");
     this.throttledMouseMoveHandler = this.throttle(
-      (e: MouseEvent) => this.handleTouchMove(e),
-      200,
-      // Math.ceil(1000 / 60)
+      (e: TouchEvent) => this.handleTouchMoveState(e),
+      1000 / 10,
+      (e: TouchEvent) => this.handleTouchMoveUI(e),
     );
 
     this.state = {
@@ -210,8 +210,9 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private throttle(
-    fn: (...args: any[]) => void,
-    wait_ms: number
+    throttled_fn: (...args: any[]) => void,
+    wait_ms: number,
+    always_fn?: (...args: any[]) => void
   ): (...args: any[]) => void {
     let last_call = 0;
     let pending_call = 0;
@@ -220,23 +221,32 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       let current = performance.now();
       if (current - last_call >= wait_ms) {
         last_call = current;
-        fn(...args);
+        throttled_fn(...args);
       } else {
-        pending_call = window.setTimeout(() => fn(...args), wait_ms);
+        pending_call = window.setTimeout(() => throttled_fn(...args), wait_ms);
+      }
+      if (always_fn) {
+        always_fn(...args);
       }
     };
   }
 
-  private handleTouchMove(e: MouseEvent) {
-    const touch = document.getElementById("touch")!; // todo do this better
+  private handleTouchMoveState(e: TouchEvent) {
     const slider = document.getElementById("slider")!; // todo do this better
-
-    // touch.style.left = `${e.clientX - touch.clientWidth / 2}px`;
-    // touch.style.top = `${e.clientY - touch.clientHeight / 2}px`;
-
-    const x = e.offsetX / slider.clientWidth;
-    const y = e.offsetY / slider.clientHeight;
+    const touch_event = e.touches[0];
+    const rect = (e.target as HTMLDivElement).getBoundingClientRect();
+    const offsetX = touch_event.pageX - rect.left;
+    // const offsetY = touch_event.pageY - rect.top;
+    const x = offsetX / slider.clientWidth;
+    // const y = offsetY / slider.clientHeight;
     this.setState({ parameterA: x * 10 });
+  }
+
+  private handleTouchMoveUI(e: TouchEvent) {
+    const touch = document.getElementById("touch")!; // todo do this better
+    const touch_event = e.touches[0];
+    touch.style.left = `${touch_event.pageX - touch.clientWidth / 2}px`;
+    touch.style.top = `${touch_event.pageY - touch.clientHeight / 2}px`;
   }
 
   renderParameter(): React.ReactNode {
@@ -258,7 +268,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         <div id="mobile_controls">
           <div
             id="slider"
-            onMouseMove={e => this.throttledMouseMoveHandler(e.nativeEvent)}
+            // onMouseMove={e => this.throttledMouseMoveHandler(e.nativeEvent)}
+            onTouchMove={e => this.throttledMouseMoveHandler(e.nativeEvent)}
           >
             <div id="touch" />
           </div>
