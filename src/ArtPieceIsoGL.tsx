@@ -39,8 +39,8 @@ export class IsoShapeRotateGL extends ArtPiece {
   private worker_promise: Promise<unknown>;
   private calc_id: number;
 
-  constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
-    super(name, uses_random_pool, canvas);
+  constructor(name: string, uses_random_pool: boolean, uses_parameter_b: boolean, canvas: ArtCanvas) {
+    super(name, uses_random_pool, uses_parameter_b, canvas);
     this.rotating_shape_radians = 0;
     this.gl = this.canvas.getContextGl();
     this.amount_of_vertices = 0;

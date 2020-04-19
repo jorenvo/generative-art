@@ -447,8 +447,8 @@ abstract class IsoShapeRotate extends ArtPiece {
   protected rotating_shape_radians: number;
   protected iso_utils: IsoUtils;
 
-  constructor(name: string, uses_random_pool: boolean, canvas: ArtCanvas) {
-    super(name, uses_random_pool, canvas);
+  constructor(name: string, uses_random_pool: boolean, uses_parameter_b: boolean, canvas: ArtCanvas) {
+    super(name, uses_random_pool, uses_parameter_b, canvas);
     this.iso_utils = new IsoUtils(this.canvas);
     this.rotating_shape_radians = 0;
   }

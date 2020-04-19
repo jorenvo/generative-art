@@ -100,19 +100,19 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   private setupArt() {
     this.art_pieces = [
-      new Schotter("Schotter", !!"uses random pool", this),
-      new Linien("Linien", !!"uses random pool", this),
-      new Diamond("Diamond", !"doesn't use random pool", this),
-      new Moiré1("Moiré 1", !"doesn't use random pool", this),
-      new Moiré2("Moiré 2", !"doesn't use random pool", this),
-      new Maze("Maze", !!"uses random pool", this),
-      new Fredkin1("Fredkin 1", !"doesn't use random pool", this),
-      new Fredkin2("Fredkin 2", !"doesn't use random pool", this),
-      new IsoCube("Iso", !!"uses random pool", this),
-      new IsoCubeColor("Isocolor", !!"uses random pool", this),
-      new IsoCubeRotate("Rotate", !"doesn't use random pool", this),
-      new IsoCarouselRotate("Carousel", !"doesn't use random pool", this),
-      new IsoShapeRotateGL("Perlin", !!"uses random pool", this),
+      new Schotter("Schotter", !!"uses random pool", !"doesn't use parameterB", this),
+      new Linien("Linien", !!"uses random pool", !"doesn't use parameterB", this),
+      new Diamond("Diamond", !"doesn't use random pool", !"doesn't use parameterB", this),
+      new Moiré1("Moiré 1", !"doesn't use random pool", !"doesn't use parameterB", this),
+      new Moiré2("Moiré 2", !"doesn't use random pool", !"doesn't use parameterB", this),
+      new Maze("Maze", !!"uses random pool", !"doesn't use parameterB", this),
+      new Fredkin1("Fredkin 1", !"doesn't use random pool", !"doesn't use parameterB", this),
+      new Fredkin2("Fredkin 2", !"doesn't use random pool", !"doesn't use parameterB", this),
+      new IsoCube("Iso", !!"uses random pool", !"doesn't use parameterB", this),
+      new IsoCubeColor("Isocolor", !!"uses random pool", !"doesn't use parameterB", this),
+      new IsoCubeRotate("Rotate", !"doesn't use random pool", !"doesn't use parameterB", this),
+      new IsoCarouselRotate("Carousel", !"doesn't use random pool", !"doesn't use parameterB", this),
+      new IsoShapeRotateGL("Perlin", !!"uses random pool", !"doesn't use parameterB", this),
     ];
 
     this.setState({
