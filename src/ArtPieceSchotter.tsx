@@ -12,12 +12,13 @@ export class Schotter extends ArtPiece {
 
     let random_index = 0;
 
-    ctx.beginPath();
+    ctx.lineWidth = 1.3;
     for (let row = 0; row < rect_per_col; row++) {
       const random_scale = row / (7.5 / this.canvas.state.parameterA);
 
       for (let col = 0; col < rect_per_row; col++) {
         ctx.save();
+        ctx.beginPath();
 
         const offset_col = col * rect_width;
         const offset_row = row * rect_height;
@@ -46,9 +47,9 @@ export class Schotter extends ArtPiece {
           this.canvas.random_pool.get(random_index++) * random_scale
         );
         ctx.rect(offset_col, offset_row, rect_width, rect_height);
+        ctx.stroke();
         ctx.restore();
       }
     }
-    ctx.stroke();
   }
 }
