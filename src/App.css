@@ -45,7 +45,7 @@ select[name="artpiece_selector"] {
     margin: 0 auto;
     background-color: rgb(28, 28, 30);
     border-radius: 30px;
-    
+
     touch-action: none; /* prevent touches from scrolling */
   }
 
@@ -73,13 +73,13 @@ input {
 
 /* disable selection when long pressing */
 * {
-  /* -webkit-touch-callout: none;
+  -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0); */
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 
   touch-action: manipulation; /* disable zooming with double tap */
 }
