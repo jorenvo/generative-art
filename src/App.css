@@ -45,7 +45,7 @@ select[name="artpiece_selector"] {
     height: 100px;
     margin: 0 auto;
     background-color: rgb(28, 28, 30);
-    border-radius: 30px;
+    border-radius: 10px;
 
     touch-action: none; /* prevent touches from scrolling */
   }
