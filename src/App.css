@@ -40,6 +40,7 @@ select[name="artpiece_selector"] {
   }
 
   #mobile_controls #slider {
+    position: relative; /* make touch position relative to this */
     width: 70%;
     height: 100px;
     margin: 0 auto;
@@ -52,6 +53,7 @@ select[name="artpiece_selector"] {
   #mobile_controls #touch {
     position: absolute;
     background: rgb(253, 253, 253);
+    background: rgb(253, 0, 0);
     width: 20px;
     height: 20px;
     border-radius: 50%;
