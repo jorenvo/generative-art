@@ -296,11 +296,15 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const rect = slider.getBoundingClientRect(); // relative to viewport
     const radius_indicator = touch_indicator.clientHeight / 2;
 
-    const top = this.clamp(
-      0,
-      clientY - rect.top - radius_indicator,
-      slider.clientHeight - touch_indicator.clientHeight
-    );
+    let top = rect.height / 2 - radius_indicator;
+    const art = this.getActiveArt();
+    if (art && art.uses_parameter_b) {
+      top = this.clamp(
+        0,
+        clientY - rect.top - radius_indicator,
+        slider.clientHeight - touch_indicator.clientHeight
+      );
+    }
     touch_indicator.style.top = `${top}px`;
 
     const left = this.clamp(
