@@ -4,9 +4,10 @@ export class Linien extends ArtPiece {
   draw() {
     const ctx = this.canvas.getContext2d();
     ctx.beginPath();
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 1; // todo
 
-    const rect_per_row = 20;
+    const rect_per_row = 20 + Math.floor((15 * this.canvas.state.parameter_b / 10));
+    const scaled_param_a = this.canvas.state.parameter_a / (this.canvas.state.parameter_b + 1);
     const rect_per_col = Math.floor(
       rect_per_row * (this.canvas.height / this.canvas.width)
     );
@@ -43,7 +44,7 @@ export class Linien extends ArtPiece {
 
         let random_scale =
           (random_scale_row * random_scale_col) /
-          (10 / this.canvas.state.parameterA);
+          (10 / scaled_param_a);
         if (row === rect_per_col - 1) {
           random_scale = 1;
         }

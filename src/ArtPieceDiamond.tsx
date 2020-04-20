@@ -3,7 +3,7 @@ import { ArtPiece } from "./ArtPiece";
 export class Diamond extends ArtPiece {
   draw() {
     const ctx = this.canvas.getContext2d();
-    const x = 2 * this.canvas.state.parameterA + 2;
+    const x = 2 * this.canvas.state.parameter_a + 2;
     const scale = 200;
 
     ctx.beginPath();

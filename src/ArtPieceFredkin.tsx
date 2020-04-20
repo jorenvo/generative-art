@@ -70,7 +70,7 @@ class FredkinUtils {
     seeder(squares, rows - 2, cols - 2);
     seeder(squares, rows - 2 - quarter_rows, cols - 2 - quarter_cols);
 
-    for (let gen = 0; gen < canvas.state.parameterA * 5 + 5; gen++) {
+    for (let gen = 0; gen < canvas.state.parameter_a * 5 + 5; gen++) {
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
           const neighbors = get_neumann_neighbors(row, col);

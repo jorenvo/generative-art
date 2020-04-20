@@ -114,7 +114,7 @@ class IsoUtils {
 
     let random_index = Math.floor(Math.random() * 99999);
     const scale = 20;
-    const parameter = this.canvas.state.parameterA - 5;
+    const parameter = this.canvas.state.parameter_a - 5;
     faces.forEach(face => {
       face.forEach(p => {
         if (rotate_radians) {
@@ -145,7 +145,7 @@ class IsoUtils {
     randomize: boolean,
     rotate_radians?: number
   ): Point3D[][] {
-    const sides = Math.ceil(this.canvas.state.parameterA) + 2;
+    const sides = Math.ceil(this.canvas.state.parameter_a) + 2;
     const degrees_per_side = (2 * Math.PI) / sides;
     const carousel = [];
     const horizontal_side_length = 2 / sides;
@@ -415,7 +415,7 @@ class IsoUtils {
       ];
       palette =
         palettes[
-          Math.floor((this.canvas.state.parameterA / 11) * palettes.length)
+          Math.floor((this.canvas.state.parameter_a / 11) * palettes.length)
         ];
     }
 
@@ -513,7 +513,7 @@ export class IsoCubeRotate extends IsoShapeRotate {
     randomize: boolean,
     elapsed_ms: number
   ): Point3D[][] {
-    const rotation_per_ms = 0.0005 * (this.canvas.state.parameterA - 4);
+    const rotation_per_ms = 0.0005 * (this.canvas.state.parameter_a - 4);
     this.rotating_shape_radians += elapsed_ms * rotation_per_ms;
 
     return this.iso_utils.generateCube(

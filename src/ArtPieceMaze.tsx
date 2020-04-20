@@ -34,7 +34,7 @@ export class Maze extends ArtPiece {
         }
 
         ctx.moveTo(col * line_length, row * line_length);
-        if (random < this.canvas.state.parameterA / 10) {
+        if (random < this.canvas.state.parameter_a / 10) {
           ctx.lineTo(col * line_length + line_length, row * line_length);
         } else {
           ctx.lineTo(col * line_length, row * line_length + line_length);

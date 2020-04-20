@@ -14,7 +14,7 @@ export class Schotter extends ArtPiece {
 
     ctx.lineWidth = 1.3;
     for (let row = 0; row < rect_per_col; row++) {
-      const random_scale = row / (7.5 / this.canvas.state.parameterA);
+      const random_scale = row / (7.5 / this.canvas.state.parameter_a);
 
       for (let col = 0; col < rect_per_row; col++) {
         ctx.save();

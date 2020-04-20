@@ -19,7 +19,8 @@ import "./App.css";
 interface ArtCanvasState {
   active_art_name: string | undefined;
   previous_art: ArtPiece | undefined;
-  parameterA: number;
+  parameter_a: number;
+  parameter_b: number;
   seed: string;
 }
 
@@ -28,6 +29,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private canvas3D: React.RefObject<HTMLCanvasElement>;
   private margin: number;
   private art_pieces: Array<ArtPiece>;
+  private throttledTouchMoveHandler: (...args: any[]) => void;
   private throttledMouseMoveHandler: (...args: any[]) => void;
 
   random_pool: RandomPool;
@@ -50,16 +52,22 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.height = this.draw_height + this.margin;
     this.art_pieces = [];
     this.random_pool = new RandomPool("");
-    this.throttledMouseMoveHandler = this.throttle(
+    this.throttledTouchMoveHandler = this.throttle(
       (e: TouchEvent) => this.handleTouchMoveState(e),
       1000 / 30,
       (e: TouchEvent) => this.handleTouchMoveUI(e)
+    );
+    this.throttledMouseMoveHandler = this.throttle(
+      (e: MouseEvent) => this.handleMouseMoveState(e),
+      1000 / 30,
+      (e: MouseEvent) => this.handleMouseMoveUI(e)
     );
 
     this.state = {
       active_art_name: undefined,
       previous_art: undefined,
-      parameterA: 5,
+      parameter_a: 5,
+      parameter_b: 5,
       seed: "",
     };
   }
@@ -106,12 +114,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         !"doesn't use parameterB",
         this
       ),
-      new Linien(
-        "Linien",
-        !!"uses random pool",
-        !"doesn't use parameterB",
-        this
-      ),
+      new Linien("Linien", !!"uses random pool", !!"uses parameterB", this),
       new Diamond(
         "Diamond",
         !"doesn't use random pool",
@@ -172,7 +175,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     this.setState({
       active_art_name: this.art_pieces[0].name,
-      parameterA: 5,
+      parameter_a: 5,
+      parameter_b: 5,
       seed: this.getNewSeed(),
     });
   }
@@ -186,7 +190,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           this.setState({ active_art_name: decodeURI(value) });
           break;
         case "param_a":
-          this.setState({ parameterA: parseFloat(value) });
+          this.setState({ parameter_a: parseFloat(value) });
           break;
         default:
           console.warn(`unknown URL parameter: ${p}`);
@@ -249,7 +253,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         defaultValue={default_art}
         onChange={event =>
           this.setState({
-            parameterA: 5,
+            parameter_a: 5,
             previous_art: this.getActiveArt(),
             active_art_name: event.target.value,
           })
@@ -286,15 +290,39 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     };
   }
 
+  private handleMouseMoveState(e: MouseEvent) {
+    const touch = document.getElementById("touch")!; // todo do this better
+    const slider = document.getElementById("slider")!; // todo do this better
+    const x = e.offsetX / slider.clientWidth;
+    const y = e.offsetY / slider.clientHeight;
+
+    touch.style.left = `${e.clientX - touch.clientWidth / 2}px`;
+    touch.style.top = `${e.clientY - touch.clientHeight / 2}px`;
+
+    this.setState({
+      parameter_a: this.clamp(0, x * 10, 10),
+      parameter_b: this.clamp(0, y * 10, 10),
+      previous_art: this.getActiveArt(),
+    });
+  }
+
+  private handleMouseMoveUI(e: MouseEvent) {}
+
   private handleTouchMoveState(e: TouchEvent) {
     const slider = document.getElementById("slider")!; // todo do this better
     const touch_event = e.touches[0];
     const rect = (e.target as HTMLDivElement).getBoundingClientRect();
-    const offsetX = touch_event.pageX - rect.left;
-    // const offsetY = touch_event.pageY - rect.top;
+    const offsetX = touch_event.pageX - rect.left - window.scrollX;
+    const offsetY = touch_event.pageY - rect.top - window.scrollY;
     const x = offsetX / slider.clientWidth;
-    // const y = offsetY / slider.clientHeight;
-    this.setState({ parameterA: x * 10, previous_art: this.getActiveArt() });
+    const y = offsetY / slider.clientHeight;
+    console.log(x, y, offsetX, offsetY);
+    this.setState({
+      parameter_a: this.clamp(0, x * 10, 10),
+      parameter_b: this.clamp(0, y * 10, 10),
+      previous_art: this.getActiveArt(),
+    });
+    e.preventDefault(); // prevent MouseMove events from being fired
   }
 
   private handleTouchMoveUI(e: TouchEvent) {
@@ -312,6 +340,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         rect.height / 2 -
         touch.clientHeight / 2}px`;
     }
+    e.preventDefault(); // prevent MouseMove events from being fired
   }
 
   renderParameter(): React.ReactNode {
@@ -323,10 +352,10 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           min="0"
           max="10"
           step="0.2"
-          value={String(this.state.parameterA)}
+          value={String(this.state.parameter_a)}
           onChange={event =>
             this.setState({
-              parameterA: Number(event.target.value),
+              parameter_a: Number(event.target.value),
               previous_art: this.getActiveArt(),
             })
           }
@@ -334,8 +363,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         <div id="mobile_controls">
           <div
             id="slider"
-            // onMouseMove={e => this.throttledMouseMoveHandler(e.nativeEvent)}
-            onTouchMove={e => this.throttledMouseMoveHandler(e.nativeEvent)}
+            onMouseMove={e => this.throttledMouseMoveHandler(e.nativeEvent)}
+            onTouchMove={e => this.throttledTouchMoveHandler(e.nativeEvent)}
           >
             <div id="touch" />
           </div>

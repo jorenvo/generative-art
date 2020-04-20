@@ -212,7 +212,7 @@ export class IsoShapeRotateGL extends ArtPiece {
       console.timeEnd("create GLWorker");
       const data: IsoShapeRotateGLDataToWorker = {
         seed: this.canvas.state.seed,
-        parameter_a: this.canvas.state.parameterA,
+        parameter_a: this.canvas.state.parameter_a,
       };
 
       return new Promise(resolve => {

@@ -25,7 +25,7 @@ export class Moiré1 extends ArtPiece {
     const nr_rectangles = new MoiréUtils().fillCanvas(this.canvas);
 
     ctx.translate(this.canvas.draw_width / 2, this.canvas.draw_height / 2);
-    ctx.rotate(this.canvas.state.parameterA * 0.006);
+    ctx.rotate(this.canvas.state.parameter_a * 0.006);
     ctx.translate(-this.canvas.draw_width / 2, -this.canvas.draw_height / 2);
 
     let random_index = 0;
@@ -50,7 +50,7 @@ export class Moiré2 extends ArtPiece {
     ctx.translate(-this.canvas.draw_width / 2, -this.canvas.draw_height / 2);
 
     let random_index = 0;
-    const x_translation = (this.canvas.state.parameterA - 5) * 2;
+    const x_translation = (this.canvas.state.parameter_a - 5) * 2;
     ctx.translate(x_translation, 0);
     for (let i = 0; i < nr_rectangles; i++) {
       ctx.fillRect(
