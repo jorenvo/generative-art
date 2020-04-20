@@ -53,7 +53,6 @@ select[name="artpiece_selector"] {
   #mobile_controls #touch {
     position: absolute;
     background: rgb(253, 253, 253);
-    background: rgb(253, 0, 0);
     width: 20px;
     height: 20px;
     border-radius: 50%;
