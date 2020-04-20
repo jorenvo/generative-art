@@ -290,14 +290,31 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     };
   }
 
+  private updateParamUI(clientX: number, clientY: number) {
+    const slider = document.getElementById("slider")!; // todo do this better
+    const touch_indicator = document.getElementById("touch")!; // todo do this better
+    const rect = slider.getBoundingClientRect(); // relative to viewport
+    const radius_indicator = touch_indicator.clientHeight / 2;
+
+    const top = this.clamp(
+      0,
+      clientY - rect.top - radius_indicator,
+      slider.clientHeight - touch_indicator.clientHeight
+    );
+    touch_indicator.style.top = `${top}px`;
+
+    const left = this.clamp(
+      0,
+      clientX - rect.left - radius_indicator,
+      slider.clientWidth - touch_indicator.clientWidth
+    );
+    touch_indicator.style.left = `${left}px`;
+  }
+
   private handleMouseMoveState(e: MouseEvent) {
-    const touch = document.getElementById("touch")!; // todo do this better
     const slider = document.getElementById("slider")!; // todo do this better
     const x = e.offsetX / slider.clientWidth;
     const y = e.offsetY / slider.clientHeight;
-
-    touch.style.left = `${e.clientX - touch.clientWidth / 2}px`;
-    touch.style.top = `${e.clientY - touch.clientHeight / 2}px`;
 
     this.setState({
       parameter_a: this.clamp(0, x * 10, 10),
@@ -307,10 +324,11 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private handleMouseMoveUI(e: MouseEvent) {
-    console.log("mousemove!");
+    this.updateParamUI(e.clientX, e.clientY);
   }
 
   private handleTouchMoveState(e: TouchEvent) {
+    // todo rewrite this to use client{X,Y}
     const slider = document.getElementById("slider")!; // todo do this better
     const touch_event = e.touches[0];
     const rect = (e.target as HTMLDivElement).getBoundingClientRect();
@@ -327,28 +345,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private handleTouchMoveUI(e: TouchEvent) {
-    const slider = document.getElementById("slider")!; // todo do this better
-    const touch_indicator = document.getElementById("touch")!; // todo do this better
     const touch = e.touches[0];
-    const rect = slider.getBoundingClientRect(); // relative to viewport
-    console.log(rect.top);
-    console.log(touch.clientY, touch.screenY, touch.pageY);
-
-    const radius_indicator = touch_indicator.clientHeight / 2;
-    const top = this.clamp(
-      0,
-      touch.clientY - rect.top - radius_indicator,
-      slider.clientHeight - touch_indicator.clientHeight
-    );
-    console.log(`top: ${top}`);
-    touch_indicator.style.top = `${top}px`;
-    const left = this.clamp(
-      0,
-      touch.clientX - rect.left - radius_indicator,
-      slider.clientWidth - touch_indicator.clientWidth
-    );
-    touch_indicator.style.left = `${left}px`;
-
+    this.updateParamUI(touch.clientX, touch.clientY);
     e.preventDefault(); // prevent MouseMove events from being fired
   }
 
