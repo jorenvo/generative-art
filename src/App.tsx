@@ -31,6 +31,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private art_pieces: Array<ArtPiece>;
   private throttledTouchMoveHandler: (...args: any[]) => void;
   private throttledMouseMoveHandler: (...args: any[]) => void;
+  private throttledSetURLFromArt: (...args: any[]) => void;
 
   random_pool: RandomPool;
   width_to_height_ratio: number;
@@ -61,6 +62,10 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       (e: MouseEvent) => this.handleMouseMoveState(e),
       1000 / 30,
       (e: MouseEvent) => this.handleMouseMoveUI(e)
+    );
+    this.throttledSetURLFromArt = this.throttle(
+      () => this.setURLFromArt(),
+      1000
     );
 
     this.state = {
@@ -99,7 +104,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     }
 
     this.drawArt();
-    this.setURLFromArt();
+    this.throttledSetURLFromArt();
   }
 
   get html_element(): HTMLCanvasElement {
@@ -192,6 +197,9 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         case "param_a":
           this.setState({ parameter_a: parseFloat(value) });
           break;
+        case "param_b":
+          this.setState({ parameter_b: parseFloat(value) });
+          break;
         default:
           console.warn(`unknown URL parameter: ${p}`);
       }
@@ -199,8 +207,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private setURLFromArt() {
-    // todo
-    // window.location.hash = `#art=${this.state.active_art_name}&param_a=${this.state.parameterA}`;
+    window.location.hash = `#art=${this.state.active_art_name}&param_a=${this.state.parameter_a}&param_b=${this.state.parameter_b}`;
   }
 
   private getNewSeed() {
