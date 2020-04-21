@@ -97,6 +97,15 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         this.canvas3D.current!.style.display = "block";
         this.canvas2D.current!.style.display = "none";
       }
+
+      const touch = document.getElementById("touch")!;
+      if (!active_art.uses_parameter_b) {
+        touch.style.height = "100px";
+        touch.style.borderRadius = "0";
+      } else {
+        touch.style.height = "20px";
+        touch.style.borderRadius = "50%";
+      }
     }
 
     if (this.random_pool.seed !== this.state.seed) {
@@ -301,9 +310,9 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const slider = document.getElementById("slider")!; // todo do this better
     const touch_indicator = document.getElementById("touch")!; // todo do this better
     const rect = slider.getBoundingClientRect(); // relative to viewport
-    const radius_indicator = touch_indicator.clientHeight / 2;
+    const radius_indicator = touch_indicator.clientWidth / 2;
 
-    let top = rect.height / 2 - radius_indicator;
+    let top = 0;
     const art = this.getActiveArt();
     if (art && art.uses_parameter_b) {
       top = this.clamp(
