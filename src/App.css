@@ -24,8 +24,11 @@ select[name="artpiece_selector"] {
   display: none;
 }
 
-/* was 640 */
-@media screen and (max-width: 2000px) {
+#canvas3D {
+  margin-bottom: 20px;
+}
+
+@media screen and (max-width: 640px) {
   .ArtCanvas {
     width: 100%;
   }
@@ -42,8 +45,7 @@ select[name="artpiece_selector"] {
   #mobile_controls #touch_rect {
     position: relative; /* make touch position relative to this */
     width: 70%;
-    padding-top: 28%;
-    /* height: 100px; */
+    padding-top: 28%; /* aspect ratio of 1 width / 0.28 height */
     margin: 0 auto 20px auto;
     background-color: rgb(28, 28, 30);
     border-radius: 10px;
@@ -56,8 +58,6 @@ select[name="artpiece_selector"] {
     background: rgb(253, 253, 253);
     width: 8%;
     border-radius: 50%;
-
-    /* transition: all 0.033s linear; */
 
     /* do not become a target for touch events */
     pointer-events: none;

@@ -30,8 +30,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private touch_rect: React.RefObject<HTMLDivElement>;
   private margin: number;
   private art_pieces: Array<ArtPiece>;
-  private throttledTouchMoveHandler: (...args: any[]) => void;
-  private throttledMouseMoveHandler: (...args: any[]) => void;
+  private throttledDrawArt: (...args: any[]) => void;
   private throttledSetURLFromArt: (...args: any[]) => void;
 
   random_pool: RandomPool;
@@ -55,15 +54,10 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.height = this.draw_height + this.margin;
     this.art_pieces = [];
     this.random_pool = new RandomPool("");
-    this.throttledTouchMoveHandler = this.throttle(
-      (e: TouchEvent) => this.handleTouchMoveState(e),
-      1000 / 30,
-      (e: TouchEvent) => this.handleTouchMoveUI(e)
-    );
-    this.throttledMouseMoveHandler = this.throttle(
-      (e: MouseEvent) => this.handleMouseMoveState(e),
+
+    this.throttledDrawArt = this.throttle(
+      () => this.drawArt(),
       1000 / 30
-      // (e: MouseEvent) => this.handleMouseMoveUI(e)
     );
     this.throttledSetURLFromArt = this.throttle(
       () => this.setURLFromArt(),
@@ -105,7 +99,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       this.random_pool = new RandomPool(this.state.seed);
     }
 
-    this.drawArt();
+    this.throttledDrawArt();
     this.throttledSetURLFromArt();
   }
 
@@ -299,39 +293,11 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     };
   }
 
-  private updateParamUI(clientX: number, clientY: number) {
-    const touch_rect = document.getElementById("touch_rect")!; // todo do this better
-    const touch_indicator = document.getElementById("touch")!; // todo do this better
-    const rect = touch_rect.getBoundingClientRect(); // relative to viewport
-    const radius_indicator = touch_indicator.clientWidth / 2;
-
-    let top = 0;
-    const art = this.getActiveArt();
-    if (art && art.uses_parameter_b) {
-      top = this.clamp(
-        0,
-        clientY - rect.top - radius_indicator,
-        touch_rect.clientHeight - touch_indicator.clientHeight
-      );
-    }
-    touch_indicator.style.top = `${top}px`;
-
-    const left = this.clamp(
-      0,
-      clientX - rect.left - radius_indicator,
-      touch_rect.clientWidth - touch_indicator.clientWidth
-    );
-    touch_indicator.style.left = `${left}px`;
-  }
-
   private getTouchIndicatorProperties(): React.CSSProperties {
-    // const touch_rect = this.touch_rect.current!;
-    // const touch_indicator = document.getElementById("touch")!; // todo do this better
-    // const rect = touch_rect.getBoundingClientRect(); // relative to viewport
     const art = this.getActiveArt();
-    let touch_indicator_width_pct = 8;
-    let ratio_a = this.state.parameter_a / 10;
-    let left_pct = -touch_indicator_width_pct / 2 + ratio_a * 100;
+    const touch_indicator_width_pct = 8;
+    const ratio_a = this.state.parameter_a / 10;
+    const left_pct = -touch_indicator_width_pct / 2 + ratio_a * 100;
     let top_pct = 0;
     let height_pct = 100;
     let border_radius = 0;
@@ -370,10 +336,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     });
   }
 
-  // private handleMouseMoveUI(e: MouseEvent) {
-  //   this.updateParamUI(e.clientX, e.clientY);
-  // }
-
   private handleTouchMoveState(e: TouchEvent) {
     // todo rewrite this to use client{X,Y}
     const touch_rect = document.getElementById("touch_rect")!; // todo do this better
@@ -388,12 +350,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       parameter_b: this.clamp(0, y * 10, 10),
       previous_art: this.getActiveArt(),
     });
-    e.preventDefault(); // prevent MouseMove events from being fired
-  }
-
-  private handleTouchMoveUI(e: TouchEvent) {
-    const touch = e.touches[0];
-    this.updateParamUI(touch.clientX, touch.clientY);
     e.preventDefault(); // prevent MouseMove events from being fired
   }
 
@@ -418,8 +374,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <div
             id="touch_rect"
             ref={this.touch_rect}
-            onMouseMove={e => this.throttledMouseMoveHandler(e.nativeEvent)}
-            onTouchMove={e => this.throttledTouchMoveHandler(e.nativeEvent)}
+            onMouseMove={e => this.handleMouseMoveState(e.nativeEvent)}
+            onTouchMove={e => this.handleTouchMoveState(e.nativeEvent)}
           >
             <div id="touch" style={this.getTouchIndicatorProperties()} />
           </div>
@@ -476,7 +432,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     return (
       <div>
         <canvas className="ArtCanvas" ref={this.canvas2D} />
-        <canvas className="ArtCanvas" ref={this.canvas3D} />
+        <canvas className="ArtCanvas" id="canvas3D" ref={this.canvas3D} />
         {this.renderSelect()}
         {this.renderParameter()}
         {this.renderReInit()}
