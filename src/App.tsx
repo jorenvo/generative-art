@@ -27,6 +27,7 @@ interface ArtCanvasState {
 export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private canvas2D: React.RefObject<HTMLCanvasElement>;
   private canvas3D: React.RefObject<HTMLCanvasElement>;
+  private touch_rect: React.RefObject<HTMLDivElement>;
   private margin: number;
   private art_pieces: Array<ArtPiece>;
   private throttledTouchMoveHandler: (...args: any[]) => void;
@@ -44,6 +45,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     super(props);
     this.canvas2D = React.createRef();
     this.canvas3D = React.createRef();
+    this.touch_rect = React.createRef();
     this.margin = 100;
 
     this.width_to_height_ratio = 1.25;
@@ -60,8 +62,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     );
     this.throttledMouseMoveHandler = this.throttle(
       (e: MouseEvent) => this.handleMouseMoveState(e),
-      1000 / 30,
-      (e: MouseEvent) => this.handleMouseMoveUI(e)
+      1000 / 30
+      // (e: MouseEvent) => this.handleMouseMoveUI(e)
     );
     this.throttledSetURLFromArt = this.throttle(
       () => this.setURLFromArt(),
@@ -96,15 +98,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       } else {
         this.canvas3D.current!.style.display = "block";
         this.canvas2D.current!.style.display = "none";
-      }
-
-      const touch = document.getElementById("touch")!;
-      if (!active_art.uses_parameter_b) {
-        touch.style.height = "100px";
-        touch.style.borderRadius = "0";
-      } else {
-        touch.style.height = "20px";
-        touch.style.borderRadius = "50%";
       }
     }
 
@@ -307,9 +300,9 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private updateParamUI(clientX: number, clientY: number) {
-    const slider = document.getElementById("slider")!; // todo do this better
+    const touch_rect = document.getElementById("touch_rect")!; // todo do this better
     const touch_indicator = document.getElementById("touch")!; // todo do this better
-    const rect = slider.getBoundingClientRect(); // relative to viewport
+    const rect = touch_rect.getBoundingClientRect(); // relative to viewport
     const radius_indicator = touch_indicator.clientWidth / 2;
 
     let top = 0;
@@ -318,7 +311,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       top = this.clamp(
         0,
         clientY - rect.top - radius_indicator,
-        slider.clientHeight - touch_indicator.clientHeight
+        touch_rect.clientHeight - touch_indicator.clientHeight
       );
     }
     touch_indicator.style.top = `${top}px`;
@@ -326,15 +319,49 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const left = this.clamp(
       0,
       clientX - rect.left - radius_indicator,
-      slider.clientWidth - touch_indicator.clientWidth
+      touch_rect.clientWidth - touch_indicator.clientWidth
     );
     touch_indicator.style.left = `${left}px`;
   }
 
+  private getTouchIndicatorProperties(): React.CSSProperties {
+    // const touch_rect = this.touch_rect.current!;
+    // const touch_indicator = document.getElementById("touch")!; // todo do this better
+    // const rect = touch_rect.getBoundingClientRect(); // relative to viewport
+    const art = this.getActiveArt();
+    let touch_indicator_width_pct = 8;
+    let ratio_a = this.state.parameter_a / 10;
+    let left_pct = -touch_indicator_width_pct / 2 + ratio_a * 100;
+    let top_pct = 0;
+    let height_pct = 100;
+    let border_radius = 0;
+    let padding_top_pct = 0;
+
+    if (art && art.uses_parameter_b) {
+      let rect_width_over_height_ratio = 1 / 0.28;
+      let ratio_b = this.state.parameter_b / 10;
+
+      top_pct =
+        (-touch_indicator_width_pct / 2) * rect_width_over_height_ratio +
+        ratio_b * 100;
+      border_radius = 50;
+      height_pct = 0;
+      padding_top_pct = 8;
+    }
+
+    return {
+      left: `${left_pct}%`,
+      top: `${top_pct}%`,
+      height: `${height_pct}%`,
+      borderRadius: `${border_radius}%`,
+      paddingBottom: `${padding_top_pct}%`,
+    };
+  }
+
   private handleMouseMoveState(e: MouseEvent) {
-    const slider = document.getElementById("slider")!; // todo do this better
-    const x = e.offsetX / slider.clientWidth;
-    const y = e.offsetY / slider.clientHeight;
+    const touch_rect = document.getElementById("touch_rect")!; // todo do this better
+    const x = e.offsetX / touch_rect.clientWidth;
+    const y = e.offsetY / touch_rect.clientHeight;
 
     this.setState({
       parameter_a: this.clamp(0, x * 10, 10),
@@ -343,19 +370,19 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     });
   }
 
-  private handleMouseMoveUI(e: MouseEvent) {
-    this.updateParamUI(e.clientX, e.clientY);
-  }
+  // private handleMouseMoveUI(e: MouseEvent) {
+  //   this.updateParamUI(e.clientX, e.clientY);
+  // }
 
   private handleTouchMoveState(e: TouchEvent) {
     // todo rewrite this to use client{X,Y}
-    const slider = document.getElementById("slider")!; // todo do this better
+    const touch_rect = document.getElementById("touch_rect")!; // todo do this better
     const touch_event = e.touches[0];
     const rect = (e.target as HTMLDivElement).getBoundingClientRect();
     const offsetX = touch_event.pageX - rect.left - window.scrollX;
     const offsetY = touch_event.pageY - rect.top - window.scrollY;
-    const x = offsetX / slider.clientWidth;
-    const y = offsetY / slider.clientHeight;
+    const x = offsetX / touch_rect.clientWidth;
+    const y = offsetY / touch_rect.clientHeight;
     this.setState({
       parameter_a: this.clamp(0, x * 10, 10),
       parameter_b: this.clamp(0, y * 10, 10),
@@ -389,11 +416,12 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         />
         <div id="mobile_controls">
           <div
-            id="slider"
+            id="touch_rect"
+            ref={this.touch_rect}
             onMouseMove={e => this.throttledMouseMoveHandler(e.nativeEvent)}
             onTouchMove={e => this.throttledTouchMoveHandler(e.nativeEvent)}
           >
-            <div id="touch" />
+            <div id="touch" style={this.getTouchIndicatorProperties()} />
           </div>
         </div>
       </>
