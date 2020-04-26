@@ -4,9 +4,9 @@
   "description": "This contains some small pieces of interactive art.",
   "main": "index.js",
   "scripts": {
-    "dev": "webpack-dev-server --open --config webpack.dev.ts",
-    "build-dev": "webpack --config webpack.dev.ts",
-    "build-prod": "webpack --config webpack.prod.ts"
+    "dev": "webpack-dev-server --open --config webpack_dev.ts",
+    "build-dev": "webpack --config webpack_dev.ts",
+    "build-prod": "webpack --config webpack_prod.ts"
   },
   "repository": {
     "type": "git",
