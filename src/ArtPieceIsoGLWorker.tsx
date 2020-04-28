@@ -268,7 +268,7 @@ class Perlin {
   private generateCloudFaces(row: number, col: number): Face[] {
     const samples = this.clouds.getSamples();
     const cloud_intensity = 255;
-    const cloud_alpha = 100;
+    const cloud_alpha = 120;
     const center = this.samples_per_row / 2;
     let cloud_height = 0.07;
     let faces = [];
@@ -278,7 +278,7 @@ class Perlin {
       Math.pow(row - center, 2) + Math.pow(col - center, 2)
     );
 
-    if (distance_to_center > center / 1.2) {
+    if (distance_to_center > center / 1.01) {
       // fade
       const offset = (distance_to_center / center) * 0.3;
       // if (Math.random() > 0.9)
