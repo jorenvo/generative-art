@@ -265,7 +265,7 @@ export class IsoShapeRotateGL extends ArtPiece {
     );
 
     // Clear the canvas.
-    this.gl.clearColor(0.8, 0.8, 0.8, 1.0);
+    this.gl.clearColor(0.9, 0.9, 0.9, 1.0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
     this.gl.enable(this.gl.CULL_FACE);
