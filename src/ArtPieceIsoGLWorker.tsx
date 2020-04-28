@@ -267,7 +267,7 @@ class Perlin {
 
   private generateCloudFaces(row: number, col: number): Face[] {
     const samples = this.clouds.getSamples();
-    const cloud_intensity = 120;
+    const cloud_intensity = 255;
     const cloud_alpha = 100;
     const center = this.samples_per_row / 2;
     let cloud_height = 0.07;

@@ -55,10 +55,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.art_pieces = [];
     this.random_pool = new RandomPool("");
 
-    this.throttledDrawArt = this.throttle(
-      () => this.drawArt(),
-      1000 / 30
-    );
+    this.throttledDrawArt = this.throttle(() => this.drawArt(), 1000 / 30);
     this.throttledSetURLFromArt = this.throttle(
       () => this.setURLFromArt(),
       1000
@@ -222,7 +219,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   getContextGl() {
     const element = this.canvas3D.current!;
-    const ctx = element.getContext("webgl");
+    const ctx = element.getContext("webgl", { alpha: false });
     if (!ctx) {
       throw new Error("Could not get gl context for canvas.");
     } else {
