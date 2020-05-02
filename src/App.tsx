@@ -22,6 +22,7 @@ interface ArtCanvasState {
   parameter_a: number;
   parameter_b: number;
   seed: string;
+  g_sensor_activated: boolean;
 }
 
 export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
@@ -32,6 +33,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private art_pieces: Array<ArtPiece>;
   private throttledDrawArt: (...args: any[]) => void;
   private throttledSetURLFromArt: (...args: any[]) => void;
+  private throttledHandleMotionEvent: (...args: any[]) => void;
 
   random_pool: RandomPool;
   width_to_height_ratio: number;
@@ -60,6 +62,10 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       () => this.setURLFromArt(),
       1000
     );
+    this.throttledHandleMotionEvent = this.throttle(
+      (e: DeviceMotionEvent) => this.handleMotionEvent(e),
+      1000 / 30
+    );
 
     this.state = {
       active_art_name: undefined,
@@ -67,6 +73,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       parameter_a: 5,
       parameter_b: 5,
       seed: "",
+      g_sensor_activated: false,
     };
   }
 
@@ -102,6 +109,45 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   get html_element(): HTMLCanvasElement {
     return this.canvas3D.current!;
+  }
+
+  private initDeviceMotion() {
+    // feature detect
+    if (typeof DeviceMotionEvent.requestPermission === "function") {
+      DeviceMotionEvent.requestPermission()
+        .then((permissionState) => {
+          if (permissionState === "granted") {
+            window.addEventListener(
+              "devicemotion",
+              this.throttledHandleMotionEvent
+            );
+            this.setState({ g_sensor_activated: true });
+          }
+        })
+        .catch(console.error);
+    } else {
+      // handle regular non iOS 13+ devices
+      console.log(
+        "Permission not required, immediately setting up the listener."
+      );
+      window.addEventListener("devicemotion", this.throttledHandleMotionEvent);
+      this.setState({ g_sensor_activated: true });
+    }
+  }
+
+  private handleMotionEvent(e: DeviceMotionEvent) {
+    const acceleration = e.accelerationIncludingGravity;
+    if (!acceleration || !acceleration.x || !acceleration.y) {
+      console.error("event didn't have accelerationIncludingGravity");
+      return;
+    }
+
+    const limit = 4; // 4G
+    this.setState({
+      parameter_a: this.clamp(-limit, acceleration.x, limit) * (5 / limit) + 5,
+      parameter_b: this.clamp(-limit, acceleration.y, limit) * (5 / limit) + 5,
+      previous_art: this.getActiveArt(),
+    });
   }
 
   private setupArt() {
@@ -181,7 +227,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   private setArtFromURL() {
     const params = window.location.hash.substr(1);
-    params.split("&").forEach(p => {
+    params.split("&").forEach((p) => {
       const [name, value] = p.split("=");
       switch (name) {
         case "art":
@@ -229,7 +275,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   private getActiveArt(): ArtPiece | undefined {
     return this.art_pieces.find(
-      art => art.name === this.state.active_art_name
+      (art) => art.name === this.state.active_art_name
     )!;
   }
 
@@ -241,7 +287,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const active_art = this.getActiveArt();
     const default_art: string =
       (active_art && active_art.name) || this.art_pieces[0].name;
-    const options = this.art_pieces.map(art => (
+    const options = this.art_pieces.map((art) => (
       <option key={art.name} value={art.name}>
         {art.name}
       </option>
@@ -251,7 +297,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       <select
         name="artpiece_selector"
         defaultValue={default_art}
-        onChange={event =>
+        onChange={(event) =>
           this.setState({
             parameter_a: 5,
             previous_art: this.getActiveArt(),
@@ -360,7 +406,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           max="10"
           step="0.2"
           value={String(this.state.parameter_a)}
-          onChange={event =>
+          onChange={(event) =>
             this.setState({
               parameter_a: Number(event.target.value),
               previous_art: this.getActiveArt(),
@@ -371,8 +417,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           <div
             id="touch_rect"
             ref={this.touch_rect}
-            onMouseMove={e => this.handleMouseMoveState(e.nativeEvent)}
-            onTouchMove={e => this.handleTouchMoveState(e.nativeEvent)}
+            onMouseMove={(e) => this.handleMouseMoveState(e.nativeEvent)}
+            onTouchMove={(e) => this.handleTouchMoveState(e.nativeEvent)}
           >
             <div id="touch" style={this.getTouchIndicatorProperties()} />
           </div>
@@ -387,9 +433,34 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       return (
         <button
           name="reinit"
-          onClick={_ => this.setState({ seed: this.getNewSeed() })}
+          onClick={(_) => this.setState({ seed: this.getNewSeed() })}
         >
           ~
+        </button>
+      );
+    }
+  }
+
+  renderGSensor(): React.ReactNode {
+    if (this.state.g_sensor_activated) {
+      return (
+        <button
+          className="GSensor"
+          onClick={(_) => {
+            window.removeEventListener(
+              "devicemotion",
+              this.throttledHandleMotionEvent
+            );
+            this.setState({ g_sensor_activated: false });
+          }}
+        >
+          Disable G-sensor
+        </button>
+      );
+    } else {
+      return (
+        <button className="GSensor" onClick={(_) => this.initDeviceMotion()}>
+          Enable G-sensor
         </button>
       );
     }
@@ -433,6 +504,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         {this.renderSelect()}
         {this.renderParameter()}
         {this.renderReInit()}
+        {this.renderGSensor()}
       </div>
     );
   }

@@ -1,3 +1,4 @@
+/* todo support dark mode */
 body {
   margin-bottom: 50px;
 }
@@ -16,7 +17,8 @@ button,
 }
 
 input[name="parameter_a"],
-select[name="artpiece_selector"] {
+select[name="artpiece_selector"],
+button[name="reinit"] {
   margin-bottom: 20px;
 }
 
