@@ -162,7 +162,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         -this.clamp(-limit, this.motion_average_y.getAverage(), limit) *
           (5 / limit) +
         5,
-      previous_art: this.getActiveArt(),
     });
   }
 
@@ -423,7 +422,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
           onChange={(event) =>
             this.setState({
               parameter_a: Number(event.target.value),
-              previous_art: this.getActiveArt(),
             })
           }
         />
@@ -513,7 +511,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   render(): React.ReactNode {
     return (
       <div>
-        <canvas className="ArtCanvas" ref={this.canvas2D} />
+        <canvas className="ArtCanvas" id="canvas2D" ref={this.canvas2D} />
         <canvas className="ArtCanvas" id="canvas3D" ref={this.canvas3D} />
         {this.renderSelect()}
         {this.renderParameter()}

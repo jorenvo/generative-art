@@ -86,3 +86,26 @@ input {
 
   touch-action: manipulation; /* disable zooming with double tap */
 }
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: rgb(35, 37, 38);
+  }
+
+  #canvas2D {
+    filter: invert(100%);
+  }
+
+  h1 {
+    color: whitesmoke;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    background-color: rgb(87, 88, 95);
+    color: whitesmoke;
+    border: 1px solid rgb(87, 88, 95);
+  }
+}
