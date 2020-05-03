@@ -8,6 +8,7 @@ import { Maze } from "./ArtPieceMaze";
 import { Fredkin1, Fredkin2 } from "./ArtPieceFredkin";
 import { IsoShapeRotateGL } from "./ArtPieceIsoGL";
 import { RandomPool } from "./RandomPool";
+import { AverageQueue } from "./UtilQueue";
 import {
   IsoCube,
   IsoCubeColor,
@@ -31,6 +32,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   private touch_rect: React.RefObject<HTMLDivElement>;
   private margin: number;
   private art_pieces: Array<ArtPiece>;
+  private motion_average_x: AverageQueue;
+  private motion_average_y: AverageQueue;
   private throttledDrawArt: (...args: any[]) => void;
   private throttledSetURLFromArt: (...args: any[]) => void;
   private throttledHandleMotionEvent: (...args: any[]) => void;
@@ -55,6 +58,10 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.draw_height = Math.floor(this.draw_width * this.width_to_height_ratio);
     this.height = this.draw_height + this.margin;
     this.art_pieces = [];
+
+    const motion_capacity = 10;
+    this.motion_average_x = new AverageQueue(motion_capacity);
+    this.motion_average_y = new AverageQueue(motion_capacity);
     this.random_pool = new RandomPool("");
 
     this.throttledDrawArt = this.throttle(() => this.drawArt(), 1000 / 30);
@@ -64,7 +71,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     );
     this.throttledHandleMotionEvent = this.throttle(
       (e: DeviceMotionEvent) => this.handleMotionEvent(e),
-      1000 / 30
+      1000 / 60
     );
 
     this.state = {
@@ -142,10 +149,19 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       return;
     }
 
+    this.motion_average_x.enqueue(acceleration.x);
+    this.motion_average_y.enqueue(acceleration.y);
+
     const limit = 4; // 4G
     this.setState({
-      parameter_a: this.clamp(-limit, acceleration.x, limit) * (5 / limit) + 5,
-      parameter_b: this.clamp(-limit, acceleration.y, limit) * (5 / limit) + 5,
+      parameter_a:
+        this.clamp(-limit, this.motion_average_x.getAverage(), limit) *
+          (5 / limit) +
+        5,
+      parameter_b:
+        -this.clamp(-limit, this.motion_average_y.getAverage(), limit) *
+          (5 / limit) +
+        5,
       previous_art: this.getActiveArt(),
     });
   }
@@ -375,7 +391,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.setState({
       parameter_a: this.clamp(0, x * 10, 10),
       parameter_b: this.clamp(0, y * 10, 10),
-      previous_art: this.getActiveArt(),
     });
   }
 
@@ -391,7 +406,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.setState({
       parameter_a: this.clamp(0, x * 10, 10),
       parameter_b: this.clamp(0, y * 10, 10),
-      previous_art: this.getActiveArt(),
     });
     e.preventDefault(); // prevent MouseMove events from being fired
   }
