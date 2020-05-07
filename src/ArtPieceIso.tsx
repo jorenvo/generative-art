@@ -115,8 +115,8 @@ class IsoUtils {
     let random_index = Math.floor(Math.random() * 99999);
     const scale = 20;
     const parameter = this.canvas.state.parameter_a - 5;
-    faces.forEach(face => {
-      face.forEach(p => {
+    faces.forEach((face) => {
+      face.forEach((p) => {
         if (rotate_radians) {
           p.rotate_xz(rotate_radians);
         }
@@ -167,9 +167,9 @@ class IsoUtils {
       }
 
       const new_side = side.map(
-        vertex => new Point3D(vertex.x, vertex.y, vertex.z)
+        (vertex) => new Point3D(vertex.x, vertex.y, vertex.z)
       );
-      new_side.forEach(vertex => {
+      new_side.forEach((vertex) => {
         vertex.rotate_xz(degrees_per_side * i);
         vertex.add(last_face_bottom_right);
         min_of_shape.min(vertex);
@@ -182,8 +182,8 @@ class IsoUtils {
     size.subtract(min_of_shape);
     size.divide(new Point3D(2, 2, 2));
 
-    carousel.forEach(face =>
-      face.forEach(vertex => {
+    carousel.forEach((face) =>
+      face.forEach((vertex) => {
         vertex.subtract(min_of_shape);
         vertex.subtract(size);
       })
@@ -248,8 +248,8 @@ class IsoUtils {
         new Point3D(0, 0, 0), // bottom left front
       ],
     ];
-    cube.forEach(face =>
-      face.forEach(vertex => vertex.subtract(new Point3D(0.5, 0.5, 0.5)))
+    cube.forEach((face) =>
+      face.forEach((vertex) => vertex.subtract(new Point3D(0.5, 0.5, 0.5)))
     );
     this.transformShape(cube, bottom_left_front, randomize, rotate_radians);
     return cube;
@@ -325,7 +325,7 @@ class IsoUtils {
     p: Point3D
   ) {
     const sqrt3 = Math.sqrt(3);
-    p.for_each_dimension(a => (a + sqrt3 * cube_depth) * scale);
+    p.for_each_dimension((a) => (a + sqrt3 * cube_depth) * scale);
   }
 
   private renderIsoPath(face: Face, fill_color: string) {
@@ -379,10 +379,10 @@ class IsoUtils {
       this.canvas.draw_width / ((horizontal_cubes + cube_depth) * Math.sqrt(3));
 
     const faces: Face[] = [];
-    face_vertices.forEach(face => {
+    face_vertices.forEach((face) => {
       const face_sum: Point3D = new Point3D();
 
-      face.forEach(vertex => {
+      face.forEach((vertex) => {
         this.convertToIso(vertex);
         face_sum.add(vertex);
         this.convertToScreenCoordinates(cube_depth, scale, vertex);
@@ -420,7 +420,7 @@ class IsoUtils {
     }
 
     let palette_index = 0;
-    faces.forEach(f => {
+    faces.forEach((f) => {
       this.renderIsoPath(f, palette[palette_index]);
       palette_index = (palette_index + 1) % palette.length;
     });
@@ -447,7 +447,12 @@ abstract class IsoShapeRotate extends ArtPiece {
   protected rotating_shape_radians: number;
   protected iso_utils: IsoUtils;
 
-  constructor(name: string, uses_random_pool: boolean, uses_parameter_b: boolean, canvas: ArtCanvas) {
+  constructor(
+    name: string,
+    uses_random_pool: boolean,
+    uses_parameter_b: boolean,
+    canvas: ArtCanvas
+  ) {
     super(name, uses_random_pool, uses_parameter_b, canvas);
     this.iso_utils = new IsoUtils(this.canvas);
     this.rotating_shape_radians = 0;
@@ -491,6 +496,10 @@ abstract class IsoShapeRotate extends ArtPiece {
   }
 
   private drawArtRotatingShape() {
+    if (this.animation_id) {
+      cancelAnimationFrame(this.animation_id);
+    }
+
     this.animation_id = requestAnimationFrame(
       this.drawArtRotatingShapeFrame.bind(this)
     );

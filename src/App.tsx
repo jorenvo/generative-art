@@ -19,7 +19,6 @@ import "./App.css";
 
 interface ArtCanvasState {
   active_art_name: string | undefined;
-  previous_art: ArtPiece | undefined;
   parameter_a: number;
   parameter_b: number;
   seed: string;
@@ -78,7 +77,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
     this.state = {
       active_art_name: undefined,
-      previous_art: undefined,
       parameter_a: 5,
       parameter_b: 5,
       seed: "",
@@ -318,13 +316,16 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       <select
         name="artpiece_selector"
         defaultValue={default_art}
-        onChange={(event) =>
+        onChange={(event) => {
+          const active_art = this.getActiveArt();
+          if (active_art) {
+            active_art.cleanUp();
+          }
           this.setState({
             parameter_a: 5,
-            previous_art: this.getActiveArt(),
             active_art_name: event.target.value,
-          })
-        }
+          });
+        }}
       >
         {options}
       </select>
@@ -496,10 +497,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   private drawArt() {
     const active_art = this.getActiveArt();
-
-    if (this.state.previous_art) {
-      this.state.previous_art.cleanUp();
-    }
 
     if (active_art && active_art.is2d()) {
       this.clear();
