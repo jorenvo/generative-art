@@ -22,7 +22,7 @@ button[name="reinit"] {
   margin-bottom: 20px;
 }
 
-#mobile_controls {
+#mobile_controls, .g_sensor {
   display: none;
 }
 
@@ -42,6 +42,10 @@ button[name="reinit"] {
   #mobile_controls {
     display: block;
     text-align: center;
+  }
+
+  .g_sensor {
+    display: block;
   }
 
   #mobile_controls #touch_rect {

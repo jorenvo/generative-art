@@ -463,7 +463,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     if (this.state.g_sensor_activated) {
       return (
         <button
-          className="GSensor"
+          className="g_sensor"
           onClick={(_) => {
             window.removeEventListener(
               "devicemotion",
@@ -477,7 +477,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       );
     } else {
       return (
-        <button className="GSensor" onClick={(_) => this.initDeviceMotion()}>
+        <button className="g_sensor" onClick={(_) => this.initDeviceMotion()}>
           Enable G-sensor
         </button>
       );
