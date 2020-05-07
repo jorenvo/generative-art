@@ -44,6 +44,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   width: number;
   draw_height: number;
   height: number;
+  dark_mode: boolean;
 
   constructor(props: any) {
     super(props);
@@ -63,6 +64,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.motion_average_x = new AverageQueue(motion_capacity);
     this.motion_average_y = new AverageQueue(motion_capacity);
     this.random_pool = new RandomPool("");
+    this.dark_mode = false;
 
     this.throttledDrawArt = this.throttle(() => this.drawArt(), 1000 / 30);
     this.throttledSetURLFromArt = this.throttle(
@@ -92,6 +94,10 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.setupArt();
     this.drawArt();
     this.setArtFromURL();
+
+    window.matchMedia("(prefers-color-scheme: dark)").addListener((e) => {
+      this.dark_mode = !!e.matches;
+    });
   }
 
   componentDidUpdate() {

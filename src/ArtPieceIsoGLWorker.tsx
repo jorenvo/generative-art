@@ -4,11 +4,12 @@ import {
   IsoShapeRotateGLDataToMain,
 } from "./ArtPieceIsoGL";
 import { RandomPool } from "./RandomPool";
+import { Color } from "./UtilColor";
 
 const ctx: Worker = self as any;
 
 // Received message from parent thread
-ctx.addEventListener("message", e => {
+ctx.addEventListener("message", (e) => {
   // console.time("worker");
   console.log("worker started and received data, starting perlin");
   const data = e.data as IsoShapeRotateGLDataToWorker;
@@ -53,35 +54,6 @@ class Face {
     this.height =
       this.vertices.reduce((acc, curr) => acc + curr.y, 0) /
       this.vertices.length;
-  }
-}
-
-class Color {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-
-  constructor(r = 0, g = 0, b = 0, a = 255) {
-    this.r = r;
-    this.g = g;
-    this.b = b;
-    this.a = a;
-  }
-
-  private clamp(min: number, x: number, max: number): number {
-    return Math.min(max, Math.max(min, Math.floor(x)));
-  }
-
-  randomize(random: number) {
-    const intensity = 32;
-    this.r += random * intensity - intensity / 2;
-    this.g += random * intensity - intensity / 2;
-    this.b += random * intensity - intensity / 2;
-
-    this.r = this.clamp(0, this.r, 255);
-    this.g = this.clamp(0, this.g, 255);
-    this.b = this.clamp(0, this.b, 255);
   }
 }
 
@@ -251,7 +223,7 @@ class Perlin {
     color.randomize(random);
     face.color = color;
 
-    face.vertices.forEach(vertex => {
+    face.vertices.forEach((vertex) => {
       vertex.y = Math.min(vertex.y, water_level - 0.04);
       vertex.divide(
         new Point3D(
@@ -310,7 +282,7 @@ class Perlin {
       );
 
       // todo generalize
-      face.vertices.forEach(vertex => {
+      face.vertices.forEach((vertex) => {
         vertex.divide(
           new Point3D(this.samples_per_row, 1, this.samples_per_row)
         );
@@ -342,31 +314,31 @@ class Perlin {
     const vertex_range_min = new Point3D(Infinity, Infinity, Infinity);
     const vertex_range_max = new Point3D(-Infinity, -Infinity, -Infinity);
 
-    faces.forEach(f => {
+    faces.forEach((f) => {
       vertex_range_min.x = Math.min(
         vertex_range_min.x,
-        ...f.vertices.map(v => v.x)
+        ...f.vertices.map((v) => v.x)
       );
       vertex_range_min.y = Math.min(
         vertex_range_min.y,
-        ...f.vertices.map(v => v.y)
+        ...f.vertices.map((v) => v.y)
       );
       vertex_range_min.z = Math.min(
         vertex_range_min.z,
-        ...f.vertices.map(v => v.z)
+        ...f.vertices.map((v) => v.z)
       );
 
       vertex_range_max.x = Math.max(
         vertex_range_max.x,
-        ...f.vertices.map(v => v.x)
+        ...f.vertices.map((v) => v.x)
       );
       vertex_range_max.y = Math.max(
         vertex_range_max.y,
-        ...f.vertices.map(v => v.y)
+        ...f.vertices.map((v) => v.y)
       );
       vertex_range_max.z = Math.max(
         vertex_range_max.z,
-        ...f.vertices.map(v => v.z)
+        ...f.vertices.map((v) => v.z)
       );
     });
 
@@ -375,7 +347,7 @@ class Perlin {
 
   calcVertices(faces: Face[]) {
     let vertices: number[] = [];
-    faces.forEach(f => {
+    faces.forEach((f) => {
       const v = f.vertices;
       vertices.push(...v[0].xyz());
       vertices.push(...v[2].xyz());
@@ -456,7 +428,7 @@ class Perlin {
     // });
 
     const vertices_per_face = 6;
-    faces.forEach(face => {
+    faces.forEach((face) => {
       for (let j = 0; j < vertices_per_face; j++) {
         gl_colors.push(face.color.r);
         gl_colors.push(face.color.g);

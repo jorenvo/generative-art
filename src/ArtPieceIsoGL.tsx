@@ -6,6 +6,7 @@ import { Matrix4 } from "./UtilMatrix4";
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import GLWorker from "worker-loader!./ArtPieceIsoGLWorker";
 import { Point3D } from "./ArtPieceIso";
+import { Color } from "./UtilColor";
 
 export interface IsoShapeRotateGLDataToWorker {
   seed: string;
@@ -39,7 +40,12 @@ export class IsoShapeRotateGL extends ArtPiece {
   private worker_promise: Promise<unknown>;
   private calc_id: number;
 
-  constructor(name: string, uses_random_pool: boolean, uses_parameter_b: boolean, canvas: ArtCanvas) {
+  constructor(
+    name: string,
+    uses_random_pool: boolean,
+    uses_parameter_b: boolean,
+    canvas: ArtCanvas
+  ) {
     super(name, uses_random_pool, uses_parameter_b, canvas);
     this.rotating_shape_radians = 0;
     this.gl = this.canvas.getContextGl();
@@ -215,8 +221,8 @@ export class IsoShapeRotateGL extends ArtPiece {
         parameter_a: this.canvas.state.parameter_a,
       };
 
-      return new Promise(resolve => {
-        gl_worker.onmessage = e => {
+      return new Promise((resolve) => {
+        gl_worker.onmessage = (e) => {
           console.log(`Got data from worker.`);
           const data = e.data as IsoShapeRotateGLDataToMain;
 
@@ -265,7 +271,16 @@ export class IsoShapeRotateGL extends ArtPiece {
     );
 
     // Clear the canvas.
-    this.gl.clearColor(0.9, 0.9, 0.9, 1.0);
+    let background_color = new Color(0.9, 0.9, 0.9, 1.0);
+    if (this.canvas.dark_mode) {
+      background_color = new Color(35 / 255, 37 / 255, 38 / 255);
+    }
+    this.gl.clearColor(
+      background_color.r,
+      background_color.g,
+      background_color.b,
+      background_color.a
+    );
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
     this.gl.enable(this.gl.CULL_FACE);
