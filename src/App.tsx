@@ -63,7 +63,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const motion_queue_capacity = 10;
     this.motion_average_x = new AverageQueue(motion_queue_capacity);
     this.motion_average_y = new AverageQueue(motion_queue_capacity);
-    this.random_pool = new RandomPool("");
+    this.random_pool = new RandomPool(String(Math.random()));
     this.dark_mode = false;
 
     this.throttledDrawArt = this.throttle(() => this.drawArt(), 1000 / 30);
