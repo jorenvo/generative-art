@@ -1,4 +1,4 @@
-import { Point3D } from "./ArtPieceIso";
+import { Point } from "./UtilPoint";
 import {
   IsoShapeRotateGLDataToWorker,
   IsoShapeRotateGLDataToMain,
@@ -38,11 +38,11 @@ ctx.addEventListener("message", (e) => {
 });
 
 class Face {
-  vertices: [Point3D, Point3D, Point3D, Point3D];
+  vertices: [Point, Point, Point, Point];
   height: number;
   color: Color;
 
-  constructor(vertices: [Point3D, Point3D, Point3D, Point3D], color?: Color) {
+  constructor(vertices: [Point, Point, Point, Point], color?: Color) {
     this.vertices = vertices;
     this.height = 0;
     this.color = color || new Color();
@@ -61,7 +61,7 @@ class Face {
 class PerlinData {
   private readonly gridcells: number;
   private readonly gridsize: number;
-  private gradients: Point3D[][];
+  private gradients: Point[][];
   private samples: number[][];
   private samples_per_row: number;
   private seed: number;
@@ -84,7 +84,7 @@ class PerlinData {
   }
 
   private initGradients() {
-    const gradients: Point3D[][] = [];
+    const gradients: Point[][] = [];
     for (let i = 0; i <= this.gridcells; i++) {
       gradients.push([]);
       for (let j = 0; j <= this.gridcells; j++) {
@@ -93,7 +93,7 @@ class PerlinData {
           Math.PI *
           2;
         gradients[i].push(
-          new Point3D(Math.cos(angle_unit_circle), Math.sin(angle_unit_circle))
+          new Point(Math.cos(angle_unit_circle), Math.sin(angle_unit_circle))
         );
       }
     }
@@ -126,7 +126,7 @@ class PerlinData {
     return (1 - weight) * x1 + weight * x2;
   }
 
-  private dotProduct(distance: Point3D, gradient: Point3D): number {
+  private dotProduct(distance: Point, gradient: Point): number {
     return distance.x * gradient.x + distance.y * gradient.y;
   }
 
@@ -144,17 +144,17 @@ class PerlinData {
     const weight_y = this.fade(y - y0);
 
     let dp1 = this.dotProduct(
-      new Point3D(x - x0, y - y0),
+      new Point(x - x0, y - y0),
       this.gradients[y0][x0]
     );
     let dp2 = this.dotProduct(
-      new Point3D(x - x1, y - y0),
+      new Point(x - x1, y - y0),
       this.gradients[y0][x1]
     );
     let interpolated1 = this.linearlyInterpolate(dp1, dp2, weight_x);
 
-    dp1 = this.dotProduct(new Point3D(x - x0, y - y1), this.gradients[y1][x0]);
-    dp2 = this.dotProduct(new Point3D(x - x1, y - y1), this.gradients[y1][x1]);
+    dp1 = this.dotProduct(new Point(x - x0, y - y1), this.gradients[y1][x0]);
+    dp2 = this.dotProduct(new Point(x - x1, y - y1), this.gradients[y1][x1]);
     let interpolated2 = this.linearlyInterpolate(dp1, dp2, weight_x);
 
     return this.linearlyInterpolate(interpolated1, interpolated2, weight_y);
@@ -194,10 +194,10 @@ class Perlin {
   private generateTerrainFace(row: number, col: number): Face {
     const samples = this.terrain.getSamples();
     let face = new Face([
-      new Point3D(col + 1, samples[row + 1][col + 1], row + 1),
-      new Point3D(col + 1, samples[row][col + 1], row),
-      new Point3D(col, samples[row][col], row),
-      new Point3D(col, samples[row + 1][col], row + 1),
+      new Point(col + 1, samples[row + 1][col + 1], row + 1),
+      new Point(col + 1, samples[row][col + 1], row),
+      new Point(col, samples[row][col], row),
+      new Point(col, samples[row + 1][col], row + 1),
     ]);
 
     // small values = tall mountains
@@ -226,7 +226,7 @@ class Perlin {
     face.vertices.forEach((vertex) => {
       vertex.y = Math.min(vertex.y, water_level - 0.04);
       vertex.divide(
-        new Point3D(
+        new Point(
           this.samples_per_row,
           1.3 + (10 - this.parameter_a) / 4,
           this.samples_per_row
@@ -269,10 +269,10 @@ class Perlin {
     }
     for (; sample < 0.5; sample += 0.05) {
       const face = new Face([
-        new Point3D(col + 1, cloud_height, row + 1),
-        new Point3D(col + 1, cloud_height, row),
-        new Point3D(col, cloud_height, row),
-        new Point3D(col, cloud_height, row + 1),
+        new Point(col + 1, cloud_height, row + 1),
+        new Point(col + 1, cloud_height, row),
+        new Point(col, cloud_height, row),
+        new Point(col, cloud_height, row + 1),
       ]);
       face.color = new Color(
         cloud_intensity,
@@ -283,9 +283,7 @@ class Perlin {
 
       // todo generalize
       face.vertices.forEach((vertex) => {
-        vertex.divide(
-          new Point3D(this.samples_per_row, 1, this.samples_per_row)
-        );
+        vertex.divide(new Point(this.samples_per_row, 1, this.samples_per_row));
       });
 
       faces.push(face);
@@ -310,9 +308,9 @@ class Perlin {
     return faces;
   }
 
-  calcVertexRange(faces: Face[]): [Point3D, Point3D] {
-    const vertex_range_min = new Point3D(Infinity, Infinity, Infinity);
-    const vertex_range_max = new Point3D(-Infinity, -Infinity, -Infinity);
+  calcVertexRange(faces: Face[]): [Point, Point] {
+    const vertex_range_min = new Point(Infinity, Infinity, Infinity);
+    const vertex_range_max = new Point(-Infinity, -Infinity, -Infinity);
 
     faces.forEach((f) => {
       vertex_range_min.x = Math.min(

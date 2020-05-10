@@ -16,6 +16,7 @@ import {
   IsoCarouselRotate,
 } from "./ArtPieceIso";
 import "./App.css";
+import { Spirograph } from "./ArtPieceSpirograph";
 
 interface ArtCanvasState {
   active_art_name: string | undefined;
@@ -59,9 +60,9 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.height = this.draw_height + this.margin;
     this.art_pieces = [];
 
-    const motion_capacity = 10;
-    this.motion_average_x = new AverageQueue(motion_capacity);
-    this.motion_average_y = new AverageQueue(motion_capacity);
+    const motion_queue_capacity = 10;
+    this.motion_average_x = new AverageQueue(motion_queue_capacity);
+    this.motion_average_y = new AverageQueue(motion_queue_capacity);
     this.random_pool = new RandomPool("");
     this.dark_mode = false;
 
@@ -225,6 +226,12 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       new IsoCarouselRotate(
         "Carousel",
         !"doesn't use random pool",
+        !"doesn't use parameterB",
+        this
+      ),
+      new Spirograph(
+        "Spirograph",
+        !!"uses random pool",
         !"doesn't use parameterB",
         this
       ),

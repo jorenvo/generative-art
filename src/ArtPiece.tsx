@@ -6,7 +6,12 @@ export abstract class ArtPiece {
   uses_parameter_b: boolean;
   protected canvas: ArtCanvas;
 
-  constructor(name: string, uses_random_pool: boolean, uses_parameter_b: boolean, canvas: ArtCanvas) {
+  constructor(
+    name: string,
+    uses_random_pool: boolean,
+    uses_parameter_b: boolean,
+    canvas: ArtCanvas
+  ) {
     this.name = name;
     this.uses_random_pool = uses_random_pool;
     this.uses_parameter_b = uses_parameter_b;

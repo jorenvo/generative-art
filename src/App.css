@@ -22,7 +22,8 @@ button[name="reinit"] {
   margin-bottom: 20px;
 }
 
-#mobile_controls, .g_sensor {
+#mobile_controls,
+.g_sensor {
   display: none;
 }
 

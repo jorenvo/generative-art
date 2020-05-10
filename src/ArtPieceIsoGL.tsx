@@ -1,12 +1,12 @@
 import { ArtPiece } from "./ArtPiece";
 import { ArtCanvas } from "./App";
 import { Matrix4 } from "./UtilMatrix4";
+import { Point } from "./UtilPoint";
+import { Color } from "./UtilColor";
 
 // https://webpack.js.org/loaders/worker-loader/#integrating-with-typescript
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import GLWorker from "worker-loader!./ArtPieceIsoGLWorker";
-import { Point3D } from "./ArtPieceIso";
-import { Color } from "./UtilColor";
 
 export interface IsoShapeRotateGLDataToWorker {
   seed: string;
@@ -17,8 +17,8 @@ export interface IsoShapeRotateGLDataToMain {
   vertices: number[];
   colors: number[];
   amount_of_vertices: number;
-  vertex_range_min: Point3D;
-  vertex_range_max: Point3D;
+  vertex_range_min: Point;
+  vertex_range_max: Point;
 }
 
 export class IsoShapeRotateGL extends ArtPiece {
@@ -33,8 +33,8 @@ export class IsoShapeRotateGL extends ArtPiece {
   private positionBuffer: WebGLBuffer | null | undefined;
   private colorBuffer: WebGLBuffer | null | undefined;
   private amount_of_vertices: number;
-  private vertex_range_min: Point3D;
-  private vertex_range_max: Point3D;
+  private vertex_range_min: Point;
+  private vertex_range_max: Point;
   private animation_id: number | undefined;
   private animation_loop_started: boolean;
   private worker_promise: Promise<unknown>;
@@ -50,8 +50,8 @@ export class IsoShapeRotateGL extends ArtPiece {
     this.rotating_shape_radians = 0;
     this.gl = this.canvas.getContextGl();
     this.amount_of_vertices = 0;
-    this.vertex_range_min = new Point3D();
-    this.vertex_range_max = new Point3D();
+    this.vertex_range_min = new Point();
+    this.vertex_range_max = new Point();
     this.animation_loop_started = false;
     this.worker_promise = Promise.resolve();
     this.calc_id = 0;

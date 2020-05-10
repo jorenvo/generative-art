@@ -1,89 +1,10 @@
 import { ArtPiece } from "./ArtPiece";
 import { ArtCanvas } from "./App";
+import { Point } from "./UtilPoint";
 
 interface Face {
-  face: Point3D[];
-  center: Point3D;
-}
-
-export class Point3D {
-  [key: string]: any; // allow dynamic props
-  x: number;
-  y: number;
-  z: number;
-
-  constructor(x = 0, y = 0, z = 0) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-  }
-
-  copy(): Point3D {
-    return new Point3D(this.x, this.y, this.z);
-  }
-
-  private componentOperation(
-    other: Point3D,
-    fn: (a: number, b: number) => number
-  ) {
-    this.x = fn(this.x, other.x);
-    this.y = fn(this.y, other.y);
-    this.z = fn(this.z, other.z);
-  }
-
-  add(other: Point3D) {
-    this.componentOperation(other, (a, b) => a + b);
-  }
-
-  subtract(other: Point3D) {
-    this.componentOperation(other, (a, b) => a - b);
-  }
-
-  multiply(other: Point3D) {
-    this.componentOperation(other, (a, b) => a * b);
-  }
-
-  divide(other: Point3D) {
-    this.componentOperation(other, (a, b) => a / b);
-  }
-
-  min(other: Point3D) {
-    this.componentOperation(other, (a, b) => Math.min(a, b));
-  }
-
-  max(other: Point3D) {
-    this.componentOperation(other, (a, b) => Math.max(a, b));
-  }
-
-  private rotate(axis1: string, axis2: string, radians: number) {
-    const sin = Math.sin(radians);
-    const cos = Math.cos(radians);
-    const tmp = this[axis1] * cos - this[axis2] * sin;
-    this[axis2] = this[axis1] * sin + this[axis2] * cos;
-    this[axis1] = tmp;
-  }
-
-  rotate_xz(radians: number) {
-    this.rotate("x", "z", radians);
-  }
-
-  rotate_xy(radians: number) {
-    this.rotate("x", "y", radians);
-  }
-
-  rotate_yz(radians: number) {
-    this.rotate("y", "z", radians);
-  }
-
-  for_each_dimension(fn: (a: number) => number) {
-    this.x = fn(this.x);
-    this.y = fn(this.y);
-    this.z = fn(this.z);
-  }
-
-  xyz() {
-    return [this.x, this.y, this.z];
-  }
+  face: Point[];
+  center: Point;
 }
 
 class IsoUtils {
@@ -93,7 +14,7 @@ class IsoUtils {
     this.canvas = canvas;
   }
 
-  private convertToIso(c: Point3D) {
+  private convertToIso(c: Point) {
     const sqrt2 = Math.sqrt(2);
     const sqrt3 = Math.sqrt(3);
     const temp_x = sqrt3 * c.x + 0 * c.y + -sqrt3 * c.z;
@@ -105,8 +26,8 @@ class IsoUtils {
   }
 
   transformShape(
-    faces: Point3D[][],
-    bottom_left_front: Point3D,
+    faces: Point[][],
+    bottom_left_front: Point,
     randomize: boolean,
     rotate_radians?: number
   ) {
@@ -124,7 +45,7 @@ class IsoUtils {
         p.add(bottom_left_front);
 
         if (randomize) {
-          const random = new Point3D(
+          const random = new Point(
             (this.canvas.random_pool.get(random_index++) * parameter) / scale,
             (this.canvas.random_pool.get(random_index++) * parameter) / scale,
             0
@@ -141,33 +62,33 @@ class IsoUtils {
   }
 
   generateCarousel(
-    bottom_left_front: Point3D,
+    bottom_left_front: Point,
     randomize: boolean,
     rotate_radians?: number
-  ): Point3D[][] {
+  ): Point[][] {
     const sides = Math.ceil(this.canvas.state.parameter_a) + 2;
     const degrees_per_side = (2 * Math.PI) / sides;
     const carousel = [];
     const horizontal_side_length = 2 / sides;
     const vertical_side_length = 0.25;
     const side = [
-      new Point3D(0, 0, 0),
-      new Point3D(horizontal_side_length, 0, 0),
-      new Point3D(horizontal_side_length, vertical_side_length, 0),
-      new Point3D(0, vertical_side_length, 0),
-      new Point3D(0, 0, 0),
+      new Point(0, 0, 0),
+      new Point(horizontal_side_length, 0, 0),
+      new Point(horizontal_side_length, vertical_side_length, 0),
+      new Point(0, vertical_side_length, 0),
+      new Point(0, 0, 0),
     ];
-    const min_of_shape = new Point3D();
-    const max_of_shape = new Point3D();
+    const min_of_shape = new Point();
+    const max_of_shape = new Point();
 
     for (let i = 0; i < sides; i++) {
-      let last_face_bottom_right = new Point3D(0, 0, 0);
+      let last_face_bottom_right = new Point(0, 0, 0);
       if (carousel.length) {
         last_face_bottom_right = carousel[carousel.length - 1][1];
       }
 
       const new_side = side.map(
-        (vertex) => new Point3D(vertex.x, vertex.y, vertex.z)
+        (vertex) => new Point(vertex.x, vertex.y, vertex.z)
       );
       new_side.forEach((vertex) => {
         vertex.rotate_xz(degrees_per_side * i);
@@ -180,7 +101,7 @@ class IsoUtils {
 
     const size = max_of_shape.copy();
     size.subtract(min_of_shape);
-    size.divide(new Point3D(2, 2, 2));
+    size.divide(new Point(2, 2, 2));
 
     carousel.forEach((face) =>
       face.forEach((vertex) => {
@@ -194,62 +115,62 @@ class IsoUtils {
   }
 
   generateCube(
-    bottom_left_front: Point3D,
+    bottom_left_front: Point,
     randomize: boolean,
     rotate_radians?: number
-  ): Point3D[][] {
-    let cube: Point3D[][] = [
+  ): Point[][] {
+    let cube: Point[][] = [
       [
         // top face (ends up bottom in isometric projection)
-        new Point3D(0, 1, 0), // top left front
-        new Point3D(1, 1, 0), // top right front
-        new Point3D(1, 1, 1), // top right back
-        new Point3D(0, 1, 1), // top left back
-        new Point3D(0, 1, 0), // top left front
+        new Point(0, 1, 0), // top left front
+        new Point(1, 1, 0), // top right front
+        new Point(1, 1, 1), // top right back
+        new Point(0, 1, 1), // top left back
+        new Point(0, 1, 0), // top left front
       ],
       [
         // front face (ends up back right in isometric projection)
-        new Point3D(0, 0, 0), // bottom left front
-        new Point3D(1, 0, 0), // bottom right front
-        new Point3D(1, 1, 0), // top right front
-        new Point3D(0, 1, 0), // top left front
-        new Point3D(0, 0, 0), // bottom left front
+        new Point(0, 0, 0), // bottom left front
+        new Point(1, 0, 0), // bottom right front
+        new Point(1, 1, 0), // top right front
+        new Point(0, 1, 0), // top left front
+        new Point(0, 0, 0), // bottom left front
       ],
       [
         // left face (ends up back left in isometric projection)
-        new Point3D(0, 0, 0), // bottom left front
-        new Point3D(0, 0, 1), // bottom left back
-        new Point3D(0, 1, 1), // top left back
-        new Point3D(0, 1, 0), // top left front
-        new Point3D(0, 0, 0), // bottom left front
+        new Point(0, 0, 0), // bottom left front
+        new Point(0, 0, 1), // bottom left back
+        new Point(0, 1, 1), // top left back
+        new Point(0, 1, 0), // top left front
+        new Point(0, 0, 0), // bottom left front
       ],
       [
         // back face (ends up front left in isometric projection)
-        new Point3D(0, 0, 1), // bottom left back
-        new Point3D(1, 0, 1), // bottom right back
-        new Point3D(1, 1, 1), // top right back
-        new Point3D(0, 1, 1), // top left back
-        new Point3D(0, 0, 1), // bottom left back
+        new Point(0, 0, 1), // bottom left back
+        new Point(1, 0, 1), // bottom right back
+        new Point(1, 1, 1), // top right back
+        new Point(0, 1, 1), // top left back
+        new Point(0, 0, 1), // bottom left back
       ],
       [
         // right face (ends up front right in isometric projection)
-        new Point3D(1, 0, 0), // bottom right front
-        new Point3D(1, 0, 1), // bottom right back
-        new Point3D(1, 1, 1), // top right back
-        new Point3D(1, 1, 0), // top right front
-        new Point3D(1, 0, 0), // bottom right front
+        new Point(1, 0, 0), // bottom right front
+        new Point(1, 0, 1), // bottom right back
+        new Point(1, 1, 1), // top right back
+        new Point(1, 1, 0), // top right front
+        new Point(1, 0, 0), // bottom right front
       ],
       [
         // bottom face (ends up top in isometric projection)
-        new Point3D(0, 0, 0), // bottom left front
-        new Point3D(1, 0, 0), // bottom right front
-        new Point3D(1, 0, 1), // bottom right back
-        new Point3D(0, 0, 1), // bottom left back
-        new Point3D(0, 0, 0), // bottom left front
+        new Point(0, 0, 0), // bottom left front
+        new Point(1, 0, 0), // bottom right front
+        new Point(1, 0, 1), // bottom right back
+        new Point(0, 0, 1), // bottom left back
+        new Point(0, 0, 0), // bottom left front
       ],
     ];
     cube.forEach((face) =>
-      face.forEach((vertex) => vertex.subtract(new Point3D(0.5, 0.5, 0.5)))
+      face.forEach((vertex) => vertex.subtract(new Point(0.5, 0.5, 0.5)))
     );
     this.transformShape(cube, bottom_left_front, randomize, rotate_radians);
     return cube;
@@ -292,7 +213,7 @@ class IsoUtils {
     // 0 depth is at the back
     // 0 i is to the right
 
-    let cubes: Point3D[][] = [];
+    let cubes: Point[][] = [];
     for (let height = 0; height < cube_height; height++) {
       for (let depth = 0; depth < cube_depth; depth++) {
         for (let i = 0; i < horizontal_cubes; i++) {
@@ -309,7 +230,7 @@ class IsoUtils {
           const occluded = in_front && to_the_right;
           if (!occluded && height <= column_height[depth][i]) {
             cubes.push(
-              ...this.generateCube(new Point3D(i, height, depth), !color)
+              ...this.generateCube(new Point(i, height, depth), !color)
             );
           }
         }
@@ -322,7 +243,7 @@ class IsoUtils {
   private convertToScreenCoordinates(
     cube_depth: number,
     scale: number,
-    p: Point3D
+    p: Point
   ) {
     const sqrt3 = Math.sqrt(3);
     p.for_each_dimension((a) => (a + sqrt3 * cube_depth) * scale);
@@ -360,7 +281,7 @@ class IsoUtils {
   paintIsoArt(
     horizontal_cubes: number,
     cube_depth: number,
-    face_vertices: Point3D[][],
+    face_vertices: Point[][],
     color: boolean
   ) {
     const ctx = this.canvas.getContext2d();
@@ -380,7 +301,7 @@ class IsoUtils {
 
     const faces: Face[] = [];
     face_vertices.forEach((face) => {
-      const face_sum: Point3D = new Point3D();
+      const face_sum: Point = new Point();
 
       face.forEach((vertex) => {
         this.convertToIso(vertex);
@@ -390,7 +311,7 @@ class IsoUtils {
 
       faces.push({
         face: face,
-        center: new Point3D(
+        center: new Point(
           face_sum.x / (face.length - 1),
           face_sum.y / (face.length - 1),
           face_sum.z / (face.length - 1)
@@ -481,7 +402,7 @@ abstract class IsoShapeRotate extends ArtPiece {
     const elapsed_ms = current_render_ms - (this.last_render_ms || 0);
 
     const shape_coords = this.generateShape(
-      new Point3D(0, 0, 0),
+      new Point(0, 0, 0),
       false,
       elapsed_ms
     );
@@ -510,18 +431,18 @@ abstract class IsoShapeRotate extends ArtPiece {
   }
 
   abstract generateShape(
-    bottom_left_front: Point3D,
+    bottom_left_front: Point,
     randomize: boolean,
     elapsed_ms: number
-  ): Point3D[][];
+  ): Point[][];
 }
 
 export class IsoCubeRotate extends IsoShapeRotate {
   generateShape(
-    bottom_left_front: Point3D,
+    bottom_left_front: Point,
     randomize: boolean,
     elapsed_ms: number
-  ): Point3D[][] {
+  ): Point[][] {
     const rotation_per_ms = 0.0005 * (this.canvas.state.parameter_a - 4);
     this.rotating_shape_radians += elapsed_ms * rotation_per_ms;
 
@@ -535,10 +456,10 @@ export class IsoCubeRotate extends IsoShapeRotate {
 
 export class IsoCarouselRotate extends IsoShapeRotate {
   generateShape(
-    bottom_left_front: Point3D,
+    bottom_left_front: Point,
     randomize: boolean,
     elapsed_ms: number
-  ): Point3D[][] {
+  ): Point[][] {
     this.rotating_shape_radians += elapsed_ms * 0.0005;
     return this.iso_utils.generateCarousel(
       bottom_left_front,
@@ -549,15 +470,15 @@ export class IsoCarouselRotate extends IsoShapeRotate {
 }
 
 // export class IsoMoonRotate extends IsoShapeRotate {
-//   generateMoon(bottom_left_front: Point3D, radians: number): Point3D[][] {
+//   generateMoon(bottom_left_front: Point, radians: number): Point[][] {
 
 //   }
 
 //   generateShape(
-//     bottom_left_front: Point3D,
+//     bottom_left_front: Point,
 //     randomize: boolean,
 //     elapsed_ms: number
-//   ): Point3D[][] {
+//   ): Point[][] {
 //     this.rotating_shape_radians += elapsed_ms * 0.0005;
 //     return this.generateMoon(
 //       bottom_left_front,

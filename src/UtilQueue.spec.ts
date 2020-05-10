@@ -1,14 +1,7 @@
 import "mocha";
 import * as assert from "assert";
 import { AverageQueue } from "./UtilQueue";
-
-function assertAlmostEqual(a: number, b: number) {
-  const EPSILON = 0.000000001;
-  assert.ok(
-    Math.abs(a - b) < EPSILON,
-    `${a} does not almost equal ${b}`
-  );
-}
+import { UtilTest } from "./UtilTest";
 
 function avg(l: number[]): number {
   if (l.length === 0) {
@@ -78,7 +71,7 @@ describe("Queue", function () {
 
     numbers.forEach((n, i) => {
       const added_numbers = numbers.slice(0, i);
-      assertAlmostEqual(q.getAverage(), avg(added_numbers));
+      UtilTest.assertAlmostEqual(q.getAverage(), avg(added_numbers));
       q.enqueue(n);
     });
 
@@ -90,7 +83,7 @@ describe("Queue", function () {
         remaining_avg = avg(remaining_numbers);
       }
 
-      assertAlmostEqual(q.getAverage(), remaining_avg);
+      UtilTest.assertAlmostEqual(q.getAverage(), remaining_avg);
       q.dequeue();
     }
   });
@@ -141,12 +134,12 @@ describe("Queue", function () {
       }
       window.push(n);
       q.enqueue(n);
-      assertAlmostEqual(q.getAverage(), avg(window));
+      UtilTest.assertAlmostEqual(q.getAverage(), avg(window));
     });
 
     // <= so we also test the queue being empty again
     for (let i = window.length; i > 0; i--) {
-      assertAlmostEqual(q.getAverage(), avg(window));
+      UtilTest.assertAlmostEqual(q.getAverage(), avg(window));
     }
   });
 });
