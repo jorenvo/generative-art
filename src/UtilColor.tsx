@@ -49,16 +49,13 @@ interface ColorStop {
 // Can't use CanvasRenderingContext2D's gradients because they
 // are affected by the current transformation matrix.
 export class Gradient {
-  private size: number;
   private color_stops: ColorStop[];
 
   constructor() {
-    this.size = 0;
     this.color_stops = [];
   }
 
   addColorStop(offset: number, color: Color) {
-    this.size = offset;
     this.color_stops.push({
       offset: offset,
       color: color,
