@@ -1,6 +1,8 @@
 import { ArtPiece } from "./ArtPiece";
 import { ArtCanvas } from "./App";
 import { Point } from "./UtilPoint";
+import { Gradient, Color } from "./UtilColor";
+import { UtilCommon } from "./UtilCommon";
 
 export class Spirograph extends ArtPiece {
   private animation_id: number | undefined;
@@ -14,8 +16,7 @@ export class Spirograph extends ArtPiece {
   private inner_circumference: number;
   private pen: Point;
   private random_i: number;
-  private last_point: Point;
-  private gradient: CanvasGradient;
+  private first_transform: DOMMatrix | undefined;
 
   constructor(
     name: string,
@@ -33,7 +34,30 @@ export class Spirograph extends ArtPiece {
       this.canvas.draw_height / 2
     );
     this.random_i = 0;
-    this.inner_radius = this.outer_radius * 0.51;
+    this.inner_radius = 0;
+    this.inner_circumference = 0;
+    this.pen = new Point();
+    // this.gradient.addColorStop(0, new Color(97, 43, 152));
+    // this.gradient.addColorStop(0.33, new Color(169, 47, 52));
+    // this.gradient.addColorStop(0.66, new Color(117, 185, 57));
+    // this.gradient.addColorStop(1, new Color(69, 192, 190));
+  }
+
+  private circumferenceCircle(r: number) {
+    return 2 * Math.PI * r;
+  }
+
+  private gcd(a: number, b: number): number {
+    if (UtilCommon.almostEqual(b, 0)) {
+      return a;
+    }
+
+    return this.gcd(b, a % b);
+  }
+
+  setupInnerCircle() {
+    this.inner_radius =
+      this.outer_radius * (0.11 + (this.canvas.state.parameter_a / 10) * 0.79);
     this.inner_circumference = this.circumferenceCircle(this.inner_radius);
 
     const random_angle =
@@ -44,36 +68,27 @@ export class Spirograph extends ArtPiece {
       Math.cos(random_angle) * random_radius,
       Math.sin(random_angle) * random_radius
     );
-    this.last_point = new Point();
-    this.gradient = this.ctx.createRadialGradient(
-      0,
-      0,
-      0,
-      0,
-      0,
-      this.outer_radius
-    );
-    this.gradient.addColorStop(0, "#A59640");
-    this.gradient.addColorStop(0.25, "#41B46A");
-    this.gradient.addColorStop(0.5, "#4456C1");
-    this.gradient.addColorStop(0.75, "#C84D9C");
-  }
+    this.first_transform = undefined;
 
-  private circumferenceCircle(r: number) {
-    return 2 * Math.PI * r;
+    const a = this.outer_circumference;
+    const b = this.inner_circumference;
+    console.log((a * this.gcd(a, b)) / b);
   }
 
   draw() {
-    this.ctx.beginPath();
-    this.ctx.arc(
-      this.center.x,
-      this.center.y,
-      this.outer_radius,
-      0,
-      2 * Math.PI
-    );
-    this.ctx.closePath();
-    this.ctx.stroke();
+    this.stopAnimation();
+    this.inner_circle_angle = 0;
+    this.setupInnerCircle();
+    // this.ctx.beginPath();
+    // this.ctx.arc(
+    //   this.center.x,
+    //   this.center.y,
+    //   this.outer_radius,
+    //   0,
+    //   2 * Math.PI
+    // );
+    // this.ctx.closePath();
+    // this.ctx.stroke();
 
     this.animation_id = requestAnimationFrame(this.drawLine.bind(this));
   }
@@ -90,43 +105,70 @@ export class Spirograph extends ArtPiece {
     }
   }
 
+  private transforms_are_equal(a: DOMMatrix, b: DOMMatrix) {
+    const epsilon = 0.02;
+    return (
+      UtilCommon.almostEqual(a.a, b.a, epsilon) &&
+      UtilCommon.almostEqual(a.b, b.b, epsilon) &&
+      UtilCommon.almostEqual(a.c, b.c, epsilon) &&
+      UtilCommon.almostEqual(a.d, b.d, epsilon) &&
+      UtilCommon.almostEqual(a.e, b.e, epsilon)
+    );
+  }
+
   drawLine(curr_frame_time: number) {
     if (this.previous_frame_time !== undefined) {
-      const speed = 0.001;
-      this.inner_circle_angle +=
+      const speed = 0.005;
+      const new_inner_circle_angle =
+        this.inner_circle_angle +
         (curr_frame_time - this.previous_frame_time) * speed;
 
-      this.ctx.save();
-      this.canvas.center();
-      this.ctx.translate(this.center.x, this.center.y);
+      for (
+        ;
+        this.inner_circle_angle <= new_inner_circle_angle;
+        this.inner_circle_angle += 0.01
+      ) {
+        this.ctx.save();
+        this.canvas.center();
+        this.ctx.translate(this.center.x, this.center.y);
 
-      // rotate the small gear in the large gear
-      this.ctx.rotate(this.inner_circle_angle);
+        // rotate the small gear in the large gear
+        this.ctx.rotate(this.inner_circle_angle);
 
-      // put the small gear against the large gear
-      this.ctx.translate(this.outer_radius - this.inner_radius, 0);
-      // this.ctx.beginPath();
-      // this.ctx.arc(0, 0, this.inner_radius, 0, 2 * Math.PI);
-      // this.ctx.closePath();
-      // this.ctx.strokeStyle = "red";
-      // this.ctx.stroke();
+        // put the small gear against the large gear
+        this.ctx.translate(this.outer_radius - this.inner_radius, 0);
+        // this.ctx.beginPath();
+        // this.ctx.arc(0, 0, this.inner_radius, 0, 2 * Math.PI);
+        // this.ctx.closePath();
+        // this.ctx.strokeStyle = "red";
+        // this.ctx.stroke();
 
-      // rotate the pen in the small gear
-      const outer_circumference_traveled_ratio =
-        this.inner_circle_angle / (2 * Math.PI);
-      const outer_circumference_length =
-        this.outer_circumference * outer_circumference_traveled_ratio;
+        // rotate the pen in the small gear
+        const outer_circumference_traveled_ratio =
+          this.inner_circle_angle / (2 * Math.PI);
+        const outer_circumference_length =
+          this.outer_circumference * outer_circumference_traveled_ratio;
 
-      const inner_circle_ratio =
-        outer_circumference_length / this.inner_circumference;
-      const inner_circle_rotation_angle = 2 * Math.PI * inner_circle_ratio;
-      this.ctx.rotate(inner_circle_rotation_angle);
-      this.ctx.fillStyle = this.gradient;
+        const inner_circle_ratio =
+          outer_circumference_length / this.inner_circumference;
+        const inner_circle_rotation_angle = 2 * Math.PI * inner_circle_ratio;
+        this.ctx.rotate(inner_circle_rotation_angle);
+        this.ctx.fillRect(this.pen.x, this.pen.y, 1, 1);
 
-      this.ctx.fillRect(this.pen.x, this.pen.y, 1, 1);
-      this.ctx.restore();
-      return;
-      // window.setTimeout(() => this.stopAnimation(), 3000);
+        const current_transform = this.ctx.getTransform();
+        if (!this.first_transform) {
+          this.first_transform = current_transform;
+        } else if (
+          this.transforms_are_equal(this.first_transform, current_transform)
+        ) {
+          console.log("stopped");
+          this.ctx.restore();
+          this.stopAnimation();
+          return;
+        }
+        // window.setTimeout(() => this.stopAnimation(), 1500);
+        this.ctx.restore();
+      }
     }
 
     this.previous_frame_time = curr_frame_time;

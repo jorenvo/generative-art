@@ -1,3 +1,5 @@
+import { UtilCommon } from "./UtilCommon";
+
 export class Point {
   [key: string]: any; // allow dynamic props
   x: number;
@@ -79,5 +81,13 @@ export class Point {
 
   xyz() {
     return [this.x, this.y, this.z];
+  }
+
+  equals(other: Point) {
+    return (
+      UtilCommon.almostEqual(this.x, other.x) &&
+      UtilCommon.almostEqual(this.y, other.y) &&
+      UtilCommon.almostEqual(this.z, other.z)
+    );
   }
 }

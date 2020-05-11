@@ -17,6 +17,7 @@ import {
 } from "./ArtPieceIso";
 import "./App.css";
 import { Spirograph } from "./ArtPieceSpirograph";
+import { UtilCommon } from "./UtilCommon";
 
 interface ArtCanvasState {
   active_art_name: string | undefined;
@@ -160,11 +161,11 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const limit = 4; // 4G
     this.setState({
       parameter_a:
-        this.clamp(-limit, this.motion_average_x.getAverage(), limit) *
+        UtilCommon.clamp(-limit, this.motion_average_x.getAverage(), limit) *
           (5 / limit) +
         5,
       parameter_b:
-        -this.clamp(-limit, this.motion_average_y.getAverage(), limit) *
+        -UtilCommon.clamp(-limit, this.motion_average_y.getAverage(), limit) *
           (5 / limit) +
         5,
     });
@@ -285,6 +286,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     if (!ctx) {
       throw new Error("Could not get 2d context for canvas.");
     } else {
+      ctx.imageSmoothingEnabled = false;
       return ctx;
     }
   }
@@ -337,10 +339,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         {options}
       </select>
     );
-  }
-
-  private clamp(min: number, x: number, max: number): number {
-    return Math.min(max, Math.max(min, x));
   }
 
   private throttle(
@@ -402,8 +400,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const y = e.offsetY / touch_rect.clientHeight;
 
     this.setState({
-      parameter_a: this.clamp(0, x * 10, 10),
-      parameter_b: this.clamp(0, y * 10, 10),
+      parameter_a: UtilCommon.clamp(0, x * 10, 10),
+      parameter_b: UtilCommon.clamp(0, y * 10, 10),
     });
   }
 
@@ -417,8 +415,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const x = offsetX / touch_rect.clientWidth;
     const y = offsetY / touch_rect.clientHeight;
     this.setState({
-      parameter_a: this.clamp(0, x * 10, 10),
-      parameter_b: this.clamp(0, y * 10, 10),
+      parameter_a: UtilCommon.clamp(0, x * 10, 10),
+      parameter_b: UtilCommon.clamp(0, y * 10, 10),
     });
     e.preventDefault(); // prevent MouseMove events from being fired
   }

@@ -1,3 +1,5 @@
+import { UtilCommon } from "./UtilCommon";
+
 export class Color {
   r: number;
   g: number;
@@ -11,33 +13,32 @@ export class Color {
     this.a = a;
   }
 
-  private clamp(min: number, x: number, max: number): number {
-    return Math.min(max, Math.max(min, Math.floor(x)));
-  }
-
   randomize(random: number) {
     const intensity = 32;
     this.r += random * intensity - intensity / 2;
     this.g += random * intensity - intensity / 2;
     this.b += random * intensity - intensity / 2;
 
-    this.r = this.clamp(0, this.r, 255);
-    this.g = this.clamp(0, this.g, 255);
-    this.b = this.clamp(0, this.b, 255);
+    this.r = UtilCommon.clamp(0, this.r, 255);
+    this.g = UtilCommon.clamp(0, this.g, 255);
+    this.b = UtilCommon.clamp(0, this.b, 255);
   }
 
   equals(other: Color) {
-    const EPSILON = 0.000001;
     return (
-      Math.abs(this.r - other.r) < EPSILON &&
-      Math.abs(this.g - other.g) < EPSILON &&
-      Math.abs(this.b - other.b) < EPSILON &&
-      Math.abs(this.a - other.a) < EPSILON
+      UtilCommon.almostEqual(this.r, other.r) &&
+      UtilCommon.almostEqual(this.g, other.g) &&
+      UtilCommon.almostEqual(this.b, other.b) &&
+      UtilCommon.almostEqual(this.a, other.a)
     );
   }
 
   multiplied_by(x: number) {
     return new Color(this.r * x, this.g * x, this.b * x, this.a * x);
+  }
+
+  toString() {
+    return `rgba(${this.r}, ${this.g}, ${this.b}, ${this.a})`;
   }
 }
 
@@ -91,10 +92,11 @@ export class Gradient {
     }
 
     const ratio = (offset - start.offset) / (stop.offset - start.offset);
-    return new Color(
+    const color = new Color(
       (1 - ratio) * start.color.r + ratio * stop.color.r,
       (1 - ratio) * start.color.g + ratio * stop.color.g,
       (1 - ratio) * start.color.b + ratio * stop.color.b
     );
+    return color;
   }
 }
