@@ -63,44 +63,38 @@ export class Gradient {
   }
 
   get(offset: number) {
-    if (this.color_stops.length === 0) {
-      return new Color(0, 0, 0);
-    } else if (this.color_stops.length === 1) {
-      return this.color_stops[0].color;
-    } else {
-      let start: ColorStop | undefined;
-      let stop: ColorStop | undefined;
+    let start: ColorStop | undefined;
+    let stop: ColorStop | undefined;
 
-      this.color_stops.find((color_stop) => {
-        if (color_stop.offset > offset) {
-          stop = color_stop;
-          return true;
-        }
-        start = color_stop;
-      });
-
-      if (start && start.offset === offset) {
-        return start.color;
+    this.color_stops.find((color_stop) => {
+      if (color_stop.offset > offset) {
+        stop = color_stop;
+        return true;
       }
+      start = color_stop;
+    });
 
-      if (stop && stop.offset === offset) {
-        return stop.color;
-      }
+    if (start && start.offset === offset) {
+      return start.color;
+    }
 
-      if (!start || !stop) {
-        throw Error(
-          `${offset} is out of gradient range (${start && start.offset}, ${
-            stop && stop.offset
-          })`
-        );
-      }
+    if (stop && stop.offset === offset) {
+      return stop.color;
+    }
 
-      const ratio = (offset - start.offset) / (stop.offset - start.offset);
-      return new Color(
-        (1 - ratio) * start.color.r + ratio * stop.color.r,
-        (1 - ratio) * start.color.g + ratio * stop.color.g,
-        (1 - ratio) * start.color.b + ratio * stop.color.b
+    if (!start || !stop) {
+      throw Error(
+        `${offset} is out of gradient range (${start && start.offset}, ${
+          stop && stop.offset
+        })`
       );
     }
+
+    const ratio = (offset - start.offset) / (stop.offset - start.offset);
+    return new Color(
+      (1 - ratio) * start.color.r + ratio * stop.color.r,
+      (1 - ratio) * start.color.g + ratio * stop.color.g,
+      (1 - ratio) * start.color.b + ratio * stop.color.b
+    );
   }
 }
