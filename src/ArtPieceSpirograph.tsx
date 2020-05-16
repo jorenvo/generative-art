@@ -23,10 +23,11 @@ export class Spirograph extends ArtPiece {
   constructor(
     name: string,
     uses_random_pool: boolean,
+    uses_parameter_a: boolean,
     uses_parameter_b: boolean,
     canvas: ArtCanvas
   ) {
-    super(name, uses_random_pool, uses_parameter_b, canvas);
+    super(name, uses_random_pool, uses_parameter_a, uses_parameter_b, canvas);
     this.inner_gear_angle = 0;
     this.ctx = this.canvas.getContext2d();
     this.outer_radius = 0;

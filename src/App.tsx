@@ -172,74 +172,67 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private setupArt() {
+    const random_pool = true;
+    const no_random_pool = false;
+    const parameter_a = true;
+    const no_parameter_a = false;
+    const parameter_b = true;
+    const no_parameter_b = false;
     this.art_pieces = [
-      new Schotter(
-        "Schotter",
-        !!"uses random pool",
-        !"doesn't use parameterB",
-        this
-      ),
-      new Linien("Linien", !!"uses random pool", !!"uses parameterB", this),
-      new Diamond(
-        "Diamond",
-        !"doesn't use random pool",
-        !"doesn't use parameterB",
-        this
-      ),
-      new Moiré1(
-        "Moiré 1",
-        !"doesn't use random pool",
-        !"doesn't use parameterB",
-        this
-      ),
-      new Moiré2(
-        "Moiré 2",
-        !"doesn't use random pool",
-        !"doesn't use parameterB",
-        this
-      ),
-      new Maze("Maze", !!"uses random pool", !"doesn't use parameterB", this),
+      new Schotter("Schotter", random_pool, parameter_a, no_parameter_b, this),
+      new Linien("Linien", random_pool, parameter_a, parameter_b, this),
+      new Diamond("Diamond", no_random_pool, parameter_a, no_parameter_b, this),
+      new Moiré1("Moiré 1", no_random_pool, parameter_a, no_parameter_b, this),
+      new Moiré2("Moiré 2", no_random_pool, parameter_a, no_parameter_b, this),
+      new Maze("Maze", random_pool, parameter_a, no_parameter_b, this),
       new Fredkin1(
         "Fredkin 1",
-        !"doesn't use random pool",
-        !"doesn't use parameterB",
+        no_random_pool,
+        parameter_a,
+        no_parameter_b,
         this
       ),
       new Fredkin2(
         "Fredkin 2",
-        !"doesn't use random pool",
-        !"doesn't use parameterB",
+        no_random_pool,
+        parameter_a,
+        no_parameter_b,
         this
       ),
-      new IsoCube("Iso", !!"uses random pool", !"doesn't use parameterB", this),
+      new IsoCube("Iso", random_pool, parameter_a, no_parameter_b, this),
       new IsoCubeColor(
         "Isocolor",
-        !!"uses random pool",
-        !"doesn't use parameterB",
+        random_pool,
+        parameter_a,
+        no_parameter_b,
         this
       ),
       new IsoCubeRotate(
         "Rotate",
-        !"doesn't use random pool",
-        !"doesn't use parameterB",
+        no_random_pool,
+        parameter_a,
+        no_parameter_b,
         this
       ),
       new IsoCarouselRotate(
         "Carousel",
-        !"doesn't use random pool",
-        !"doesn't use parameterB",
+        no_random_pool,
+        parameter_a,
+        no_parameter_b,
         this
       ),
       new Spirograph(
         "Spirograph",
-        !!"uses random pool",
-        !"doesn't use parameterB",
+        random_pool,
+        no_parameter_a,
+        no_parameter_b,
         this
       ),
       new IsoShapeRotateGL(
         "Perlin",
-        !!"uses random pool",
-        !"doesn't use parameterB",
+        random_pool,
+        parameter_a,
+        no_parameter_b,
         this
       ),
     ];
@@ -395,18 +388,24 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private handleMouseMoveState(e: MouseEvent) {
+    const art = this.getActiveArt();
     const touch_rect = document.getElementById("touch_rect")!; // todo do this better
     const x = e.offsetX / touch_rect.clientWidth;
     const y = e.offsetY / touch_rect.clientHeight;
 
-    this.setState({
-      parameter_a: UtilCommon.clamp(0, x * 10, 10),
-      parameter_b: UtilCommon.clamp(0, y * 10, 10),
-    });
+    if (art) {
+      if (art.uses_parameter_a) {
+        this.setState({ parameter_a: UtilCommon.clamp(0, x * 10, 10) });
+      }
+      if (art.uses_parameter_b) {
+        this.setState({ parameter_b: UtilCommon.clamp(0, y * 10, 10) });
+      }
+    }
   }
 
   private handleTouchMoveState(e: TouchEvent) {
     // todo rewrite this to use client{X,Y}
+    const art = this.getActiveArt();
     const touch_rect = document.getElementById("touch_rect")!; // todo do this better
     const touch_event = e.touches[0];
     const rect = (e.target as HTMLDivElement).getBoundingClientRect();
@@ -414,41 +413,51 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     const offsetY = touch_event.pageY - rect.top - window.scrollY;
     const x = offsetX / touch_rect.clientWidth;
     const y = offsetY / touch_rect.clientHeight;
-    this.setState({
-      parameter_a: UtilCommon.clamp(0, x * 10, 10),
-      parameter_b: UtilCommon.clamp(0, y * 10, 10),
-    });
+    if (art) {
+      if (art.uses_parameter_a) {
+        this.setState({ parameter_a: UtilCommon.clamp(0, x * 10, 10) });
+      }
+      if (art.uses_parameter_b) {
+        this.setState({ parameter_b: UtilCommon.clamp(0, y * 10, 10) });
+      }
+    }
     e.preventDefault(); // prevent MouseMove events from being fired
   }
 
   renderParameter(): React.ReactNode {
-    return (
-      <>
-        <input
-          type="range"
-          name="parameter_a"
-          min="0"
-          max="10"
-          step="0.2"
-          value={String(this.state.parameter_a)}
-          onChange={(event) =>
-            this.setState({
-              parameter_a: Number(event.target.value),
-            })
-          }
-        />
-        <div id="mobile_controls">
-          <div
-            id="touch_rect"
-            ref={this.touch_rect}
-            onMouseMove={(e) => this.handleMouseMoveState(e.nativeEvent)}
-            onTouchMove={(e) => this.handleTouchMoveState(e.nativeEvent)}
-          >
-            <div id="touch" style={this.getTouchIndicatorProperties()} />
+    const active_art = this.getActiveArt();
+    if (
+      active_art &&
+      (active_art.uses_parameter_a || active_art.uses_parameter_b)
+    ) {
+      return (
+        <>
+          <input
+            type="range"
+            name="parameter_a"
+            min="0"
+            max="10"
+            step="0.2"
+            value={String(this.state.parameter_a)}
+            onChange={(event) =>
+              this.setState({
+                parameter_a: Number(event.target.value),
+              })
+            }
+          />
+          <div id="mobile_controls">
+            <div
+              id="touch_rect"
+              ref={this.touch_rect}
+              onMouseMove={(e) => this.handleMouseMoveState(e.nativeEvent)}
+              onTouchMove={(e) => this.handleTouchMoveState(e.nativeEvent)}
+            >
+              <div id="touch" style={this.getTouchIndicatorProperties()} />
+            </div>
           </div>
-        </div>
-      </>
-    );
+        </>
+      );
+    }
   }
 
   renderReInit(): React.ReactNode {
