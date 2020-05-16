@@ -4,6 +4,7 @@ import { Point } from "./UtilPoint";
 import { Gradient, Color } from "./UtilColor";
 import { UtilCommon } from "./UtilCommon";
 
+// idea: add a floodfill
 export class Spirograph extends ArtPiece {
   private animation_id: number | undefined;
   private inner_gear_angle: number;
@@ -120,14 +121,14 @@ export class Spirograph extends ArtPiece {
     this.stopAnimation();
   }
 
-  stopAnimation() {
+  private stopAnimation() {
     if (this.animation_id) {
       cancelAnimationFrame(this.animation_id);
       this.animation_id = undefined;
     }
   }
 
-  drawLine(curr_frame_time: number) {
+  private drawLine(curr_frame_time: number) {
     if (this.previous_frame_time !== undefined) {
       const speed = 0.005;
       const new_inner_gear_angle =
