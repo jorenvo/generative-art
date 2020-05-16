@@ -381,12 +381,10 @@ export class IsoShapeRotateGL extends ArtPiece {
     // console.timeEnd("main_draw");
   }
 
-  draw(init = true) {
-    if (init) {
-      console.time("setup");
-      this.setup();
-      console.timeEnd("setup");
-    }
+  draw() {
+    console.time("setup");
+    this.setup();
+    console.timeEnd("setup");
 
     if (!this.animation_loop_started) {
       this.animation_loop_started = true;
