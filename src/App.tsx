@@ -259,6 +259,9 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         case "param_b":
           this.setState({ parameter_b: parseFloat(value) });
           break;
+        case "seed":
+          this.setState({ seed: value });
+          break;
         default:
           console.warn(`unknown URL parameter: ${p}`);
       }
@@ -266,7 +269,10 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
   }
 
   private setURLFromArt() {
-    window.location.hash = `#art=${this.state.active_art_name}&param_a=${this.state.parameter_a}&param_b=${this.state.parameter_b}`;
+    window.location.hash = `#art=${this.state.active_art_name}&\
+param_a=${this.state.parameter_a}&\
+param_b=${this.state.parameter_b}&\
+seed=${this.state.seed}`;
   }
 
   private getNewSeed() {
