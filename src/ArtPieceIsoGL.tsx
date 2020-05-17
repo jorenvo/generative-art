@@ -3,6 +3,7 @@ import { ArtCanvas } from "./App";
 import { Matrix4 } from "./UtilMatrix4";
 import { Point } from "./UtilPoint";
 import { Color } from "./UtilColor";
+import { ArtPieceIsoGLUtils } from "./ArtPieceIsoGLUtils";
 
 // https://webpack.js.org/loaders/worker-loader/#integrating-with-typescript
 // eslint-disable-next-line import/no-webpack-loader-syntax
@@ -24,12 +25,8 @@ export interface IsoShapeRotateGLDataToMain {
 export class IsoShapeRotateGL extends ArtPiece {
   private last_render_ms: number | undefined;
   private gl: WebGLRenderingContext;
+  private gl_utils: ArtPieceIsoGLUtils;
   protected rotating_shape_radians: number;
-  private program: WebGLProgram | undefined;
-  private positionLocation: number | undefined;
-  private colorLocation: number | undefined;
-  private matrixLocation: WebGLUniformLocation | undefined;
-  private cloudTranslation: WebGLUniformLocation | undefined;
   private positionBuffer: WebGLBuffer | null | undefined;
   private colorBuffer: WebGLBuffer | null | undefined;
   private amount_of_vertices: number;
@@ -50,6 +47,7 @@ export class IsoShapeRotateGL extends ArtPiece {
     super(name, uses_random_pool, uses_parameter_a, uses_parameter_b, canvas);
     this.rotating_shape_radians = 0;
     this.gl = this.canvas.getContextGl();
+    this.gl_utils = new ArtPieceIsoGLUtils(this.gl);
     this.amount_of_vertices = 0;
     this.vertex_range_min = new Point();
     this.vertex_range_max = new Point();
@@ -73,63 +71,8 @@ export class IsoShapeRotateGL extends ArtPiece {
     return false;
   }
 
-  private createShader(type: number, source: string) {
-    const shader = this.gl.createShader(type)!;
-    this.gl.shaderSource(shader, source);
-    this.gl.compileShader(shader);
-
-    const success = this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS);
-    if (success) {
-      return shader;
-    } else {
-      const info = this.gl.getShaderInfoLog(shader);
-      this.gl.deleteShader(shader);
-      throw new Error(info || "undefined shader compilation error");
-    }
-  }
-
-  private createProgram(
-    vertexShader: WebGLShader,
-    fragmentShader: WebGLShader
-  ) {
-    const program = this.gl.createProgram()!;
-    this.gl.attachShader(program, vertexShader);
-    this.gl.attachShader(program, fragmentShader);
-    this.gl.linkProgram(program);
-
-    const success = this.gl.getProgramParameter(program, this.gl.LINK_STATUS);
-    if (success) {
-      return program;
-    } else {
-      const info = this.gl.getProgramInfoLog(program);
-      this.gl.deleteProgram(program);
-      throw new Error(info || "undefined program creation error");
-    }
-  }
-
-  private getAttribLocationAndCheck(program: WebGLProgram, name: string) {
-    const location = this.gl.getAttribLocation(program, name);
-    if (location === null) {
-      throw new Error(`${name} not found`);
-    } else {
-      return location;
-    }
-  }
-
-  private getUniformLocationAndCheck(
-    program: WebGLProgram,
-    name: string
-  ): WebGLUniformLocation {
-    const location = this.gl.getUniformLocation(program, name);
-    if (location === null) {
-      throw new Error(`${name} not found`);
-    } else {
-      return location;
-    }
-  }
-
   public setupWhenLoading() {
-    const vertex_shader_src = `
+    const vertex_shader = `
     attribute vec4 a_position;
     attribute vec4 a_color;
 
@@ -166,12 +109,8 @@ export class IsoShapeRotateGL extends ArtPiece {
       v_color = final_color;
     }
         `;
-    const vertex_shader = this.createShader(
-      this.gl.VERTEX_SHADER,
-      vertex_shader_src
-    );
 
-    const fragment_shader_src = `
+    const fragment_shader = `
     precision mediump float;
 
     // comes from the vertex shader
@@ -181,28 +120,12 @@ export class IsoShapeRotateGL extends ArtPiece {
        gl_FragColor = v_color;
     }
         `;
-    const fragment_shader = this.createShader(
-      this.gl.FRAGMENT_SHADER,
-      fragment_shader_src
-    );
-    this.program = this.createProgram(vertex_shader, fragment_shader);
 
-    this.positionLocation = this.getAttribLocationAndCheck(
-      this.program,
-      "a_position"
-    );
-    this.colorLocation = this.getAttribLocationAndCheck(
-      this.program,
-      "a_color"
-    );
-    this.matrixLocation = this.getUniformLocationAndCheck(
-      this.program,
-      "u_matrix"
-    );
-    this.cloudTranslation = this.getUniformLocationAndCheck(
-      this.program,
-      "cloud_translation"
-    );
+    this.gl_utils.setProgram(vertex_shader, fragment_shader);
+    this.gl_utils.setAttribLocation("a_position");
+    this.gl_utils.setAttribLocation("a_color");
+    this.gl_utils.setUniformLocation("u_matrix");
+    this.gl_utils.setUniformLocation("cloud_translation");
   }
 
   public setup() {
@@ -288,8 +211,8 @@ export class IsoShapeRotateGL extends ArtPiece {
     this.gl.enable(this.gl.BLEND);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     this.gl.enable(this.gl.DEPTH_TEST);
-    this.gl.useProgram(this.program!);
-    this.gl.enableVertexAttribArray(this.positionLocation!);
+    this.gl.useProgram(this.gl_utils.program!);
+    this.gl.enableVertexAttribArray(this.gl_utils.getLocation("a_position"));
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer!);
 
     let size = 3; // 3 components per iteration
@@ -298,7 +221,7 @@ export class IsoShapeRotateGL extends ArtPiece {
     let stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
     let offset = 0; // start at the beginning of the buffer
     this.gl.vertexAttribPointer(
-      this.positionLocation!,
+      this.gl_utils.getLocation("a_position"),
       size,
       type,
       normalize,
@@ -306,7 +229,7 @@ export class IsoShapeRotateGL extends ArtPiece {
       offset
     );
 
-    this.gl.enableVertexAttribArray(this.colorLocation!);
+    this.gl.enableVertexAttribArray(this.gl_utils.getLocation("a_color"));
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer!);
 
     size = 4; // 4 components per iteration
@@ -315,7 +238,7 @@ export class IsoShapeRotateGL extends ArtPiece {
     stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
     offset = 0; // start at the beginning of the buffer
     this.gl.vertexAttribPointer(
-      this.colorLocation!,
+      this.gl_utils.getLocation("a_color"),
       size,
       type,
       normalize,
@@ -362,12 +285,12 @@ export class IsoShapeRotateGL extends ArtPiece {
     matrix = m4.translate(matrix, -0.5, y_center, -0.5);
 
     // Set the matrix.
-    this.gl.uniformMatrix4fv(this.matrixLocation!, false, matrix);
+    this.gl.uniformMatrix4fv(this.gl_utils.getLocation("u_matrix"), false, matrix);
 
     // Set the current time
     const seconds_cloud_cycle = 15;
     this.gl.uniform1f(
-      this.cloudTranslation!,
+      this.gl_utils.getLocation("cloud_translation"),
       ((current_render_ms / 1000) % seconds_cloud_cycle) / seconds_cloud_cycle
     );
 

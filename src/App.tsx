@@ -18,6 +18,7 @@ import {
 import "./App.css";
 import { Spirograph } from "./ArtPieceSpirograph";
 import { UtilCommon } from "./UtilCommon";
+import { ArtPieceIsoGLSpirograph } from "./ArtPieceIsoGLSpirograph";
 
 interface ArtCanvasState {
   active_art_name: string | undefined;
@@ -232,6 +233,13 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         "Perlin",
         random_pool,
         parameter_a,
+        no_parameter_b,
+        this
+      ),
+      new ArtPieceIsoGLSpirograph(
+        "3D Spirograph",
+        random_pool,
+        no_parameter_a,
         no_parameter_b,
         this
       ),
