@@ -37,6 +37,10 @@ export class Color {
     return new Color(this.r * x, this.g * x, this.b * x, this.a * x);
   }
 
+  rgb() {
+    return [this.r, this.g, this.b];
+  }
+
   toString() {
     return `rgba(${this.r}, ${this.g}, ${this.b}, ${this.a})`;
   }

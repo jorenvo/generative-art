@@ -29,6 +29,12 @@ export class Point {
     this.componentOperation(other, (a, b) => a + b);
   }
 
+  newAdd(other: Point) {
+    const n = this.copy();
+    n.add(other);
+    return n;
+  }
+
   subtract(other: Point) {
     this.componentOperation(other, (a, b) => a - b);
   }

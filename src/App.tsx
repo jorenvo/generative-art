@@ -239,7 +239,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       new ArtPieceIsoGLSpirograph(
         "3D Spirograph",
         random_pool,
-        no_parameter_a,
+        parameter_a,
         no_parameter_b,
         this
       ),

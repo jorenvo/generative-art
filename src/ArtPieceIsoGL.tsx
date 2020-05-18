@@ -47,15 +47,13 @@ export class IsoShapeRotateGL extends ArtPiece {
     super(name, uses_random_pool, uses_parameter_a, uses_parameter_b, canvas);
     this.rotating_shape_radians = 0;
     this.gl = this.canvas.getContextGl();
-    this.gl_utils = new ArtPieceIsoGLUtils(this.gl);
     this.amount_of_vertices = 0;
     this.vertex_range_min = new Point();
     this.vertex_range_max = new Point();
     this.animation_loop_started = false;
     this.worker_promise = Promise.resolve();
     this.calc_id = 0;
-
-    this.setupWhenLoading();
+    this.gl_utils = this.createUtils();
   }
 
   cleanUp() {
@@ -71,7 +69,7 @@ export class IsoShapeRotateGL extends ArtPiece {
     return false;
   }
 
-  public setupWhenLoading() {
+  private createUtils() {
     const vertex_shader = `
     attribute vec4 a_position;
     attribute vec4 a_color;
@@ -121,14 +119,10 @@ export class IsoShapeRotateGL extends ArtPiece {
     }
         `;
 
-    this.gl_utils.setProgram(vertex_shader, fragment_shader);
-    this.gl_utils.setAttribLocation("a_position");
-    this.gl_utils.setAttribLocation("a_color");
-    this.gl_utils.setUniformLocation("u_matrix");
-    this.gl_utils.setUniformLocation("cloud_translation");
+    return new ArtPieceIsoGLUtils(this.gl, vertex_shader, fragment_shader);
   }
 
-  public setup() {
+  private setup() {
     // this.amount_of_vertices = 0; // prevent rendering
     const calc_id = ++this.calc_id;
     this.worker_promise = this.worker_promise.then(() => {
@@ -211,7 +205,7 @@ export class IsoShapeRotateGL extends ArtPiece {
     this.gl.enable(this.gl.BLEND);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     this.gl.enable(this.gl.DEPTH_TEST);
-    this.gl.useProgram(this.gl_utils.program!);
+    this.gl.useProgram(this.gl_utils.program);
     this.gl.enableVertexAttribArray(this.gl_utils.getLocation("a_position"));
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer!);
 
@@ -285,7 +279,11 @@ export class IsoShapeRotateGL extends ArtPiece {
     matrix = m4.translate(matrix, -0.5, y_center, -0.5);
 
     // Set the matrix.
-    this.gl.uniformMatrix4fv(this.gl_utils.getLocation("u_matrix"), false, matrix);
+    this.gl.uniformMatrix4fv(
+      this.gl_utils.getLocation("u_matrix"),
+      false,
+      matrix
+    );
 
     // Set the current time
     const seconds_cloud_cycle = 15;

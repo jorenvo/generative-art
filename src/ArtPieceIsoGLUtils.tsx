@@ -1,11 +1,16 @@
 export class ArtPieceIsoGLUtils {
   private gl: WebGLRenderingContext;
-  program: WebGLProgram | undefined;
+  program: WebGLProgram;
   private nameToLocation: Map<string, number>;
 
-  constructor(gl: WebGLRenderingContext) {
+  constructor(
+    gl: WebGLRenderingContext,
+    vertex_shader: string,
+    fragment_shader: string
+  ) {
     this.gl = gl;
     this.nameToLocation = new Map();
+    this.program = this.createProgram(vertex_shader, fragment_shader);
   }
 
   private createShader(type: number, source: string) {
@@ -23,7 +28,10 @@ export class ArtPieceIsoGLUtils {
     }
   }
 
-  setProgram(vertex_shader_src: string, fragment_shader_src: string) {
+  private createProgram(
+    vertex_shader_src: string,
+    fragment_shader_src: string
+  ) {
     const program = this.gl.createProgram()!;
     const vertex_shader = this.createShader(
       this.gl.VERTEX_SHADER,
@@ -40,7 +48,7 @@ export class ArtPieceIsoGLUtils {
 
     const success = this.gl.getProgramParameter(program, this.gl.LINK_STATUS);
     if (success) {
-      this.program = program;
+      return program;
     } else {
       const info = this.gl.getProgramInfoLog(program);
       this.gl.deleteProgram(program);
@@ -54,7 +62,7 @@ export class ArtPieceIsoGLUtils {
     }
 
     const location = this.gl.getAttribLocation(this.program, name);
-    if (location === null) {
+    if (location === null || location === -1) {
       throw new Error(`${name} not found.`);
     } else {
       return location;
@@ -67,26 +75,35 @@ export class ArtPieceIsoGLUtils {
     }
 
     const location = this.gl.getUniformLocation(this.program, name);
-    if (location === null) {
+    if (location === null || location === -1) {
       throw new Error(`${name} not found.`);
     } else {
       return location as number;
     }
   }
 
-  setAttribLocation(name: string) {
+  private setAttribLocation(name: string) {
     this.nameToLocation.set(name, this.getAttribLocationAndCheck(name));
   }
 
-  setUniformLocation(name: string) {
+  private setUniformLocation(name: string) {
     this.nameToLocation.set(name, this.getUniformLocationAndCheck(name));
   }
 
   getLocation(name: string) {
+    if (!this.nameToLocation.has(name)) {
+      try {
+        this.setAttribLocation(name);
+      } catch {
+        this.setUniformLocation(name);
+      }
+    }
+
     const location = this.nameToLocation.get(name);
     if (location === undefined) {
       throw new Error(`Location ${name} was not defined.`);
+    } else {
+      return location;
     }
-    return location;
   }
 }
