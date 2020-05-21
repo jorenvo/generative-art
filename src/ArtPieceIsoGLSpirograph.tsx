@@ -69,14 +69,14 @@ export class ArtPieceIsoGLSpirograph extends ArtPiece {
     // const scale = [1, 1, 1];
     const m4 = new Matrix4();
     const rotate = [
-      ((this.canvas.state.parameter_a / 10) * Math.PI) / 2,
-      ((this.canvas.state.parameter_a / 10) * Math.PI) / 2,
-      0,
+      0, // ((this.canvas.state.parameter_a / 10) * Math.PI) / 2,
+      -((this.canvas.state.parameter_a / 10) * Math.PI) / 2,
+      0, // ((this.canvas.state.parameter_a / 10) * Math.PI) / 2,
     ];
     let matrix = m4.projection(
       (this.gl.canvas as HTMLCanvasElement).clientWidth,
       (this.gl.canvas as HTMLCanvasElement).clientHeight,
-      1000
+      9_999
     );
     // this happens last
     matrix = m4.translate(
@@ -100,23 +100,46 @@ export class ArtPieceIsoGLSpirograph extends ArtPiece {
 
   private getVertices() {
     const triangle = [
+      new Point(-1, 0, 0),
+      new Point(-0.5, 1.5, 0),
       new Point(0, 0, 0),
-      new Point(50, 100, 0),
-      new Point(100, 0, 0),
     ];
     const flipped_triangle = [
-      new Point(100, 0, 0),
-      new Point(50, 100, 0),
-      new Point(150, 100, 0),
+      new Point(0, 0, 0),
+      new Point(-0.5, 1.5, 0),
+      new Point(0.5, 1.5, 0),
     ];
+
+    //            x
+    // -------------------+------ ▶
+    // (-1, 0)         (0,|0)
+    //    X---------------*
+    //     \             /|\
+    //      \           / | \
+    //       \         /  |  \
+    //        \       /   |   \
+    //         \     /    | y  \
+    //          \   /     |     \
+    //           \ /      |      \
+    //            X-------+-------X
+    //        (-0.5, 1)   |    (0.5, 1)
+    //                    ▼
     const pattern = triangle.concat(flipped_triangle);
+    pattern.forEach((v) => v.add(new Point(1)));
+    pattern.forEach((v) => v.multiply(new Point(100, 100, 1)));
+    const res: Point[] = [];
+    let prev = new Point(0, 200, 0);
 
-    const res = [];
+    for (let i = 0; i < 8; ++i) {
+      const pattern_copy = pattern.map((v) => v.copy());
+      const angle = 0; // i * 0.1;
+      pattern_copy.forEach((v) => {
+        v.rotate_xz(angle);
+        v.add(prev);
+        res.push(v);
+      });
 
-    for (let i = 0; i < 6; ++i) {
-      res.push(
-        ...pattern.map((v) => v.newAdd(new Point(100 + 100 * i, 100, 0)))
-      );
+      prev = res[res.length - 3];
     }
 
     return res;
@@ -168,7 +191,7 @@ export class ArtPieceIsoGLSpirograph extends ArtPiece {
       this.gl.drawingBufferHeight
     );
 
-    this.gl.enable(this.gl.CULL_FACE);
+    // this.gl.enable(this.gl.CULL_FACE);
     // this.gl.enable(this.gl.BLEND);
     // this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     this.gl.enable(this.gl.DEPTH_TEST);
