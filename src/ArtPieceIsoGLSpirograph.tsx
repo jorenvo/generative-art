@@ -65,10 +65,10 @@ export class ArtPieceIsoGLSpirograph extends ArtPiece {
 
   private setProjection() {
     const translation = [0, 0, 0];
-    // const rotation = [0, 0, 0];
     // const scale = [1, 1, 1];
     const m4 = new Matrix4();
     const rotate = [
+      // TODO before using this properly center the canvas
       0, // ((this.canvas.state.parameter_a / 10) * Math.PI) / 2,
       -((this.canvas.state.parameter_a / 10) * Math.PI) / 2,
       0, // ((this.canvas.state.parameter_a / 10) * Math.PI) / 2,
@@ -85,10 +85,15 @@ export class ArtPieceIsoGLSpirograph extends ArtPiece {
       translation[1],
       translation[2]
     );
-    // this happens first
+
+    matrix = m4.translate(matrix, 300, 0, 0);
+
     matrix = m4.zRotate(matrix, rotate[2]);
     matrix = m4.yRotate(matrix, rotate[1]);
     matrix = m4.xRotate(matrix, rotate[0]);
+
+    // this happens first
+    matrix = m4.translate(matrix, -300, 0, 0);
 
     // Set the matrix.
     this.gl.uniformMatrix4fv(
@@ -99,42 +104,29 @@ export class ArtPieceIsoGLSpirograph extends ArtPiece {
   }
 
   private getVertices() {
+    const nr_rotations = 8;
     const triangle = [
-      new Point(-1, 0, 0),
-      new Point(-0.5, 1.5, 0),
       new Point(0, 0, 0),
+      new Point(1, nr_rotations - 1, 0),
+      new Point(nr_rotations - 1, 0, 0),
     ];
     const flipped_triangle = [
-      new Point(0, 0, 0),
-      new Point(-0.5, 1.5, 0),
-      new Point(0.5, 1.5, 0),
+      new Point(1, nr_rotations - 1, 0),
+      new Point(nr_rotations - 1, 0, 0),
+      new Point(nr_rotations, nr_rotations - 1, 0),
     ];
+    const rhombus = triangle.concat(flipped_triangle);
+    rhombus.forEach((v) => v.for_each_dimension((a) => a * 5));
 
-    //            x
-    // -------------------+------ ▶
-    // (-1, 0)         (0,|0)
-    //    X---------------*
-    //     \             /|\
-    //      \           / | \
-    //       \         /  |  \
-    //        \       /   |   \
-    //         \     /    | y  \
-    //          \   /     |     \
-    //           \ /      |      \
-    //            X-------+-------X
-    //        (-0.5, 1)   |    (0.5, 1)
-    //                    ▼
-    const pattern = triangle.concat(flipped_triangle);
-    pattern.forEach((v) => v.add(new Point(1)));
-    pattern.forEach((v) => v.multiply(new Point(100, 100, 1)));
+    const angle = (2 * Math.PI) / (nr_rotations - 1);
     const res: Point[] = [];
-    let prev = new Point(0, 200, 0);
+    let prev = new Point(200, 200, 0);
 
-    for (let i = 0; i < 8; ++i) {
-      const pattern_copy = pattern.map((v) => v.copy());
-      const angle = 0; // i * 0.1;
+    for (let i = 0; i < nr_rotations * 60; ++i) {
+      const pattern_copy = rhombus.map((v) => v.copy());
+      const pattern_angle = i * angle;
       pattern_copy.forEach((v) => {
-        v.rotate_xz(angle);
+        v.rotate_yz(pattern_angle);
         v.add(prev);
         res.push(v);
       });
@@ -142,10 +134,22 @@ export class ArtPieceIsoGLSpirograph extends ArtPiece {
       prev = res[res.length - 3];
     }
 
+    // const mark_center = [
+    //   new Point(center.x, center.y, 0),
+    //   new Point(center.x + 10, center.y + 10, 0),
+    //   new Point(center.x, center.y + 10, 0),
+    // ];
+    // console.log(rhombus);
+    // console.log(center.xyz());
+    // mark_center.forEach((v) => (v.z = -100));
+    // res.push(...mark_center);
+    // res.push(...rhombus);
+
     return res;
   }
 
   private getColors(amount: number) {
+    const color = new Color(0, 0, 200);
     const colors: Color[] = [];
 
     if (amount % 3 !== 0) {
@@ -153,18 +157,14 @@ export class ArtPieceIsoGLSpirograph extends ArtPiece {
     }
 
     for (let i = 0; i < amount; i += 3) {
-      const random_color = new Color(
-        this.canvas.random_pool.get(this.random_i++),
-        this.canvas.random_pool.get(this.random_i++),
-        this.canvas.random_pool.get(this.random_i++)
-      );
-
+      const random_color = color.copy();
+      random_color.randomize(this.canvas.random_pool.get(this.random_i++) * 2);
       colors.push(random_color);
       colors.push(random_color);
       colors.push(random_color);
     }
 
-    return colors;
+    return colors.map((c) => c.multiplied_by(1 / 255));
   }
 
   private clear() {

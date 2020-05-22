@@ -33,6 +33,10 @@ export class Color {
     );
   }
 
+  copy() {
+    return this.multiplied_by(1);
+  }
+
   multiplied_by(x: number) {
     return new Color(this.r * x, this.g * x, this.b * x, this.a * x);
   }
