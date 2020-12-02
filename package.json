@@ -24,6 +24,7 @@
   "dependencies": {
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "rune.js": "^1.1.8",
     "seedrandom": "^3.0.5",
     "worker-loader": "^2.0.0"
   },

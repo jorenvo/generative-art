@@ -7,6 +7,7 @@ import { Moiré1, Moiré2 } from "./ArtPieceMoire";
 import { Maze } from "./ArtPieceMaze";
 import { Fredkin1, Fredkin2 } from "./ArtPieceFredkin";
 import { IsoShapeRotateGL } from "./ArtPieceIsoGL";
+import { Bezier } from "./Bezier";
 import { RandomPool } from "./RandomPool";
 import { AverageQueue } from "./UtilQueue";
 import {
@@ -230,6 +231,13 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       ),
       new IsoShapeRotateGL(
         "Perlin",
+        random_pool,
+        parameter_a,
+        no_parameter_b,
+        this
+      ),
+      new Bezier(
+        "Bezier",
         random_pool,
         parameter_a,
         no_parameter_b,
@@ -534,6 +542,7 @@ seed=${this.state.seed}`;
   render(): React.ReactNode {
     return (
       <div>
+        <div className="ArtCanvas" id="runeContainer"/>
         <canvas className="ArtCanvas" id="canvas2D" ref={this.canvas2D} />
         <canvas className="ArtCanvas" id="canvas3D" ref={this.canvas3D} />
         {this.renderSelect()}
