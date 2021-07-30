@@ -18,6 +18,7 @@ import {
 import "./App.css";
 import { Spirograph } from "./ArtPieceSpirograph";
 import { UtilCommon } from "./UtilCommon";
+import { Waves } from "./ArtPieceWaves";
 
 interface ArtCanvasState {
   active_art_name: string | undefined;
@@ -235,6 +236,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         no_parameter_b,
         this
       ),
+      new Waves("Waves", random_pool, no_parameter_a, no_parameter_b, this),
     ];
 
     this.setState({
@@ -297,6 +299,17 @@ seed=${this.state.seed}`;
       throw new Error("Could not get gl context for canvas.");
     } else {
       return ctx;
+    }
+  }
+
+  setHoverText(text: string) {
+    const active_art = this.getActiveArt();
+    if (active_art) {
+      if (active_art.is2d()) {
+        this.canvas2D.current!.title = text;
+      } else {
+        this.canvas3D.current!.title = text;
+      }
     }
   }
 
