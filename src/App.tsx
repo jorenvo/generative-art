@@ -19,6 +19,7 @@ import "./App.css";
 import { Spirograph } from "./ArtPieceSpirograph";
 import { UtilCommon } from "./UtilCommon";
 import { Waves } from "./ArtPieceWaves";
+import { Sun } from "./ArtPieceSun";
 
 interface ArtCanvasState {
   active_art_name: string | undefined;
@@ -237,6 +238,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         this
       ),
       new Waves("Waves", random_pool, no_parameter_a, no_parameter_b, this),
+      new Sun("Sun", random_pool, parameter_a, no_parameter_b, this),
     ];
 
     this.setState({
