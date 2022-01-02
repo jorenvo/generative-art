@@ -1,5 +1,6 @@
 import { ArtPiece } from "./ArtPiece";
 import { RandomPool } from "./RandomPool";
+import { Point } from "./UtilPoint";
 
 // Ni,k(t) = Ni,k-1(t) (t - ti )/(ti+k-1 - ti ) + Ni+1,k-1(t) (ti+k - t)/(ti+k - ti+1 ) ,
 // Ni,1 = {1   if   ti ≤ t ≤ ti+1 ,    0   otherwise }
@@ -9,32 +10,47 @@ class BSplineCalc {
   // [0, 1, ..., n]
   // this turns t_i into i
 
+  private id: number;
+  private random_pool: RandomPool;
+
   private k: number; // order
-  private p: number[]; // control points
+  private p: Point[]; // control points
   private n: number; // max control point index
 
-  constructor(random_pool: RandomPool) {
+  constructor(random_pool: RandomPool, id: number) {
+    this.id = id;
+    this.random_pool = random_pool;
     this.k = 3;
-
-    // this.p = [];
-    // for (let i = 0; i <= 2; i++) {
-    //   for (let dup = 0; dup < 10; dup++) {
-    //     this.p.push(0);
-    //   }
-    //   this.p.push(i);
-    // }
     this.p = [];
-    for (let i = 0; i < 30; i++) {
-      let x = i * 8;
+    this.n = 0;
+    this.setControlPoints();
+  }
+
+  private getRandomOffset(): number {
+    const seed = 8011;
+    return seed * this.id;
+  }
+
+  private setControlPoints(): void {
+    const nr_points = 30;
+    for (let i = 0; i < nr_points; i++) {
+      let x = i;
+      let y = i * 2;
       if (i % 2) {
-        x *= -1;
+        y *= -1;
       }
-      this.p.push(x);
+
+      const multiplier = i / 8;
+      const x_random = this.random_pool.get(this.getRandomOffset() + i) - 0.5;
+      x += x_random * multiplier;
+      const y_random =
+        this.random_pool.get(this.getRandomOffset() + nr_points + i) - 0.5;
+      y += y_random * multiplier;
+      this.p.push(new Point(x, y));
     }
-    console.log(this.p);
-    // this.p = [0, 10, 15, 30, -40, 50, -60];
-    // this.p = this.p.map((v) => v * 10);
+
     this.n = this.p.length - 1;
+    console.log(this.p);
   }
 
   private N(i: number, k: number, t: number): number {
@@ -60,11 +76,14 @@ class BSplineCalc {
     );
   }
 
-  getPoint(t: number): number {
-    let res = 0;
+  getPoint(t: number): Point {
+    let res = new Point();
 
     for (let i = 0; i <= this.n; i++) {
-      res += this.N(i, this.k, t) * this.p[i];
+      const coefficient = this.N(i, this.k, t);
+      const control_point = this.p[i].copy();
+      control_point.multiply_scalar(coefficient);
+      res.add(control_point);
     }
 
     return res;
@@ -76,21 +95,31 @@ class BSplineCalc {
 }
 
 export class BSpline extends ArtPiece {
-  draw() {
+  private drawLine(id: number) {
     const ctx = this.canvas.getContext2d();
     ctx.lineWidth = 0.25;
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
+    ctx.strokeStyle = "rgba(0, 65, 100, 0.05)";
+    ctx.fillStyle = ctx.strokeStyle;
 
     const middle = this.canvas.draw_height / 2;
     ctx.moveTo(0, middle);
 
-    const nr_points = 1_000;
-    const calculator = new BSplineCalc(this.canvas.random_pool);
+    const nr_points = 8_000;
+    const calculator = new BSplineCalc(this.canvas.random_pool, id);
     for (let i = 0; i < nr_points; i++) {
       const p = calculator.getPoint((i / nr_points) * calculator.getWidth());
-      ctx.fillRect((i / nr_points) * this.canvas.draw_width, middle + p, 1, 1);
-      // ctx.lineTo(i, middle + p);
-      // ctx.stroke();
+      ctx.fillRect(
+        (p.x / calculator.getWidth()) * this.canvas.draw_width,
+        middle + p.y,
+        1,
+        1
+      );
+    }
+  }
+
+  draw() {
+    for (let i = 0; i < 10; i++) {
+      this.drawLine(i);
     }
   }
 }

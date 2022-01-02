@@ -37,6 +37,10 @@ export class Point {
     this.componentOperation(other, (a, b) => a * b);
   }
 
+  multiply_scalar(v: number) {
+    this.for_each_dimension((p) => p * v);
+  }
+
   divide(other: Point) {
     this.componentOperation(other, (a, b) => a / b);
   }
