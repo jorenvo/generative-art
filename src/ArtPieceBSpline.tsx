@@ -10,47 +10,14 @@ class BSplineCalc {
   // [0, 1, ..., n]
   // this turns t_i into i
 
-  private id: number;
-  private random_pool: RandomPool;
-
   private k: number; // order
   private p: Point[]; // control points
   private n: number; // max control point index
 
-  constructor(random_pool: RandomPool, id: number) {
-    this.id = id;
-    this.random_pool = random_pool;
+  constructor(control_points: Point[]) {
     this.k = 3;
-    this.p = [];
-    this.n = 0;
-    this.setControlPoints();
-  }
-
-  private getRandomOffset(): number {
-    const seed = 8011;
-    return seed * this.id;
-  }
-
-  private setControlPoints(): void {
-    const nr_points = 10;
-    for (let i = 0; i < nr_points; i++) {
-      let x = i;
-      let y = i * 2;
-      if (i % 2) {
-        y *= -1;
-      }
-
-      const multiplier = i * 4;
-      // const x_random = this.random_pool.get(this.getRandomOffset() + i) - 0.5;
-      // x += x_random * multiplier;
-      const y_random =
-        this.random_pool.get(this.getRandomOffset() + nr_points + i) - 0.5;
-      y += y_random * multiplier;
-      this.p.push(new Point(x, y));
-    }
-
+    this.p = control_points;
     this.n = this.p.length - 1;
-    console.log(this.p);
   }
 
   private N(i: number, k: number, t: number): number {
@@ -95,32 +62,82 @@ class BSplineCalc {
 }
 
 export class BSpline extends ArtPiece {
-  private drawLine(id: number) {
+  private controlPoints(): Point[][] {
+    const nr_nodes = 10;
+    const nr_points_per_node = 3;
+    const nr_point_derivatives = 10;
+    const node_distance = this.canvas.draw_width / nr_nodes;
+
+    const lines: Point[][] = [];
+    for (let i = 0; i < nr_points_per_node * nr_point_derivatives; i++) {
+      lines.push([]);
+    }
+
+    for (let node = 0; node < nr_nodes; node++) {
+      const diverging_points = this.canvas.random_pool.get(node) > 0.7;
+      const x = node_distance * node;
+
+      for (let point = 0; point < nr_points_per_node; point++) {
+        let y = this.canvas.draw_height / 2;
+        if (diverging_points) {
+          const multiplier = 10;
+          y +=
+            this.canvas.random_pool.get(node * nr_points_per_node + point) *
+            multiplier;
+        }
+
+        const derivative_strength = this.canvas.random_pool.get(
+          node * nr_points_per_node + point + 8011
+        );
+        for (
+          let derivative = 0;
+          derivative < nr_point_derivatives;
+          derivative++
+        ) {
+          // TODO wrong random
+          const diverge_offset = this.canvas.random_pool.get(
+            node * nr_points_per_node * point * nr_points_per_node + derivative
+          );
+          lines[point * nr_point_derivatives + derivative].push(
+            new Point(
+              x / this.canvas.draw_width,
+              y + diverge_offset * derivative_strength
+            )
+          );
+        }
+      }
+    }
+
+    return lines;
+  }
+
+  private drawLine(control_points: Point[]) {
     const ctx = this.canvas.getContext2d();
     ctx.lineWidth = 0.25;
-    ctx.strokeStyle = "rgba(100, 255, 255, 0.01)";
-    ctx.fillStyle = ctx.strokeStyle;
+    // ctx.strokeStyle = "rgba(100, 255, 255, 0.01)";
+    // ctx.fillStyle = ctx.strokeStyle;
 
-    const middle = this.canvas.draw_height / 2;
-    ctx.moveTo(0, middle);
-
-    const nr_points = 16_000;
-    const calculator = new BSplineCalc(this.canvas.random_pool, id);
+    const nr_points = 1000;
+    const calculator = new BSplineCalc(control_points);
     for (let i = 0; i < nr_points; i++) {
-      const p = calculator.getPoint((i / nr_points) * calculator.getWidth());
-      ctx.fillRect(
-        (p.x / calculator.getWidth()) * this.canvas.draw_width,
-        middle + p.y,
-        1,
-        1
-      );
+      const t = (i / nr_points) * calculator.getWidth();
+      const p = calculator.getPoint(t);
+      p.x = (p.x / calculator.getWidth()) * this.canvas.draw_width;
+      p.x *= 10;
+      console.log(t, "=>", p.x, p.y);
+      // if (p.x >= 1) throw new Error("ueao");
+      ctx.fillRect(p.x, p.y, 1, 1);
     }
   }
 
   draw() {
-    const nr_lines = 10;
-    for (let i = 0; i < nr_lines; i++) {
-      this.drawLine(i);
-    }
+    let control_points = this.controlPoints();
+
+    control_points = [control_points[0]]; // TODO temp
+    console.log(control_points[0]);
+
+    control_points.forEach((line) => {
+      this.drawLine(line);
+    });
   }
 }
