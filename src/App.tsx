@@ -128,9 +128,10 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
 
   private initDeviceMotion() {
     // feature detect
-    if (typeof DeviceMotionEvent.requestPermission === "function") {
-      DeviceMotionEvent.requestPermission()
-        .then((permissionState) => {
+    if (typeof (DeviceMotionEvent as any).requestPermission === "function") {
+      (DeviceMotionEvent as any)
+        .requestPermission()
+        .then((permissionState: any) => {
           if (permissionState === "granted") {
             window.addEventListener(
               "devicemotion",
