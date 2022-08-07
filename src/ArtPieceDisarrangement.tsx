@@ -32,13 +32,15 @@ class DisarrangementAnimation {
   private atoms_side: number;
   private atoms: Atom[];
   private ms_per_frame: number;
+  private first_x: boolean;
 
   constructor(canvas: ArtCanvas) {
     this.canvas = canvas;
     this.prev_render_ms = 0;
     this.atoms_side = 40;
     this.atoms = this.createAtoms();
-    this.ms_per_frame = 1_000;
+    this.ms_per_frame = 300;
+    this.first_x = true;
   }
 
   private createAtoms(): Atom[] {
@@ -46,8 +48,16 @@ class DisarrangementAnimation {
 
     for (let row = 0; row < this.atoms_side; row++) {
       for (let col = 0; col < this.atoms_side; col++) {
-        const color =
+        let color =
           150 + this.canvas.random_pool.get(row * this.atoms_side + col) * 105;
+
+        if (row === 10) {
+          color = 10;
+        }
+
+        if (col === 10) {
+          color = 240;
+        }
 
         atoms.push(new Atom(row, col, color, color, color));
       }
@@ -72,8 +82,22 @@ class DisarrangementAnimation {
       this.canvas.center();
 
       this.atoms.forEach((atom: Atom) => {
-        if (atom.pos.x === 10) {
-          atom.pos.y = (atom.pos.y + 1) % this.atoms_side;
+        if (this.first_x) {
+          if (atom.pos.x === 10) {
+            atom.pos.y = (atom.pos.y + 1) % this.atoms_side;
+          }
+
+          if (atom.pos.y === 10) {
+            atom.pos.x = (atom.pos.x + 1) % this.atoms_side;
+          }
+        } else {
+          if (atom.pos.y === 10) {
+            atom.pos.x = (atom.pos.x + 1) % this.atoms_side;
+          }
+
+          if (atom.pos.x === 10) {
+            atom.pos.y = (atom.pos.y + 1) % this.atoms_side;
+          }
         }
 
         ctx.fillStyle = atom.color.toString();
@@ -82,6 +106,8 @@ class DisarrangementAnimation {
         const y = atom.pos.y * size + size / 2;
         ctx.fillRect(x, y, size, size);
       });
+
+      this.first_x = !this.first_x;
 
       ctx.restore();
     }
