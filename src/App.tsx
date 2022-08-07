@@ -186,8 +186,8 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
       new Schotter("Schotter", random_pool, parameter_a, no_parameter_b, this),
       new Linien("Linien", random_pool, parameter_a, parameter_b, this),
       new Diamond("Diamond", no_random_pool, parameter_a, no_parameter_b, this),
-      new Moiré1("Moiré 1", no_random_pool, parameter_a, no_parameter_b, this),
-      new Moiré2("Moiré 2", no_random_pool, parameter_a, no_parameter_b, this),
+      new Moiré1("Moiré 1", random_pool, parameter_a, no_parameter_b, this),
+      new Moiré2("Moiré 2", random_pool, parameter_a, no_parameter_b, this),
       new Maze("Maze", random_pool, parameter_a, no_parameter_b, this),
       new Fredkin1(
         "Fredkin 1",
