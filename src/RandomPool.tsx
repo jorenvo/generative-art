@@ -1,9 +1,9 @@
 import seedrandom from "seedrandom";
 
 export class RandomPool {
-  private rng: seedrandom.PRNG;
+  private readonly rng: seedrandom.PRNG;
   public seed: string;
-  private pool: number[];
+  private readonly pool: number[];
 
   constructor(seed: string) {
     this.rng = seedrandom(seed);
