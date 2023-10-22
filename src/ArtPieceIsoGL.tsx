@@ -246,7 +246,7 @@ export class IsoShapeRotateGL extends ArtPiece {
           this.amount_of_vertices = data.amount_of_vertices;
           this.vertex_range_min = data.vertex_range_min;
           this.vertex_range_max = data.vertex_range_max;
-          resolve();
+          resolve(undefined);
         };
 
         console.time("postMessage");
@@ -293,7 +293,7 @@ export class IsoShapeRotateGL extends ArtPiece {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer!);
 
     let size = 3; // 3 components per iteration
-    let type = this.gl.FLOAT; // the data is 32bit floats
+    let type: number = this.gl.FLOAT; // the data is 32bit floats
     let normalize = false; // don't normalize the data
     let stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
     let offset = 0; // start at the beginning of the buffer

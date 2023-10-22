@@ -1,7 +1,7 @@
 import seedrandom from "seedrandom";
 
 export class RandomPool {
-  private rng: seedrandom.prng;
+  private rng: seedrandom.PRNG;
   public seed: string;
   private pool: number[];
 
