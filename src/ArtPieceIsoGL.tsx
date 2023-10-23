@@ -74,7 +74,11 @@ export class IsoShapeRotateGL extends ArtPiece {
   }
 
   private createShader(type: number, source: string) {
-    const shader = this.gl.createShader(type)!;
+    const shader = this.gl.createShader(type);
+    if (shader === null) {
+      throw new Error("couldn't create shader");
+    }
+
     this.gl.shaderSource(shader, source);
     this.gl.compileShader(shader);
 
@@ -328,9 +332,9 @@ export class IsoShapeRotateGL extends ArtPiece {
       (current_render_ms - (this.last_render_ms || 0)) * 0.0002;
     this.last_render_ms = current_render_ms;
 
-    const map_size = this.canvas.html_element.clientHeight * 0.9;
+    const map_size = this.canvas.htmlElement.clientHeight * 0.9;
     const scale_factor = map_size;
-    const x_offset = (this.canvas.html_element.clientWidth - map_size) / 2;
+    const x_offset = (this.canvas.htmlElement.clientWidth - map_size) / 2;
     const y_offset =
       (map_size * (1 - this.vertex_range_max.y - this.vertex_range_min.y)) / 2;
 
