@@ -123,7 +123,7 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
     this.throttledSetURLFromArt();
   }
 
-  get html_element(): HTMLCanvasElement {
+  get htmlElement(): HTMLCanvasElement {
     return this.canvas3D.current!;
   }
 
