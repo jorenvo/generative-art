@@ -232,6 +232,13 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         no_parameter_b,
         this
       ),
+      new IsoShapeRotateGL(
+        "Perlin",
+        random_pool,
+        parameter_a,
+        no_parameter_b,
+        this
+      ),
       new Waves("Waves", random_pool, no_parameter_a, no_parameter_b, this),
       new Sun("Sun", random_pool, parameter_a, no_parameter_b, this),
       new BSpline(
@@ -242,26 +249,6 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         this
       ),
     ];
-
-    const is_ios =
-      /iPad|iPhone|iPod/.test(navigator.platform) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-    // iOS 17 loses webgl context immediately after getting it:
-    // - https://github.com/playcanvas/engine/issues/5742
-    // - https://bugs.webkit.org/show_bug.cgi?id=261313
-    // For now disable it, retry after iOS 17.0.3.
-    if (!is_ios) {
-      this.art_pieces.push(
-        new IsoShapeRotateGL(
-          "Perlin",
-          random_pool,
-          parameter_a,
-          no_parameter_b,
-          this
-        )
-      );
-    }
 
     this.setState({
       active_art_name: this.art_pieces[0].name,
