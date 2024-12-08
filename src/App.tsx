@@ -21,6 +21,7 @@ import { UtilCommon } from "./UtilCommon";
 import { Waves } from "./ArtPieceWaves";
 import { Sun } from "./ArtPieceSun";
 import { BSpline } from "./ArtPieceBSpline";
+import { Szpakowski } from "./ArtPieceSzpakowski";
 
 interface ArtCanvasState {
   active_art_name: string | undefined;
@@ -245,6 +246,13 @@ export class ArtCanvas extends React.Component<{}, ArtCanvasState> {
         "B-spline",
         random_pool,
         no_parameter_a,
+        no_parameter_b,
+        this
+      ),
+      new Szpakowski(
+        "Szpakowski",
+        random_pool,
+        parameter_a,
         no_parameter_b,
         this
       ),
