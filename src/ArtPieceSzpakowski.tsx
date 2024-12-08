@@ -34,63 +34,90 @@ class Pen {
   }
 }
 
+type penFunction = (pen: Pen) => void;
+
+class DrawSequence {
+  sequences: DrawSequence[] | undefined;
+  command: penFunction | undefined;
+
+  constructor(
+    command: penFunction | undefined,
+    sequences: DrawSequence[] = []
+  ) {
+    this.sequences = sequences;
+    this.command = command;
+  }
+
+  execute(pen: Pen, start: number, times: number) {
+    if (this.command) {
+      this.command(pen);
+    } else if (this.sequences) {
+      for (let i = 0; i < this.sequences.length * times; i++) {
+        this.sequences[(start + i) % this.sequences.length].execute(
+          pen,
+          start,
+          times
+        );
+      }
+    }
+  }
+}
+
 export class Szpakowski extends ArtPiece {
   draw() {
     const ctx = this.canvas.getContext2d();
     ctx.beginPath();
 
     const pen = new Pen(ctx, 10, this.canvas.draw_width * 0.8);
+    const largeHorizontal = 50;
+    const smallHorizontal = 5;
+    const largeVertical = 20;
 
-    for (let i2 = 0; i2 < 3; ++i2) {
-      const largeHorizontal = 50;
-      pen.move(largeHorizontal);
+    const zigZag = new DrawSequence(undefined, [
+      new DrawSequence((pen: Pen) => pen.turn(-90)),
+      new DrawSequence((pen: Pen) => pen.move(smallHorizontal)),
 
-      pen.turn(-90);
-      pen.move(40);
+      new DrawSequence((pen: Pen) => pen.turn(-90)),
+      new DrawSequence((pen: Pen) => pen.move(largeVertical)),
 
-      const smallHorizontal = 5;
-      const largeVertical = 20;
+      new DrawSequence((pen: Pen) => pen.turn(90)),
+      new DrawSequence((pen: Pen) => pen.move(smallHorizontal)),
 
-      for (let i = 0; i < largeHorizontal / smallHorizontal / 2; i++) {
-        pen.turn(-90);
-        pen.move(smallHorizontal);
+      new DrawSequence((pen: Pen) => pen.turn(90)),
+      new DrawSequence((pen: Pen) => pen.move(largeVertical)),
+    ]);
 
-        pen.turn(-90);
-        pen.move(largeVertical);
+    const sequence = new DrawSequence(undefined, [
+      new DrawSequence((pen: Pen) => pen.move(largeHorizontal)),
+      new DrawSequence((pen: Pen) => pen.turn(-90)),
 
-        pen.turn(90);
-        pen.move(smallHorizontal);
+      new DrawSequence((pen: Pen) => pen.move(40)),
 
-        pen.turn(90);
-        pen.move(largeVertical);
-      }
+      new DrawSequence((pen: Pen) =>
+        zigZag.execute(pen, 0, largeHorizontal / smallHorizontal / 2)
+      ),
 
-      pen.move(largeVertical);
-      pen.turn(90);
-      pen.move(largeHorizontal + smallHorizontal + largeHorizontal);
+      new DrawSequence((pen: Pen) => pen.move(largeVertical)),
+      new DrawSequence((pen: Pen) => pen.turn(90)),
+      new DrawSequence((pen: Pen) =>
+        pen.move(largeHorizontal + smallHorizontal + largeHorizontal)
+      ),
 
-      pen.turn(90);
-      pen.move(largeVertical);
+      new DrawSequence((pen: Pen) => pen.turn(90)),
+      new DrawSequence((pen: Pen) => pen.move(largeVertical)),
 
-      for (let i = 0; i < largeHorizontal / smallHorizontal / 2; i++) {
-        pen.move(largeVertical);
+      new DrawSequence((pen: Pen) =>
+        zigZag.execute(pen, 3, largeHorizontal / smallHorizontal / 2)
+      ),
 
-        pen.turn(90);
-        pen.move(smallHorizontal);
+      new DrawSequence((pen: Pen) => pen.move(largeVertical * 2)),
+      new DrawSequence((pen: Pen) => pen.turn(-90)),
+      new DrawSequence((pen: Pen) =>
+        pen.move(largeHorizontal + smallHorizontal)
+      ),
+    ]);
 
-        pen.turn(90);
-        pen.move(largeVertical);
-
-        pen.turn(-90);
-        pen.move(smallHorizontal);
-
-        pen.turn(-90);
-      }
-
-      pen.move(largeVertical * 2);
-      pen.turn(-90);
-      pen.move(largeHorizontal + smallHorizontal);
-    }
+    sequence.execute(pen, 0, 3);
 
     ctx.stroke();
   }
