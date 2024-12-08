@@ -37,28 +37,15 @@ class Pen {
 type penFunction = (pen: Pen) => void;
 
 class DrawSequence {
-  sequences: DrawSequence[] | undefined;
-  command: penFunction | undefined;
+  private readonly commands: penFunction[];
 
-  constructor(
-    command: penFunction | undefined,
-    sequences: DrawSequence[] = []
-  ) {
-    this.sequences = sequences;
-    this.command = command;
+  constructor(commands: penFunction[]) {
+    this.commands = commands;
   }
 
   execute(pen: Pen, start: number, times: number) {
-    if (this.command) {
-      this.command(pen);
-    } else if (this.sequences) {
-      for (let i = 0; i < this.sequences.length * times; i++) {
-        this.sequences[(start + i) % this.sequences.length].execute(
-          pen,
-          start,
-          times
-        );
-      }
+    for (let i = 0; i < this.commands.length * times; i++) {
+      this.commands[(start + i) % this.commands.length](pen);
     }
   }
 }
@@ -73,48 +60,43 @@ export class Szpakowski extends ArtPiece {
     const smallHorizontal = 5;
     const largeVertical = 20;
 
-    const zigZag = new DrawSequence(undefined, [
-      new DrawSequence((pen: Pen) => pen.turn(-90)),
-      new DrawSequence((pen: Pen) => pen.move(smallHorizontal)),
+    const zigZag = new DrawSequence([
+      (pen: Pen) => pen.turn(-90),
+      (pen: Pen) => pen.move(smallHorizontal),
 
-      new DrawSequence((pen: Pen) => pen.turn(-90)),
-      new DrawSequence((pen: Pen) => pen.move(largeVertical)),
+      (pen: Pen) => pen.turn(-90),
+      (pen: Pen) => pen.move(largeVertical),
 
-      new DrawSequence((pen: Pen) => pen.turn(90)),
-      new DrawSequence((pen: Pen) => pen.move(smallHorizontal)),
+      (pen: Pen) => pen.turn(90),
+      (pen: Pen) => pen.move(smallHorizontal),
 
-      new DrawSequence((pen: Pen) => pen.turn(90)),
-      new DrawSequence((pen: Pen) => pen.move(largeVertical)),
+      (pen: Pen) => pen.turn(90),
+      (pen: Pen) => pen.move(largeVertical),
     ]);
 
-    const sequence = new DrawSequence(undefined, [
-      new DrawSequence((pen: Pen) => pen.move(largeHorizontal)),
-      new DrawSequence((pen: Pen) => pen.turn(-90)),
+    const sequence = new DrawSequence([
+      (pen: Pen) => pen.move(largeHorizontal),
+      (pen: Pen) => pen.turn(-90),
 
-      new DrawSequence((pen: Pen) => pen.move(40)),
+      (pen: Pen) => pen.move(40),
 
-      new DrawSequence((pen: Pen) =>
-        zigZag.execute(pen, 0, largeHorizontal / smallHorizontal / 2)
-      ),
+      (pen: Pen) =>
+        zigZag.execute(pen, 0, largeHorizontal / smallHorizontal / 2),
 
-      new DrawSequence((pen: Pen) => pen.move(largeVertical)),
-      new DrawSequence((pen: Pen) => pen.turn(90)),
-      new DrawSequence((pen: Pen) =>
-        pen.move(largeHorizontal + smallHorizontal + largeHorizontal)
-      ),
+      (pen: Pen) => pen.move(largeVertical),
+      (pen: Pen) => pen.turn(90),
+      (pen: Pen) =>
+        pen.move(largeHorizontal + smallHorizontal + largeHorizontal),
 
-      new DrawSequence((pen: Pen) => pen.turn(90)),
-      new DrawSequence((pen: Pen) => pen.move(largeVertical)),
+      (pen: Pen) => pen.turn(90),
+      (pen: Pen) => pen.move(largeVertical),
 
-      new DrawSequence((pen: Pen) =>
-        zigZag.execute(pen, 3, largeHorizontal / smallHorizontal / 2)
-      ),
+      (pen: Pen) =>
+        zigZag.execute(pen, 3, largeHorizontal / smallHorizontal / 2),
 
-      new DrawSequence((pen: Pen) => pen.move(largeVertical * 2)),
-      new DrawSequence((pen: Pen) => pen.turn(-90)),
-      new DrawSequence((pen: Pen) =>
-        pen.move(largeHorizontal + smallHorizontal)
-      ),
+      (pen: Pen) => pen.move(largeVertical * 2),
+      (pen: Pen) => pen.turn(-90),
+      (pen: Pen) => pen.move(largeHorizontal + smallHorizontal),
     ]);
 
     sequence.execute(pen, 0, 3);
