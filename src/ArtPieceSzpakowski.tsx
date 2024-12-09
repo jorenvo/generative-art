@@ -34,18 +34,27 @@ class Pen {
   }
 }
 
-type penFunction = (pen: Pen) => void;
+type PenFunction = (pen: Pen) => void;
 
 class DrawSequence {
-  private readonly commands: penFunction[];
+  private readonly commands: PenFunction[];
 
-  constructor(commands: penFunction[]) {
+  constructor(commands: PenFunction[]) {
     this.commands = commands;
   }
 
-  execute(pen: Pen, start: number, times: number) {
+  execute(
+    pen: Pen,
+    start: number,
+    times: number,
+    spacer: PenFunction = (_: Pen) => {}
+  ) {
     for (let i = 0; i < this.commands.length * times; i++) {
-      this.commands[(start + i) % this.commands.length](pen);
+      const commandIndex = (start + i) % this.commands.length;
+      this.commands[commandIndex](pen);
+      if (i > 0 && i % this.commands.length === 0) {
+        spacer(pen);
+      }
     }
   }
 }
@@ -96,10 +105,10 @@ export class Szpakowski extends ArtPiece {
 
       (pen: Pen) => pen.move(largeVertical * 2),
       (pen: Pen) => pen.turn(-90),
-      (pen: Pen) => pen.move(largeHorizontal + smallHorizontal),
+      (pen: Pen) => pen.move(largeHorizontal),
     ]);
 
-    sequence.execute(pen, 0, 3);
+    sequence.execute(pen, 0, 3, (pen: Pen) => pen.move(smallHorizontal));
 
     ctx.stroke();
   }
