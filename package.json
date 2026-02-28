@@ -7,7 +7,7 @@
     "dev": "webpack-dev-server --host 0.0.0.0 --open --config webpack_dev.ts",
     "build-dev": "webpack --config webpack_dev.ts",
     "build-dev-deploy": "webpack --config webpack_dev_deploy.ts",
-    "build-prod": "webpack --config webpack_prod.ts",
+    "build-prod": "rm -rf docs && webpack --config webpack_prod.ts",
     "test": "mocha -r ts-node/register src/*.spec.ts"
   },
   "repository": {
